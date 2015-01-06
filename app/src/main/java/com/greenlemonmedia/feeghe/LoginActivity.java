@@ -75,17 +75,17 @@ public class LoginActivity extends Activity {
             @Override
             public void onClick(View v) {
                 LoginTask login = new LoginTask(
-                        txtLoginPhoneNumber.getText().toString(),
-                        txtLoginPassword.getText().toString(),
-                        new ProgressDialog(context),
-                        session,
-                        new LoginListener() {
+                    txtLoginPhoneNumber.getText().toString(),
+                    txtLoginPassword.getText().toString(),
+                    new ProgressDialog(context),
+                    session,
+                    new LoginListener() {
 
-                            @Override
-                            public void onSuccess(String token) {
-                                goToMainActivity();
-                            }
+                        @Override
+                        public void onSuccess(String token) {
+                            goToMainActivity();
                         }
+                    }
                 );
                 login.execute();
             }
