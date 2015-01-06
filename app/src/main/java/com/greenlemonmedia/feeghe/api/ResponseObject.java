@@ -1,6 +1,5 @@
 package com.greenlemonmedia.feeghe.api;
 
-import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 
 /**
@@ -10,15 +9,39 @@ public class ResponseObject extends Response {
 
 	private JSONObject content;
 
+	/**
+	 *
+	 * @param statusCode
+	 * @param data
+	 */
 	public ResponseObject(int statusCode, JSONObject data) {
-		this.statusCode = statusCode;
+		super(statusCode);
 		content = data;
 	}
 
+	/**
+	 *
+	 * @param statusCode
+	 * @param error
+	 */
+	public ResponseObject(int statusCode, String error) {
+		super(statusCode, error);
+		content = new JSONObject();
+	}
+
+	/**
+	 *
+	 * @param data
+	 */
 	public ResponseObject(JSONObject data) {
+		super();
 		content = data;
 	}
 
+	/**
+	 *
+	 * @return
+	 */
 	public JSONObject getContent() {
 		return content;
 	}

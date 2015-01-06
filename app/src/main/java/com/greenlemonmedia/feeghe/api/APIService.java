@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.api;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,10 +16,19 @@ import java.io.IOException;
  */
 abstract public class APIService {
 
-	public static final String API_HOST = "http://192.168.122.1:1338/api/";
+	public static final String API_HOST = "http://192.168.254.101:1338/api/";
 
 	protected String modelName;
-	protected DefaultHttpClient httpClient = new DefaultHttpClient();
+	protected DefaultHttpClient httpClient;
+
+	/**
+	 *
+	 * @param modelName
+	 */
+	public APIService(String modelName) {
+		this.modelName = modelName;
+		httpClient = new DefaultHttpClient();
+	}
 
 	/**
 	 *
@@ -39,11 +49,76 @@ abstract public class APIService {
 
 	/**
 	 *
+	 * @param requestMethod
+	 */
+	protected void setApiCredentials(HttpUriRequest requestMethod) {
+		requestMethod.addHeader("X-Feeghe-Token", "test");
+		requestMethod.addHeader("X-Feeghe-User", "user");
+	}
+
+	/**
+	 *
+	 * @param request
+	 */
+	protected void setDefaultHeaders(HttpUriRequest request) {
+		request.addHeader("Content-Type", "application/json");
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @param isArray
+	 * @return
+	 */
+	protected Response call(HttpUriRequest request, boolean isArray) {
+		Response result = null;
+		setDefaultHeaders(request);
+		try {
+			result = parseResponse(httpClient.execute(request), isArray);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	protected Response call(HttpUriRequest request) {
+		return call(request, false);
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @param isArray
+	 * @return
+	 */
+	protected Response apiCall(HttpUriRequest request, boolean isArray) {
+		setApiCredentials(request);
+		return call(request, isArray);
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	protected Response apiCall(HttpUriRequest request) {
+		return apiCall(request, false);
+	}
+
+	/**
+	 *
 	 * @param response
 	 * @param isArray
 	 * @return Response
 	 */
 	protected Response parseResponse(HttpResponse response, boolean isArray) {
+
+		Response returnResponse = null;
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
 			response.getEntity().writeTo(output);
@@ -51,24 +126,29 @@ abstract public class APIService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		String result = output.toString();
+		int statusCode = response.getStatusLine().getStatusCode();
 		try {
-			String result = output.toString();
-			int statusCode = response.getStatusLine().getStatusCode();
 			if (isArray) {
 				if (result.isEmpty()) {
 					result = "[]";
 				}
-				return new ResponseArray(statusCode, new JSONArray(result));
+				returnResponse = new ResponseArray(statusCode, new JSONArray(result));
 			} else {
 				if (result.isEmpty()) {
 					result = "{}";
 				}
-				return new ResponseObject(statusCode, new JSONObject(result));
+				returnResponse = new ResponseObject(statusCode, new JSONObject(result));
 			}
 		} catch (JSONException e) {
-			e.printStackTrace();
+			if (isArray) {
+				returnResponse = new ResponseArray(statusCode, result);
+			} else {
+				returnResponse = new ResponseObject(statusCode, result);
+			}
 		}
-		return null;
+		return returnResponse;
 	}
 
 	/**
@@ -77,14 +157,7 @@ abstract public class APIService {
 	 * @return ResponseObject
 	 */
 	public ResponseObject get(String id) {
-		ResponseObject response = null;
-		HttpGet request = new HttpGet(getBaseUrl(id));
-		try {
-			response = (ResponseObject) parseResponse(httpClient.execute(request), false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return response;
+		return (ResponseObject) call(new HttpGet(getBaseUrl(id)));
 	}
 
 	/**

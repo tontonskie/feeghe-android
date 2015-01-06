@@ -1,27 +1,16 @@
 package com.greenlemonmedia.feeghe;
 
-import android.content.Context;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.greenlemonmedia.feeghe.api.UserService;
-
 public class MainActivity extends ActionBarActivity {
-
-	private UserService userService = new UserService();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_registration);
-
-		TelephonyManager telManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		String phoneNumber = telManager.getLine1Number();
-
-
+		setContentView(R.layout.activity_main);
 	}
 
 	@Override
