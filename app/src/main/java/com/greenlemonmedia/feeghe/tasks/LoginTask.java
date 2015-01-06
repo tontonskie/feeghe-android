@@ -15,43 +15,43 @@ import org.json.JSONException;
  */
 public class LoginTask extends AsyncTask<Void, Void, Void> {
 
-	private ProgressDialog preloader;
-	private String paramPhoneNumber;
-	private String paramPassword;
-	private UserSession session;
-	private LoginListener listener;
+    private ProgressDialog preloader;
+    private String paramPhoneNumber;
+    private String paramPassword;
+    private UserSession session;
+    private LoginListener listener;
 
-	public LoginTask(String phoneNumber, String password, ProgressDialog progressDialog, UserSession session,
-	                 LoginListener loginListener) {
-		paramPhoneNumber = phoneNumber;
-		paramPassword = password;
-		preloader = progressDialog;
-		listener = loginListener;
-		this.session = session;
-	}
+    public LoginTask(String phoneNumber, String password, ProgressDialog progressDialog, UserSession session,
+                     LoginListener loginListener) {
+        paramPhoneNumber = phoneNumber;
+        paramPassword = password;
+        preloader = progressDialog;
+        listener = loginListener;
+        this.session = session;
+    }
 
-	public void onPreExecute() {
-		preloader.setMessage("Please wait...");
-		preloader.setCancelable(false);
-		preloader.show();
-	}
+    public void onPreExecute() {
+        preloader.setMessage("Please wait...");
+        preloader.setCancelable(false);
+        preloader.show();
+    }
 
-	@Override
-	protected Void doInBackground(Void... params) {
-		UserService userService = new UserService();
-		ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
-		if (response.isOk() && response.getContent().has("token")) {
-			try {
-				session.setToken(response.getContent().getString("token"));
-				listener.onSuccess(session.getToken());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
+    @Override
+    protected Void doInBackground(Void... params) {
+        UserService userService = new UserService();
+        ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
+        if (response.isOk() && response.getContent().has("token")) {
+            try {
+                session.setToken(response.getContent().getString("token"));
+                listener.onSuccess(session.getToken());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
 
-	public void onPostExecute(Void unused) {
-		preloader.dismiss();
-	}
+    public void onPostExecute(Void unused) {
+        preloader.dismiss();
+    }
 }

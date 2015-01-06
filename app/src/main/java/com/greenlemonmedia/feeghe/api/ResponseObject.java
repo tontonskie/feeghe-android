@@ -7,42 +7,42 @@ import org.json.JSONObject;
  */
 public class ResponseObject extends Response {
 
-	private JSONObject content;
+    private JSONObject content;
 
-	/**
-	 *
-	 * @param statusCode
-	 * @param data
-	 */
-	public ResponseObject(int statusCode, JSONObject data) {
-		super(statusCode);
-		content = data;
-	}
+    /**
+     *
+     * @param statusCode
+     * @param data
+     */
+    public ResponseObject(int statusCode, JSONObject data) {
+        super(statusCode);
+        content = data;
+    }
 
-	/**
-	 *
-	 * @param statusCode
-	 * @param error
-	 */
-	public ResponseObject(int statusCode, String error) {
-		super(statusCode, error);
-		content = new JSONObject();
-	}
+    /**
+     *
+     * @param statusCode
+     * @param error
+     */
+    public ResponseObject(int statusCode, String error) {
+        super(statusCode, error);
+        content = new JSONObject();
+    }
 
-	/**
-	 *
-	 * @param data
-	 */
-	public ResponseObject(JSONObject data) {
-		super();
-		content = data;
-	}
+    /**
+     *
+     * @param data
+     */
+    public ResponseObject(JSONObject data) {
+        super();
+        content = data;
+    }
 
-	/**
-	 *
-	 * @return
-	 */
-	public JSONObject getContent() {
-		return content;
-	}
+    /**
+     *
+     * @return
+     */
+    public JSONObject getContent() {
+        return content;
+    }
 }

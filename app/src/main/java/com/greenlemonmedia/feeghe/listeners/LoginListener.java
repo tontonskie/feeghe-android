@@ -5,9 +5,9 @@ package com.greenlemonmedia.feeghe.listeners;
  */
 public interface LoginListener {
 
-	/**
-	 *
-	 * @param token
-	 */
-	public void onSuccess(String token);
+    /**
+     *
+     * @param token
+     */
+    public void onSuccess(String token);
 }
