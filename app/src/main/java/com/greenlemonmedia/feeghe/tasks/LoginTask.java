@@ -3,8 +3,6 @@ package com.greenlemonmedia.feeghe.tasks;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
-import android.util.Log;
-import android.view.View;
 
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.UserService;
@@ -26,7 +24,7 @@ public class LoginTask extends AsyncTask<Void, Void, Void> {
   private Activity activity;
 
   public interface LoginListener {
-    public void onSuccess(String token);
+    public void onSuccess(String token, String userId);
     public void onFail(int statusCode, String error);
   }
 
@@ -67,7 +65,7 @@ public class LoginTask extends AsyncTask<Void, Void, Void> {
 
           @Override
           public void run() {
-            listener.onSuccess(session.getToken());
+            listener.onSuccess(session.getToken(), session.getUserId());
           }
         });
       } catch (JSONException e) {

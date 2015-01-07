@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,6 +15,7 @@ import android.widget.ViewFlipper;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoginTask;
 import com.greenlemonmedia.feeghe.tasks.RegisterTask;
+import com.greenlemonmedia.feeghe.tasks.VerifyTask;
 
 public class LoginActivity extends Activity {
 
@@ -28,6 +28,7 @@ public class LoginActivity extends Activity {
   private EditText txtLoginPassword;
   private TextView txtViewRegisterError;
   private TextView txtViewLoginError;
+  private EditText txtVerificationCode;
   private Button btnLogin;
   private Activity context;
   private Session session;
@@ -51,8 +52,10 @@ public class LoginActivity extends Activity {
     txtViewLoginError = (TextView) findViewById(R.id.txtViewLoginError);
     txtViewRegisterError = (TextView) findViewById(R.id.txtViewRegisterError);
     txtLoginPhoneNumber = (EditText) findViewById(R.id.txtLoginPhoneNumber);
+    txtVerificationCode = (EditText) findViewById(R.id.txtVerificationCode);
     txtLoginPassword = (EditText) findViewById(R.id.txtLoginPassword);
     txtRegisterPhoneNumber = (EditText) findViewById(R.id.txtRegisterPhoneNumber);
+
     if (!phoneNumber.isEmpty()) {
       txtLoginPhoneNumber.setText(phoneNumber);
       txtRegisterPhoneNumber.setText(phoneNumber);
@@ -73,7 +76,15 @@ public class LoginActivity extends Activity {
 
       @Override
       public void onClick(View v) {
-        viewFlipper.showPrevious();
+        if (verifyId == null) {
+          viewFlipper.showPrevious();
+          return;
+        }
+        verifyId = null;
+        btnRegister.setText("Sign Up");
+        btnBackToLogin.setText("Back to Login");
+        txtRegisterPhoneNumber.setVisibility(View.VISIBLE);
+        txtVerificationCode.setVisibility(View.INVISIBLE);
       }
     });
 
@@ -89,7 +100,7 @@ public class LoginActivity extends Activity {
           new LoginTask.LoginListener() {
 
             @Override
-            public void onSuccess(String token) {
+            public void onSuccess(String token, String userId) {
               goToMainActivity();
             }
 
@@ -109,16 +120,42 @@ public class LoginActivity extends Activity {
 
       @Override
       public void onClick(View v) {
-        RegisterTask register = new RegisterTask(
+        if (verifyId == null) {
+          RegisterTask register = new RegisterTask(
+            context,
+            txtRegisterPhoneNumber.getText().toString(),
+            new RegisterTask.RegisterListener() {
+
+              @Override
+              public void onSuccess(String verificationId) {
+                verifyId = verificationId;
+                btnRegister.setText("Verify");
+                btnBackToLogin.setText("Cancel");
+                txtViewRegisterError.setVisibility(View.GONE);
+                txtVerificationCode.setVisibility(View.VISIBLE);
+                txtRegisterPhoneNumber.setVisibility(View.INVISIBLE);
+                Toast.makeText(context, "SMS Sent", Toast.LENGTH_LONG).show();
+              }
+
+              @Override
+              public void onFail(int statusCode, String error) {
+                txtViewRegisterError.setText(error);
+                txtViewRegisterError.setVisibility(View.VISIBLE);
+              }
+            }
+          );
+          register.execute();
+          return;
+        }
+        VerifyTask verify = new VerifyTask(
           context,
-          txtRegisterPhoneNumber.getText().toString(),
-          new RegisterTask.RegisterListener() {
+          verifyId,
+          txtVerificationCode.getText().toString(),
+          new VerifyTask.VerifyListener() {
 
             @Override
-            public void onSuccess(String verificationId) {
-              verifyId = verificationId;
-              txtViewRegisterError.setVisibility(View.GONE);
-              Toast.makeText(context, "SMS Sent", Toast.LENGTH_LONG).show();
+            public void onSuccess(String token, String userId) {
+              goToMainActivity();
             }
 
             @Override
@@ -128,7 +165,7 @@ public class LoginActivity extends Activity {
             }
           }
         );
-        register.execute();
+        verify.execute();
       }
     });
   }

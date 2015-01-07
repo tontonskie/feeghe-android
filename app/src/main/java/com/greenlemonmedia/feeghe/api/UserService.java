@@ -4,6 +4,7 @@ import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +51,24 @@ public class UserService extends APIService {
     }
     setBodyParams(postRequest, params);
     return (ResponseObject) call(postRequest);
+  }
+
+  /**
+   *
+   * @param verificationId
+   * @param code
+   * @return
+   */
+  public ResponseObject verify(String verificationId, String code) {
+    HttpPut putRequest = new HttpPut(getBaseUrl("verify/" + verificationId));
+    JSONObject params = new JSONObject();
+    try {
+      params.put("code", code);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    setBodyParams(putRequest, params);
+    return (ResponseObject) call(putRequest);
   }
 
   /**
