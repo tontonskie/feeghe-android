@@ -9,29 +9,32 @@ import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by tonton on 1/7/15.
  */
-public class RegisterTask extends AsyncTask<Void, Void, Void> {
+public class VerifyTask extends AsyncTask<Void, Void, Void> {
 
-  private String paramPhoneNumber;
   private ProgressDialog preloader;
-  private RegisterListener listener;
-  private Session session;
   private Activity activity;
+  private Session session;
+  private String paramCode;
+  private String paramId;
+  private VerifyListener listener;
 
-  public interface RegisterListener {
-    public void onSuccess(String verificationId);
+  public interface VerifyListener {
+    public void onSuccess(String token, String userId);
     public void onFail(int statusCode, String error);
   }
 
-  public RegisterTask(Activity context, String phoneNumber, RegisterListener registerListener) {
-    paramPhoneNumber = phoneNumber;
-    listener = registerListener;
+  public VerifyTask(Activity context, String verificationId, String code, VerifyListener verifyListener) {
+    paramCode = code;
+    paramId = verificationId;
     preloader = new ProgressDialog(context);
     session = Session.getInstance(context);
     activity = context;
+    listener = verifyListener;
   }
 
   public void onPreExecute() {
@@ -43,27 +46,29 @@ public class RegisterTask extends AsyncTask<Void, Void, Void> {
   @Override
   protected Void doInBackground(Void... params) {
     UserService userService = new UserService(session);
-    final ResponseObject registerResult = userService.register(paramPhoneNumber);
-    if (!registerResult.isOk()) {
+    final ResponseObject response = userService.verify(paramId, paramCode);
+    if (!response.isOk()) {
       activity.runOnUiThread(new Runnable() {
 
         @Override
         public void run() {
-          listener.onFail(registerResult.getStatusCode(), registerResult.getErrorMessage());
+          listener.onFail(response.getStatusCode(), "Invalid code");
         }
       });
       return null;
     }
-    if (registerResult.getContent().has("id")) {
+    if (response.getContent().has("token")) {
       activity.runOnUiThread(new Runnable() {
 
         @Override
         public void run() {
+          JSONObject result = response.getContent();
           try {
-            listener.onSuccess(registerResult.getContent().getString("id"));
+            session.setCredentials(result.getString("token"), result.getString("user"));
           } catch (JSONException e) {
             e.printStackTrace();
           }
+          listener.onSuccess(session.getToken(), session.getUserId());
         }
       });
     }

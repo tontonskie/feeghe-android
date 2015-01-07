@@ -7,42 +7,42 @@ import org.json.JSONArray;
  */
 public class ResponseArray extends Response {
 
-    private JSONArray content;
+  private JSONArray content;
 
-    /**
-     *
-     * @param statusCode
-     * @param data
-     */
-    public ResponseArray(int statusCode, JSONArray data) {
-        super(statusCode);
-        content = data;
-    }
+  /**
+   *
+   * @param statusCode
+   * @param data
+   */
+  public ResponseArray(int statusCode, JSONArray data) {
+    super(statusCode);
+    content = data;
+  }
 
-    /**
-     *
-     * @param statusCode
-     * @param error
-     */
-    public ResponseArray(int statusCode, String error) {
-        super(statusCode, error);
-        content = new JSONArray();
-    }
+  /**
+   *
+   * @param statusCode
+   * @param error
+   */
+  public ResponseArray(int statusCode, String error) {
+    super(statusCode, error);
+    content = new JSONArray();
+  }
 
-    /**
-     *
-     * @param data
-     */
-    public ResponseArray(JSONArray data) {
-        super();
-        content = data;
-    }
+  /**
+   *
+   * @param data
+   */
+  public ResponseArray(JSONArray data) {
+    super();
+    content = data;
+  }
 
-    /**
-     *
-     * @return
-     */
-    public JSONArray getContent() {
-        return content;
-    }
+  /**
+   *
+   * @return
+   */
+  public JSONArray getContent() {
+    return content;
+  }
 }
