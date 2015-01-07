@@ -12,30 +12,30 @@ import java.io.UnsupportedEncodingException;
  */
 public class UserService extends APIService {
 
-	public UserService() {
-		super("user");
-	}
+    public UserService() {
+        super("user");
+    }
 
-	/**
-	 *
-	 * @param phoneNumber
-	 * @param password
-	 * @return
-	 */
-	public ResponseObject login(String phoneNumber, String password) {
-		HttpPost postRequest = new HttpPost(getBaseUrl("login"));
-		JSONObject params = new JSONObject();
-		try {
-			params.put("password", password);
-			params.put("phoneNumber", phoneNumber);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		try {
-			postRequest.setEntity(new StringEntity(params.toString()));
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		return (ResponseObject) call(postRequest);
-	}
+    /**
+     *
+     * @param phoneNumber
+     * @param password
+     * @return
+     */
+    public ResponseObject login(String phoneNumber, String password) {
+        HttpPost postRequest = new HttpPost(getBaseUrl("login"));
+        JSONObject params = new JSONObject();
+        try {
+            params.put("password", password);
+            params.put("phoneNumber", phoneNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            postRequest.setEntity(new StringEntity(params.toString()));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return (ResponseObject) call(postRequest);
+    }
 }
