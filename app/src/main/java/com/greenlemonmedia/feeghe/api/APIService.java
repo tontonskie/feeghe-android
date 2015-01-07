@@ -21,7 +21,7 @@ import java.io.UnsupportedEncodingException;
  */
 abstract public class APIService {
 
-  public static final String API_HOST = "http://192.168.254.101:1338/api/";
+  public static final String API_HOST = "http://dev.feeghe.com/api/";
 
   protected String modelName;
   protected Session session;
