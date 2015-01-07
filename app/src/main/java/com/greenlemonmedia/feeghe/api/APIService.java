@@ -1,8 +1,12 @@
 package com.greenlemonmedia.feeghe.api;
 
+import com.greenlemonmedia.feeghe.storage.Session;
+
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -10,6 +14,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Created by tonton on 1/5/15.
@@ -19,14 +24,16 @@ abstract public class APIService {
     public static final String API_HOST = "http://192.168.254.101:1338/api/";
 
     protected String modelName;
+    protected Session session;
     protected DefaultHttpClient httpClient;
 
     /**
      *
      * @param modelName
      */
-    public APIService(String modelName) {
+    public APIService(String modelName, Session sessionStorage) {
         this.modelName = modelName;
+        session = sessionStorage;
         httpClient = new DefaultHttpClient();
     }
 
@@ -49,11 +56,11 @@ abstract public class APIService {
 
     /**
      *
-     * @param requestMethod
+     * @param request
      */
-    protected void setApiCredentials(HttpUriRequest requestMethod) {
-        requestMethod.addHeader("X-Feeghe-Token", "test");
-        requestMethod.addHeader("X-Feeghe-User", "user");
+    protected void setApiCredentials(HttpUriRequest request) {
+        request.addHeader("X-Feeghe-Token", session.getToken());
+        request.addHeader("X-Feeghe-User", session.getUserId());
     }
 
     /**
@@ -62,6 +69,19 @@ abstract public class APIService {
      */
     protected void setDefaultHeaders(HttpUriRequest request) {
         request.addHeader("Content-Type", "application/json");
+    }
+
+    /**
+     *
+     * @param request
+     * @param params
+     */
+    protected void setBodyParams(HttpEntityEnclosingRequestBase request, JSONObject params) {
+        try {
+            request.setEntity(new StringEntity(params.toString()));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
