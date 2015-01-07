@@ -1,8 +1,10 @@
 package com.greenlemonmedia.feeghe.tasks;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
+import android.view.View;
 
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.UserService;
@@ -16,47 +18,66 @@ import org.json.JSONObject;
  */
 public class LoginTask extends AsyncTask<Void, Void, Void> {
 
-    private ProgressDialog preloader;
-    private String paramPhoneNumber;
-    private String paramPassword;
-    private Session session;
-    private LoginListener listener;
+  private ProgressDialog preloader;
+  private String paramPhoneNumber;
+  private String paramPassword;
+  private Session session;
+  private LoginListener listener;
+  private Activity activity;
 
-    public interface LoginListener {
-        public void onSuccess(String token);
-    }
+  public interface LoginListener {
+    public void onSuccess(String token);
+    public void onFail(int statusCode, String error);
+  }
 
-    public LoginTask(Context context, String phoneNumber, String password, LoginListener loginListener) {
-        paramPhoneNumber = phoneNumber;
-        paramPassword = password;
-        listener = loginListener;
-        session = Session.getInstance(context);
-        preloader = new ProgressDialog(context);
-    }
+  public LoginTask(Activity context, String phoneNumber, String password, LoginListener loginListener) {
+    paramPhoneNumber = phoneNumber;
+    paramPassword = password;
+    listener = loginListener;
+    session = Session.getInstance(context);
+    preloader = new ProgressDialog(context);
+    activity = context;
+  }
 
-    public void onPreExecute() {
-        preloader.setMessage("Please wait...");
-        preloader.setCancelable(false);
-        preloader.show();
-    }
+  public void onPreExecute() {
+    preloader.setMessage("Please wait...");
+    preloader.setCancelable(false);
+    preloader.show();
+  }
 
-    @Override
-    protected Void doInBackground(Void... params) {
-        UserService userService = new UserService(session);
-        ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
-        if (response.isOk() && response.getContent().has("token")) {
-            try {
-                JSONObject user = response.getContent();
-                session.setCredentials(user.getString("token"), user.getString("user"));
-                listener.onSuccess(session.getToken());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+  @Override
+  protected Void doInBackground(Void... params) {
+    UserService userService = new UserService(session);
+    final ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
+    if (!response.isOk()) {
+      activity.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+          listener.onFail(response.getStatusCode(), "Invalid number and password");
         }
-        return null;
+      });
+      return null;
     }
+    if (response.getContent().has("token")) {
+      try {
+        JSONObject user = response.getContent();
+        session.setCredentials(user.getString("token"), user.getString("user"));
+        activity.runOnUiThread(new Runnable() {
 
-    public void onPostExecute(Void unused) {
-        preloader.dismiss();
+          @Override
+          public void run() {
+            listener.onSuccess(session.getToken());
+          }
+        });
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
     }
+    return null;
+  }
+
+  public void onPostExecute(Void unused) {
+    preloader.dismiss();
+  }
 }
