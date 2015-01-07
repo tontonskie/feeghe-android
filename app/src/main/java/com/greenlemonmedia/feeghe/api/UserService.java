@@ -1,19 +1,19 @@
 package com.greenlemonmedia.feeghe.api;
 
+import com.greenlemonmedia.feeghe.storage.Session;
+
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * Created by tonton on 1/5/15.
  */
 public class UserService extends APIService {
 
-    public UserService() {
-        super("user");
+    public UserService(Session session) {
+        super("user", session);
     }
 
     /**
@@ -31,11 +31,32 @@ public class UserService extends APIService {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        setBodyParams(postRequest, params);
+        return (ResponseObject) call(postRequest);
+    }
+
+    /**
+     *
+     * @param phoneNumber
+     * @return
+     */
+    public ResponseObject register(String phoneNumber) {
+        HttpPost postRequest = new HttpPost(getBaseUrl("register"));
+        JSONObject params = new JSONObject();
         try {
-            postRequest.setEntity(new StringEntity(params.toString()));
-        } catch (UnsupportedEncodingException e) {
+            params.put("phoneNumber", phoneNumber);
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+        setBodyParams(postRequest, params);
         return (ResponseObject) call(postRequest);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public ResponseObject logout() {
+        return (ResponseObject) apiCall(new HttpDelete(getBaseUrl("logout")));
     }
 }

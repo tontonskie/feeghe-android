@@ -1,7 +1,6 @@
 package com.greenlemonmedia.feeghe;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,27 +10,29 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ViewFlipper;
 
-import com.greenlemonmedia.feeghe.listeners.LoginListener;
-import com.greenlemonmedia.feeghe.storage.UserSession;
+import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoginTask;
+import com.greenlemonmedia.feeghe.tasks.RegisterTask;
 
 public class LoginActivity extends Activity {
 
     private Button btnSwitchRegister;
     private Button btnBackToLogin;
+    private Button btnRegister;
     private ViewFlipper viewFlipper;
     private EditText txtLoginPhoneNumber;
     private EditText txtRegisterPhoneNumber;
     private EditText txtLoginPassword;
     private Button btnLogin;
     private Context context;
-    private UserSession session;
+    private Session session;
+    private String verifyId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        session = UserSession.getInstance(this);
+        session = Session.getInstance(this);
         if (session.isLoggedIn()) {
             goToMainActivity();
         }
@@ -75,11 +76,10 @@ public class LoginActivity extends Activity {
             @Override
             public void onClick(View v) {
                 LoginTask login = new LoginTask(
+                    context,
                     txtLoginPhoneNumber.getText().toString(),
                     txtLoginPassword.getText().toString(),
-                    new ProgressDialog(context),
-                    session,
-                    new LoginListener() {
+                    new LoginTask.LoginListener() {
 
                         @Override
                         public void onSuccess(String token) {
@@ -88,6 +88,26 @@ public class LoginActivity extends Activity {
                     }
                 );
                 login.execute();
+            }
+        });
+
+        btnRegister = (Button) findViewById(R.id.btnRegister);
+        btnRegister.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                RegisterTask register = new RegisterTask(
+                    context,
+                    txtRegisterPhoneNumber.getText().toString(),
+                    new RegisterTask.RegisterListener() {
+
+                        @Override
+                        public void onSuccess(String verificationId) {
+                            verifyId = verificationId;
+                        }
+                   }
+                );
+                register.execute();
             }
         });
     }

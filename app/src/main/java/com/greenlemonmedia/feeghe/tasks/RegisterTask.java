@@ -9,46 +9,41 @@ import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
- * Created by tonton on 1/6/15.
+ * Created by tonton on 1/7/15.
  */
-public class LoginTask extends AsyncTask<Void, Void, Void> {
+public class RegisterTask extends AsyncTask<Void, Void, Void> {
 
-    private ProgressDialog preloader;
     private String paramPhoneNumber;
-    private String paramPassword;
+    private ProgressDialog preloader;
+    private RegisterListener listener;
     private Session session;
-    private LoginListener listener;
 
-    public interface LoginListener {
-        public void onSuccess(String token);
+    public interface RegisterListener {
+        public void onSuccess(String verificationId);
     }
 
-    public LoginTask(Context context, String phoneNumber, String password, LoginListener loginListener) {
+    public RegisterTask(Context context, String phoneNumber, RegisterListener registerListener) {
         paramPhoneNumber = phoneNumber;
-        paramPassword = password;
-        listener = loginListener;
-        session = Session.getInstance(context);
+        listener = registerListener;
         preloader = new ProgressDialog(context);
+        session = Session.getInstance(context);
     }
 
     public void onPreExecute() {
-        preloader.setMessage("Please wait...");
         preloader.setCancelable(false);
+        preloader.setMessage("Please wait...");
         preloader.show();
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         UserService userService = new UserService(session);
-        ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
-        if (response.isOk() && response.getContent().has("token")) {
+        ResponseObject registerResult = userService.register(paramPhoneNumber);
+        if (registerResult.isOk() && registerResult.getContent().has("id")) {
             try {
-                JSONObject user = response.getContent();
-                session.setCredentials(user.getString("token"), user.getString("user"));
-                listener.onSuccess(session.getToken());
+                listener.onSuccess(registerResult.getContent().getString("id"));
             } catch (JSONException e) {
                 e.printStackTrace();
             }

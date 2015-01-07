@@ -6,14 +6,15 @@ import android.content.SharedPreferences;
 /**
  * Created by tonton on 1/6/15.
  */
-public class UserSession {
+public class Session {
 
     private SharedPreferences session;
-    private SharedPreferences.Editor editor;
+    public SharedPreferences.Editor editor;
 
-    private static UserSession instance = null;
+    private static Session instance = null;
     private static final String LOGGED_IN_KEY = "logged_in";
     private static final String TOKEN_KEY = "token";
+    private static final String USER_KEY = "user";
     private static final String PREFERENCE_NAME = "feeghe_user_session";
     private static final int PREFERENCE_MODE = 0;
 
@@ -21,7 +22,7 @@ public class UserSession {
      *
      * @param preferences
      */
-    private UserSession(SharedPreferences preferences) {
+    private Session(SharedPreferences preferences) {
         session = preferences;
         editor = session.edit();
     }
@@ -31,13 +32,17 @@ public class UserSession {
      * @param context
      * @return
      */
-    public static UserSession getInstance(Context context) {
+    public static Session getInstance(Context context) {
         if (instance == null) {
-            instance = new UserSession(
+            instance = new Session(
                 context.getApplicationContext().getSharedPreferences(PREFERENCE_NAME, PREFERENCE_MODE)
             );
         }
         return instance;
+    }
+
+    public void save() {
+        editor.commit();
     }
 
     /**
@@ -48,18 +53,28 @@ public class UserSession {
         editor.putBoolean(LOGGED_IN_KEY, loggedIn);
         if (!loggedIn) {
             editor.remove(TOKEN_KEY);
+            editor.remove(USER_KEY);
         }
-        editor.commit();
+        save();
     }
 
     /**
      *
      * @param token
+     * @param userId
      */
-    public void setToken(String token) {
-        setLoggedIn(true);
+    public void setCredentials(String token, String userId) {
         editor.putString(TOKEN_KEY, token);
-        editor.commit();
+        editor.putString(USER_KEY, userId);
+        setLoggedIn(true);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getUserId() {
+        return session.getString(USER_KEY, null);
     }
 
     /**
