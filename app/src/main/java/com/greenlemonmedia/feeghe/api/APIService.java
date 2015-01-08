@@ -21,7 +21,8 @@ import java.io.UnsupportedEncodingException;
  */
 abstract public class APIService {
 
-  public static final String API_HOST = "http://dev.feeghe.com/api/";
+  public static final String API_HOST = "http://dev.feeghe.com";
+  public static final String API_URL = API_HOST + "/api/";
 
   protected String modelName;
   protected Session session;
@@ -51,7 +52,7 @@ abstract public class APIService {
    * @return String
    */
   public String getBaseUrl() {
-    return API_HOST + modelName;
+    return API_URL + modelName;
   }
 
   /**

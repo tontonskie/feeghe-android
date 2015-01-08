@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.greenlemonmedia.feeghe.api.ResponseObject;
+import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.storage.Session;
 
@@ -42,6 +43,7 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
     try {
       if (response.isOk() && response.getContent().getBoolean("success")) {
         session.setLoggedIn(false);
+        Socket.disconnect();
         listener.onSuccess();
       }
     } catch (JSONException e) {
