@@ -41,6 +41,7 @@ public class LoginActivity extends Activity {
     session = Session.getInstance(this);
     if (session.isLoggedIn()) {
       goToMainActivity();
+      return;
     }
 
     TelephonyManager telManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -56,7 +57,7 @@ public class LoginActivity extends Activity {
     txtLoginPassword = (EditText) findViewById(R.id.txtLoginPassword);
     txtRegisterPhoneNumber = (EditText) findViewById(R.id.txtRegisterPhoneNumber);
 
-    if (!phoneNumber.isEmpty()) {
+    if (phoneNumber != null) {
       txtLoginPhoneNumber.setText(phoneNumber);
       txtRegisterPhoneNumber.setText(phoneNumber);
     }

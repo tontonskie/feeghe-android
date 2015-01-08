@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
 public class Session {
 
   private SharedPreferences session;
-  public SharedPreferences.Editor editor;
+  private SharedPreferences.Editor editor;
 
   private static Session instance = null;
   private static final String LOGGED_IN_KEY = "logged_in";
@@ -41,10 +41,6 @@ public class Session {
     return instance;
   }
 
-  public void save() {
-    editor.commit();
-  }
-
   /**
    *
    * @param loggedIn
@@ -55,7 +51,7 @@ public class Session {
       editor.remove(TOKEN_KEY);
       editor.remove(USER_KEY);
     }
-    save();
+    editor.commit();
   }
 
   /**
