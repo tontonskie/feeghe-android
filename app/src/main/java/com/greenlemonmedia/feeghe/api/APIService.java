@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
+import android.content.Context;
 import android.net.Uri;
 
 import com.greenlemonmedia.feeghe.storage.Session;
@@ -19,13 +20,14 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 
 /**
  * Created by tonton on 1/5/15.
  */
-abstract public class APIService {
+abstract public class APIService implements Serializable {
 
   public static final String HTTP_SCHEME = "http";
   public static final String HOST = "dev.feeghe.com";
@@ -40,9 +42,9 @@ abstract public class APIService {
    *
    * @param modelName
    */
-  public APIService(String modelName, Session sessionStorage) {
+  public APIService(String modelName, Context context) {
     this.modelName = modelName;
-    session = sessionStorage;
+    session = Session.getInstance(context);
     httpClient = new DefaultHttpClient();
   }
 
@@ -254,5 +256,13 @@ abstract public class APIService {
    */
   public ResponseObject delete(String id) {
     return (ResponseObject) apiCall(new HttpDelete(getBaseUrl(id)));
+  }
+
+  /**
+   *
+   * @return
+   */
+  public Session getSession() {
+    return session;
   }
 }

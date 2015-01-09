@@ -1,0 +1,123 @@
+<ViewAnimator
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:id="@+id/newUserFormSwitcher"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:padding="10dp">
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/newUserChangePassForm"
+    >
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Welcome, New User"
+      android:id="@+id/lblWelcomeNewUser"
+      android:gravity="center"
+      android:layout_marginBottom="20dp"
+      android:textSize="30dp"/>
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceMedium"
+      android:id="@+id/txtViewNewUserError"
+      android:layout_marginBottom="10dp"
+      android:visibility="gone"
+      android:textColor="#ffa94442"
+      android:gravity="center"/>
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Gender"
+      android:id="@+id/lblGender"
+      android:layout_marginBottom="10dp"/>
+
+    <Spinner
+      android:layout_width="match_parent"
+      android:layout_height="50dp"
+      android:id="@+id/selectGender"
+      android:spinnerMode="dialog"
+      android:layout_marginBottom="15dp"
+      android:entries="@array/gender_list"
+      style="@style/RtlOverlay.Widget.AppCompat.Search.DropDown.Text"
+      android:background="#ffffffff"/>
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Password"
+      android:id="@+id/lblPassword"
+      android:layout_marginBottom="10dp"/>
+
+    <EditText
+      android:layout_width="match_parent"
+      android:layout_height="50dp"
+      android:inputType="textPassword"
+      android:ems="10"
+      android:id="@+id/txtNewPassword"
+      android:autoText="false"
+      android:layout_marginBottom="15dp"
+      android:editable="false"
+      android:background="#ffffffff"
+      android:textSize="20dp"
+      android:hint="Type your new password"/>
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Confirm"
+      android:id="@+id/lblConfirmPass"
+      android:layout_marginBottom="10dp"/>
+
+    <EditText
+      android:layout_width="match_parent"
+      android:layout_height="50dp"
+      android:inputType="textPassword"
+      android:ems="10"
+      android:id="@+id/txtConfirmPassword"
+      android:layout_marginBottom="15dp"
+      android:background="#FFFFFF"
+      android:textSize="20dp"
+      android:hint="Retype your new password"/>
+
+    <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:weightSum="1">
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:text="Skip"
+        android:id="@+id/btnSkipChangePass"
+        android:layout_weight=".5"/>
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:text="Proceed"
+        android:id="@+id/btnChangePass"
+        android:layout_weight=".5"/>
+    </LinearLayout>
+
+  </LinearLayout>
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/newUserSyncContactsForm">
+  </LinearLayout>
+
+</ViewAnimator>

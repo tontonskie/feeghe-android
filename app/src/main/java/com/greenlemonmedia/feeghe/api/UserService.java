@@ -1,5 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
+import android.content.Context;
+
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.apache.http.client.methods.HttpDelete;
@@ -13,8 +15,8 @@ import org.json.JSONObject;
  */
 public class UserService extends APIService {
 
-  public UserService(Session session) {
-    super("user", session);
+  public UserService(Context context) {
+    super("user", context);
   }
 
   /**
@@ -77,5 +79,22 @@ public class UserService extends APIService {
    */
   public ResponseObject logout() {
     return (ResponseObject) apiCall(new HttpDelete(getBaseUrl("logout")));
+  }
+
+  public void updateCurrentUser() {
+    session.setCurrentUser(get(session.getUserId()));
+  }
+
+  /**
+   *
+   * @return
+   */
+  public Session.User getCurrentUser() {
+    Session.User currentUser = session.getCurrentUser();
+    if (currentUser == null) {
+      updateCurrentUser();
+      currentUser = session.getCurrentUser();
+    }
+    return currentUser;
   }
 }

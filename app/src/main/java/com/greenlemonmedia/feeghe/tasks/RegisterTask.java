@@ -42,7 +42,7 @@ public class RegisterTask extends AsyncTask<Void, Void, Void> {
 
   @Override
   protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(session);
+    UserService userService = new UserService(activity);
     final ResponseObject registerResult = userService.register(paramPhoneNumber);
     if (!registerResult.isOk()) {
       activity.runOnUiThread(new Runnable() {

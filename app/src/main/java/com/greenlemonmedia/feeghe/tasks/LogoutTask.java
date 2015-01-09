@@ -19,6 +19,7 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
   private ProgressDialog preloader;
   private LogoutListener listener;
   private Session session;
+  private Context context;
 
   public interface LogoutListener {
     public void onSuccess();
@@ -28,6 +29,7 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
     preloader = new ProgressDialog(context);
     session = Session.getInstance(context);
     listener = logoutListener;
+    this.context = context;
   }
 
   public void onPreExecute() {
@@ -38,7 +40,7 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
 
   @Override
   protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(session);
+    UserService userService = new UserService(context);
     ResponseObject response = userService.logout();
     try {
       if (response.isOk() && response.getContent().getBoolean("success")) {
