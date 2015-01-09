@@ -45,7 +45,7 @@ public class VerifyTask extends AsyncTask<Void, Void, Void> {
 
   @Override
   protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(session);
+    UserService userService = new UserService(activity);
     final ResponseObject response = userService.verify(paramId, paramCode);
     if (!response.isOk()) {
       activity.runOnUiThread(new Runnable() {
