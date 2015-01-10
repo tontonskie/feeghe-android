@@ -1,6 +1,7 @@
 package com.greenlemonmedia.feeghe;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
@@ -58,13 +59,16 @@ public class MainActivity extends ActionBarActivity {
     });
   }
 
-  public void showNewUserFragment() {
-    NewUserFragment newUserFragment = new NewUserFragment();
-    newUserFragment.setArguments(getIntent().getExtras());
+  private void showFragment(Fragment fragment) {
+    fragment.setArguments(getIntent().getExtras());
     getFragmentManager()
       .beginTransaction()
-      .add(R.id.frameMainContent, newUserFragment)
+      .add(R.id.frameMainContent, fragment)
       .commit();
+  }
+
+  public void showNewUserFragment() {
+    showFragment(new NewUserFragment());
   }
 
   @Override

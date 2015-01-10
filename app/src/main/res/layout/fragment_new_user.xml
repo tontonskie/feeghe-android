@@ -99,16 +99,9 @@
       <Button
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:text="Skip"
-        android:id="@+id/btnSkipChangePass"
-        android:layout_weight=".5"/>
-
-      <Button
-        android:layout_width="0dp"
-        android:layout_height="50dp"
         android:text="Proceed"
         android:id="@+id/btnChangePass"
-        android:layout_weight=".5"/>
+        android:layout_weight="1"/>
     </LinearLayout>
 
   </LinearLayout>
@@ -118,6 +111,53 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/newUserSyncContactsForm">
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Add Contacts"
+      android:id="@+id/textView"
+      android:gravity="center"
+      android:layout_marginBottom="15dp"
+      android:textSize="30dp"/>
+
+    <CheckBox
+      android:layout_width="match_parent"
+      android:layout_height="50dp"
+      android:text="Sync Contacts"
+      android:id="@+id/chkSyncContacts"
+      android:textSize="20dp"
+      android:checked="true"
+      android:layout_marginBottom="10dp"/>
+
+    <ListView
+      android:layout_width="match_parent"
+      android:layout_height="363dp"
+      android:id="@+id/listContacts"
+      android:choiceMode="multipleChoice"
+      android:layout_marginBottom="10dp"/>
+
+    <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent">
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:text="Skip"
+        android:id="@+id/btnSkipContacts"
+        android:layout_weight=".5"/>
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:text="Proceed"
+        android:id="@+id/btnAddContacts"
+        android:layout_weight=".5"/>
+    </LinearLayout>
+
   </LinearLayout>
 
 </ViewAnimator>

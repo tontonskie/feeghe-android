@@ -37,7 +37,7 @@ public class NewUserFragment extends Fragment {
   }
 
   @Override
-  public void onActivityCreated (Bundle savedInstanceState) {
+  public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     context = getActivity();
     view = (ViewAnimator) getView();
