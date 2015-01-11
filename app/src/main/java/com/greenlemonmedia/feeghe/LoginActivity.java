@@ -94,11 +94,19 @@ public class LoginActivity extends Activity {
 
       @Override
       public void onClick(View v) {
+        String phoneNumber = txtLoginPhoneNumber.getText().toString();
+        String password = txtLoginPassword.getText().toString();
+        if (phoneNumber.isEmpty() || password.isEmpty()) {
+          txtViewLoginError.setText("Phone number and password is required");
+          txtViewLoginError.setVisibility(View.VISIBLE);
+          return;
+        }
+        txtViewLoginError.setVisibility(View.GONE);
         LoginTask login = new LoginTask(
           context,
-          txtLoginPhoneNumber.getText().toString(),
-          txtLoginPassword.getText().toString(),
-          new LoginTask.LoginListener() {
+          phoneNumber,
+          password,
+          new LoginTask.Listener() {
 
             @Override
             public void onSuccess(String token, String userId) {
@@ -122,10 +130,17 @@ public class LoginActivity extends Activity {
       @Override
       public void onClick(View v) {
         if (verifyId == null) {
+          String phoneNumber = txtRegisterPhoneNumber.getText().toString();
+          if (phoneNumber.isEmpty()) {
+            txtViewRegisterError.setText("Phone number is required");
+            txtViewRegisterError.setVisibility(View.VISIBLE);
+            return;
+          }
+          txtViewRegisterError.setVisibility(View.GONE);
           RegisterTask register = new RegisterTask(
             context,
-            txtRegisterPhoneNumber.getText().toString(),
-            new RegisterTask.RegisterListener() {
+            phoneNumber,
+            new RegisterTask.Listener() {
 
               @Override
               public void onSuccess(String verificationId) {
@@ -148,11 +163,18 @@ public class LoginActivity extends Activity {
           register.execute();
           return;
         }
+        String verificationCode = txtVerificationCode.getText().toString();
+        if (verificationCode.isEmpty()) {
+          txtViewRegisterError.setText("Verification code is required");
+          txtViewRegisterError.setVisibility(View.VISIBLE);
+          return;
+        }
+        txtViewRegisterError.setVisibility(View.GONE);
         VerifyTask verify = new VerifyTask(
           context,
           verifyId,
-          txtVerificationCode.getText().toString(),
-          new VerifyTask.VerifyListener() {
+          verificationCode,
+          new VerifyTask.Listener() {
 
             @Override
             public void onSuccess(String token, String userId) {

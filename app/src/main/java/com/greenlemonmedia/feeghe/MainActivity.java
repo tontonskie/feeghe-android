@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
+import com.greenlemonmedia.feeghe.fragments.HomeFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LogoutTask;
@@ -54,6 +55,8 @@ public class MainActivity extends ActionBarActivity {
         socketPreloader.dismiss();
         if (currentUser.hasStatus(Session.User.STATUS_INCOMPLETE)) {
           showNewUserFragment();
+        } else {
+          showHomeFragment();
         }
       }
     });
@@ -63,12 +66,17 @@ public class MainActivity extends ActionBarActivity {
     fragment.setArguments(getIntent().getExtras());
     getFragmentManager()
       .beginTransaction()
-      .add(R.id.frameMainContent, fragment)
+      .replace(R.id.frameMainContent, fragment)
+      .addToBackStack(null)
       .commit();
   }
 
   public void showNewUserFragment() {
     showFragment(new NewUserFragment());
+  }
+
+  public void showHomeFragment() {
+    showFragment(new HomeFragment());
   }
 
   @Override
@@ -81,11 +89,16 @@ public class MainActivity extends ActionBarActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     int id = item.getItemId();
     if (id == R.id.action_logout) {
-      LogoutTask logout = new LogoutTask(this, new LogoutTask.LogoutListener() {
+      LogoutTask logout = new LogoutTask(this, new LogoutTask.Listener() {
 
         @Override
         public void onSuccess() {
           backToLogin();
+        }
+
+        @Override
+        public void onFail(int statusCode, String error) {
+
         }
       });
       logout.execute();

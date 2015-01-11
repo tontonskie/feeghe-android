@@ -14,21 +14,21 @@ import org.json.JSONException;
 /**
  * Created by tonton on 1/7/15.
  */
-public class LogoutTask extends AsyncTask<Void, Void, Void> {
+public class LogoutTask extends AsyncTask<Void, Void, ResponseObject> {
 
   private ProgressDialog preloader;
-  private LogoutListener listener;
+  private Listener listener;
   private Session session;
   private Context context;
 
-  public interface LogoutListener {
+  public interface Listener extends TaskListener {
     public void onSuccess();
   }
 
-  public LogoutTask(Context context, LogoutListener logoutListener) {
+  public LogoutTask(Context context, Listener listener) {
     preloader = new ProgressDialog(context);
     session = Session.getInstance(context);
-    listener = logoutListener;
+    this.listener = listener;
     this.context = context;
   }
 
@@ -39,9 +39,11 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
   }
 
   @Override
-  protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(context);
-    ResponseObject response = userService.logout();
+  protected ResponseObject doInBackground(Void... params) {
+    return new UserService(context).logout();
+  }
+
+  public void onPostExecute(ResponseObject response) {
     try {
       if (response.isOk() && response.getContent().getBoolean("success")) {
         session.setLoggedIn(false);
@@ -51,10 +53,6 @@ public class LogoutTask extends AsyncTask<Void, Void, Void> {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    return null;
-  }
-
-  public void onPostExecute(Void unused) {
     preloader.dismiss();
   }
 }
