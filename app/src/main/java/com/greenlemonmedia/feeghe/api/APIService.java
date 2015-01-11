@@ -265,4 +265,27 @@ abstract public class APIService implements Serializable {
   public Session getSession() {
     return session;
   }
+
+  /**
+   *
+   * @param whereCondition
+   * @return
+   */
+  public JSONObject createWhereQuery(JSONObject whereCondition) {
+    JSONObject whereQuery = new JSONObject();
+    try {
+      if (whereCondition == null) {
+        whereQuery.put("where", new JSONObject());
+      } else {
+        whereQuery.put("where", whereCondition);
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return whereQuery;
+  }
+
+  public JSONObject createWhereQuery() {
+    return createWhereQuery(null);
+  }
 }

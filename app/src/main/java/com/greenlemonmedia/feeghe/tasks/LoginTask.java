@@ -1,7 +1,7 @@
 package com.greenlemonmedia.feeghe.tasks;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -14,27 +14,26 @@ import org.json.JSONObject;
 /**
  * Created by tonton on 1/6/15.
  */
-public class LoginTask extends AsyncTask<Void, Void, Void> {
+public class LoginTask extends AsyncTask<Void, Void, ResponseObject> {
 
   private ProgressDialog preloader;
   private String paramPhoneNumber;
   private String paramPassword;
   private Session session;
-  private LoginListener listener;
-  private Activity activity;
+  private Listener listener;
+  private Context context;
 
-  public interface LoginListener {
+  public interface Listener extends TaskListener {
     public void onSuccess(String token, String userId);
-    public void onFail(int statusCode, String error);
   }
 
-  public LoginTask(Activity context, String phoneNumber, String password, LoginListener loginListener) {
+  public LoginTask(Context context, String phoneNumber, String password, Listener listener) {
     paramPhoneNumber = phoneNumber;
     paramPassword = password;
-    listener = loginListener;
     session = Session.getInstance(context);
     preloader = new ProgressDialog(context);
-    activity = context;
+    this.context = context;
+    this.listener = listener;
   }
 
   public void onPreExecute() {
@@ -44,38 +43,23 @@ public class LoginTask extends AsyncTask<Void, Void, Void> {
   }
 
   @Override
-  protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(activity);
-    final ResponseObject response = userService.login(paramPhoneNumber, paramPassword);
-    if (!response.isOk()) {
-      activity.runOnUiThread(new Runnable() {
-
-        @Override
-        public void run() {
-          listener.onFail(response.getStatusCode(), "Invalid number and password");
-        }
-      });
-      return null;
-    }
-    if (response.getContent().has("token")) {
-      try {
-        JSONObject user = response.getContent();
-        session.setCredentials(user.getString("token"), user.getString("user"));
-        activity.runOnUiThread(new Runnable() {
-
-          @Override
-          public void run() {
-            listener.onSuccess(session.getToken(), session.getUserId());
-          }
-        });
-      } catch (JSONException e) {
-        e.printStackTrace();
-      }
-    }
-    return null;
+  protected ResponseObject doInBackground(Void... params) {
+    return new UserService(context).login(paramPhoneNumber, paramPassword);
   }
 
-  public void onPostExecute(Void unused) {
-    preloader.dismiss();
+  public void onPostExecute(ResponseObject response) {
+    if (!response.isOk()) {
+      listener.onFail(response.getStatusCode(), "Invalid number and password");
+      preloader.dismiss();
+      return;
+    }
+    try {
+      JSONObject user = response.getContent();
+      session.setCredentials(user.getString("token"), user.getString("user"));
+      listener.onSuccess(session.getToken(), session.getUserId());
+      preloader.dismiss();
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
   }
 }

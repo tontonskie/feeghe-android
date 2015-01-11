@@ -1,7 +1,7 @@
 package com.greenlemonmedia.feeghe.tasks;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -14,23 +14,22 @@ import org.json.JSONObject;
 /**
  * Created by tonton on 1/9/15.
  */
-public class NewUserTask extends AsyncTask<Void, Void, Void> {
+public class NewUserTask extends AsyncTask<Void, Void, ResponseObject> {
 
-  private Activity activity;
+  private Context context;
   private ProgressDialog preloader;
-  private NewUserListener listener;
+  private Listener listener;
   private String paramPassword;
   private String paramGender;
   private Session session;
 
-  public interface NewUserListener {
+  public interface Listener extends TaskListener {
     public void onSuccess(ResponseObject updatedUser);
-    public void onFail(int statusCode, String error);
   }
 
-  public NewUserTask(Activity context, String gender, String password, NewUserListener newUserListener) {
-    activity = context;
-    listener = newUserListener;
+  public NewUserTask(Context context, String gender, String password, Listener listener) {
+    this.context = context;
+    this.listener = listener;
     paramGender = gender.toLowerCase();
     paramPassword = password;
     session = Session.getInstance(context);
@@ -44,8 +43,8 @@ public class NewUserTask extends AsyncTask<Void, Void, Void> {
   }
 
   @Override
-  protected Void doInBackground(Void... params) {
-    UserService userService = new UserService(activity);
+  protected ResponseObject doInBackground(Void... params) {
+    UserService userService = new UserService(context);
     JSONObject data = new JSONObject();
     try {
       data.put("gender", paramGender);
@@ -53,29 +52,17 @@ public class NewUserTask extends AsyncTask<Void, Void, Void> {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    final ResponseObject updatedUser = userService.update(session.getUserId(), data);
-    session.getCurrentUser().update(updatedUser);
-    if (!updatedUser.isOk()) {
-      activity.runOnUiThread(new Runnable() {
-
-        @Override
-        public void run() {
-          listener.onFail(updatedUser.getStatusCode(), updatedUser.getErrorMessage());
-        }
-      });
-      return null;
-    }
-    activity.runOnUiThread(new Runnable() {
-
-      @Override
-      public void run() {
-        listener.onSuccess(updatedUser);
-      }
-    });
-    return null;
+    return userService.update(session.getUserId(), data);
   }
 
-  public void onPostExecute(Void unused) {
+  public void onPostExecute(ResponseObject updatedUser) {;
+    session.getCurrentUser().update(updatedUser);
+    if (!updatedUser.isOk()) {
+      listener.onFail(updatedUser.getStatusCode(), updatedUser.getErrorMessage());
+      preloader.dismiss();
+      return;
+    }
+    listener.onSuccess(updatedUser);
     preloader.dismiss();
   }
 }

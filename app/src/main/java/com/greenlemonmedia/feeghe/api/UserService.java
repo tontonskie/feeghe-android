@@ -15,6 +15,10 @@ import org.json.JSONObject;
  */
 public class UserService extends APIService {
 
+  /**
+   *
+   * @param context
+   */
   public UserService(Context context) {
     super("user", context);
   }
