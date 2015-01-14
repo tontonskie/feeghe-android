@@ -7,6 +7,7 @@ import android.provider.ContactsContract;
 
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.UserService;
+import com.greenlemonmedia.feeghe.api.Util;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,17 +65,6 @@ public class ReferContactsTask extends AsyncTask<Void, Void, ResponseArray> {
       listener.onFail(response.getStatusCode(), response.getErrorMessage());
       return;
     }
-    ArrayList<JSONObject> contacts = new ArrayList<>();
-    JSONArray content = response.getContent();
-    int length = content.length();
-    try {
-      for (int i = 0; i < length; i++) {
-        JSONObject jsonContent = content.getJSONObject(i);
-        contacts.add(jsonContent);
-      }
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    listener.onSuccess(contacts);
+    listener.onSuccess(Util.toList(response));
   }
 }

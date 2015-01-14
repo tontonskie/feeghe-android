@@ -4,8 +4,10 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.koushikdutta.async.http.socketio.Acknowledge;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -63,6 +65,23 @@ abstract public class APIService implements Serializable {
    */
   public String getBaseUrl() {
     return URL + modelName;
+  }
+
+  /**
+   *
+   * @return
+   */
+  public String getBaseUri() {
+    return '/' + PATH + '/' + modelName;
+  }
+
+  /**
+   *
+   * @param append
+   * @return
+   */
+  public String getBaseUri(String append) {
+    return getBaseUri() + '/' + append;
   }
 
   /**
@@ -287,5 +306,83 @@ abstract public class APIService implements Serializable {
 
   public JSONObject createWhereQuery() {
     return createWhereQuery(null);
+  }
+
+  public interface Callback {
+    public void onSuccess(ResponseObject response);
+    public void onFail(int statusCode, String error);
+  }
+
+  /**
+   *
+   * @param method
+   * @param uri
+   * @param params
+   * @param callback
+   */
+  protected void apiSocketCall(String method, String uri, JSONObject params, final Callback callback) {
+    JSONArray args = new JSONArray();
+    try {
+      JSONObject data = new JSONObject();
+      data.put("method", method);
+      data.put("data", params);
+      if (uri == null) {
+        data.put("url", getBaseUri());
+      }
+      JSONObject headers = new JSONObject();
+      headers.put("X-Feeghe-Token", session.getToken());
+      headers.put("X-Feeghe-User", session.getUserId());
+      data.put("headers", headers);
+      args.put(data);
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    Socket.getClient().emit(method, args, new Acknowledge() {
+
+      @Override
+      public void acknowledge(JSONArray arguments) {
+        JSONObject result;
+        try {
+          result = arguments.getJSONObject(0);
+          int statusCode = result.getInt("statusCode");
+          if (statusCode == HttpStatus.SC_OK) {
+            callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
+          } else {
+            callback.onFail(statusCode, result.getString("body"));
+          }
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+      }
+    });
+  }
+
+  /**
+   *
+   * @param method
+   * @param data
+   * @param callback
+   */
+  public void apiSocketCall(String method, JSONObject data, Callback callback) {
+    apiSocketCall(method, null, data, callback);
+  }
+
+  /**
+   *
+   * @param postData
+   * @param callback
+   */
+  public void socketSave(JSONObject postData, Callback callback) {
+    apiSocketCall("post", postData, callback);
+  }
+
+  /**
+   *
+   * @param id
+   * @param postData
+   * @param callback
+   */
+  public void socketUpdate(String id, JSONObject postData, Callback callback) {
+    apiSocketCall("put", getBaseUri(id), postData, callback);
   }
 }

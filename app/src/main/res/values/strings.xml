@@ -11,4 +11,8 @@
     <item>Female</item>
   </string-array>
 
+  <string name="title_activity_new_user">new_user</string>
+  <string name="hello_world">Hello world!</string>
+  <string name="title_activity_messages">MessagesActivity</string>
+
 </resources>
