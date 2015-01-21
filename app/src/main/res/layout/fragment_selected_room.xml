@@ -1,0 +1,47 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:orientation="vertical"
+             tools:context="com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment"
+  >
+
+  <!-- TODO: Update blank fragment layout -->
+
+  <ListView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/listViewMessages"
+    android:choiceMode="multipleChoice"
+    android:stackFromBottom="true"
+    android:layout_above="@+id/linearLayout"
+    android:divider="@android:color/transparent"
+    android:dividerHeight="0dp"
+    android:transcriptMode="normal"/>
+
+  <LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:weightSum="10"
+    android:layout_alignParentBottom="true"
+    android:id="@+id/linearLayout">
+
+    <EditText
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:id="@+id/txtNewMessage"
+      android:layout_weight="8"
+      android:background="#ffffffff"
+      android:hint="Type your message here"
+      />
+
+    <Button
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:text="Send"
+      android:id="@+id/btnSendNewMessage"
+      android:layout_weight="2"/>
+  </LinearLayout>
+
+</RelativeLayout>

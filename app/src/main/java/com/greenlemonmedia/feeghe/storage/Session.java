@@ -120,6 +120,10 @@ public class Session {
     public boolean hasStatus(String status) {
       return getString("status").equals(status);
     }
+
+    public JSONObject toJSON()  {
+      return new JSONObject(this);
+    }
   }
 
   /**

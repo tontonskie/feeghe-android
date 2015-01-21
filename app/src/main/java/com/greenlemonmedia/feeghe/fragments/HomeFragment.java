@@ -1,18 +1,13 @@
 package com.greenlemonmedia.feeghe.fragments;
 
-
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.greenlemonmedia.feeghe.R;
 
-/**
- * A simple {@link Fragment} subclass.
- */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends MainActivityFragment {
 
 
   public HomeFragment() {

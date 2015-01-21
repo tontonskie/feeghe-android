@@ -1,9 +1,7 @@
 package com.greenlemonmedia.feeghe.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +28,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-/**
- * A simple {@link Fragment} subclass.
- */
-public class NewUserFragment extends Fragment {
+public class NewUserFragment extends MainActivityFragment {
 
   private Button btnChangePass;
   private EditText txtNewPassword;
@@ -41,7 +36,7 @@ public class NewUserFragment extends Fragment {
   private TextView txtViewNewUserError;
   private ViewAnimator view;
   private Spinner selectGender;
-  private Activity context;
+  private MainActivity context;
   private ListView listViewContacts;
   private CheckBox chkSyncContacts;
   private Button btnAddContacts;
@@ -56,7 +51,7 @@ public class NewUserFragment extends Fragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    context = getActivity();
+    context = getCurrentActivity();
     view = (ViewAnimator) getView();
     view.setOutAnimation(AnimationUtils.loadAnimation(context, R.anim.abc_slide_out_top));
     view.setInAnimation(AnimationUtils.loadAnimation(context, R.anim.abc_slide_in_bottom));
