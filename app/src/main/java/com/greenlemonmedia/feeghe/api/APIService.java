@@ -31,6 +31,7 @@ import java.util.Iterator;
  */
 abstract public class APIService implements Serializable {
 
+  public static final String PORT = null;
   public static final String HTTP_SCHEME = "http";
   public static final String HOST = "dev.feeghe.com";
   public static final String PATH = "api";
@@ -89,9 +90,15 @@ abstract public class APIService implements Serializable {
    * @return
    */
   public Uri.Builder getBaseUrlBuilder() {
-    return new Uri.Builder()
-      .scheme(HTTP_SCHEME)
-      .authority(HOST)
+    Uri.Builder uriBuilder;
+    if (PORT != null) {
+      uriBuilder = Uri.parse(HTTP_SCHEME + "://" + HOST + ":" + PORT).buildUpon();
+    } else {
+      uriBuilder = new Uri.Builder()
+        .scheme(HTTP_SCHEME)
+        .authority(HOST);
+    }
+    return uriBuilder
       .appendPath(PATH)
       .appendPath(modelName);
   }

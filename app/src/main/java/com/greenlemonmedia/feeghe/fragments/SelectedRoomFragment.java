@@ -3,13 +3,15 @@ package com.greenlemonmedia.feeghe.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -19,6 +21,7 @@ import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.Socket;
+import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GetMessagesTask;
 import com.koushikdutta.async.http.socketio.Acknowledge;
@@ -30,22 +33,36 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class RoomFragment extends MainActivityFragment {
+public class SelectedRoomFragment extends MainActivityFragment {
 
   private MainActivity context;
   private String currentRoomId;
   private ListView listViewMessages;
   private Button btnSendNewMessage;
   private EditText txtNewMessage;
-  private ArrayList<JSONObject> messages;
+  private ArrayList<JSONObject> listMessages;
   private RoomMessagesAdapter roomMessagesAdapter;
   private Session session;
   private MessageService messageService;
+  private Boolean scrollEnd = true;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
-    return inflater.inflate(R.layout.fragment_room, container, false);
+    return inflater.inflate(R.layout.fragment_selected_room, container, false);
+  }
+
+  public void scrollToEnd() {
+    if (scrollEnd) {
+      Log.d("test", "scrolled to end");
+      listViewMessages.setSelection(roomMessagesAdapter.getCount() - 1);
+    }
+  }
+
+  public void addToListViewMesages(JSONObject message) {
+    listMessages.add(message);
+    roomMessagesAdapter.notifyDataSetChanged();
+    scrollToEnd();
   }
 
   public void onActivityCreated(Bundle savedInstance) {
@@ -58,6 +75,38 @@ public class RoomFragment extends MainActivityFragment {
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
+
+    listViewMessages.setOnScrollListener(new ListView.OnScrollListener() {
+
+      @Override
+      public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+      }
+
+      @Override
+      public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if ((firstVisibleItem + visibleItemCount) == totalItemCount) {
+          scrollEnd = true;
+        } else {
+          scrollEnd = false;
+        }
+        Log.d("test", scrollEnd.toString());
+      }
+    });
+
+    final APIService.Callback sendNewMessageCb = new APIService.Callback() {
+
+      @Override
+      public void onSuccess(ResponseObject response) {
+        
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+
+      }
+    };
+
     btnSendNewMessage.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -65,6 +114,7 @@ public class RoomFragment extends MainActivityFragment {
         JSONObject newMessage = new JSONObject();
         JSONObject dataForAppend = new JSONObject();
         String content = txtNewMessage.getText().toString();
+        txtNewMessage.setText("");
         try {
 
           newMessage.put("content", content);
@@ -79,18 +129,8 @@ public class RoomFragment extends MainActivityFragment {
           ex.printStackTrace();
         }
 
-        messageService.socketSave(dataForAppend, new APIService.Callback() {
-
-          @Override
-          public void onSuccess(ResponseObject response) {
-
-          }
-
-          @Override
-          public void onFail(int statusCode, String error) {
-
-          }
-        });
+        messageService.socketSave(newMessage, sendNewMessageCb);
+        addToListViewMesages(dataForAppend);
       }
     });
 
@@ -98,14 +138,20 @@ public class RoomFragment extends MainActivityFragment {
 
       @Override
       public void onEvent(JSONArray argument, Acknowledge acknowledge) {
-        JSONObject evt = null;
+        String verb = "";
+        JSONObject data = null;
         try {
-          evt = argument.getJSONObject(0);
+          JSONObject evt = argument.getJSONObject(0);
+          verb = evt.getString("verb");
+          data = evt.getJSONObject("data");
         } catch (JSONException e) {
           e.printStackTrace();
         }
-        messages.add(evt);
-        roomMessagesAdapter.notifyDataSetChanged();
+        if (verb.equals("created")) {
+          addToListViewMesages(data);
+        } else if (verb.equals("typing")) {
+
+        }
       }
     });
 
@@ -116,7 +162,8 @@ public class RoomFragment extends MainActivityFragment {
 
         @Override
         public void onSuccess(ArrayList<JSONObject> messages) {
-          roomMessagesAdapter = new RoomMessagesAdapter(messages);
+          listMessages = messages;
+          roomMessagesAdapter = new RoomMessagesAdapter(listMessages);
           listViewMessages.setAdapter(roomMessagesAdapter);
         }
 
@@ -143,7 +190,7 @@ public class RoomFragment extends MainActivityFragment {
     private class MessageViewHolder {
       TextView txtViewPerChatContent;
       TextView txtViewChatMateName;
-      ImageView imgViewProfileImg;
+      TextView txtViewMessageTimestamp;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -152,30 +199,60 @@ public class RoomFragment extends MainActivityFragment {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = vi.inflate(R.layout.per_chat, null);
         viewHolder = new MessageViewHolder();
-        viewHolder.imgViewProfileImg = (ImageView) convertView.findViewById(R.id.imgViewProfileImg);
         viewHolder.txtViewChatMateName = (TextView) convertView.findViewById(R.id.txtViewChatMateName);
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
+        viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
         viewHolder.txtViewPerChatContent.setOnLongClickListener(this);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (MessageViewHolder) convertView.getTag();
       }
+
       JSONObject message = getItem(position);
       try {
-        JSONObject user = message.getJSONObject("user");
-        String firstName = user.getString("firstName");
-        String lastName = user.getString("lastName");
-        if (!firstName.isEmpty() && !lastName.isEmpty() && !user.isNull("firstName") && !user.isNull("lastName")) {
-          viewHolder.txtViewChatMateName.setText(firstName + " " + lastName);
-        } else {
-          viewHolder.txtViewChatMateName.setText(user.getString("phoneNumber"));
+
+        JSONObject previousUser = null;
+        JSONObject nextUser = null;
+        if (position > 0) {
+          previousUser = getItem(position - 1).getJSONObject("user");
         }
+        if (position < (getCount() - 1)) {
+          nextUser = getItem(position + 1).getJSONObject("user");
+        }
+
+        JSONObject user = message.getJSONObject("user");
+        String userId = user.getString("id");
+        if (previousUser == null || !previousUser.getString("id").equals(userId)) {
+          viewHolder.txtViewChatMateName.setVisibility(View.VISIBLE);
+          viewHolder.txtViewChatMateName.setText(Util.getFullName(user));
+        } else {
+          viewHolder.txtViewChatMateName.setVisibility(View.GONE);
+        }
+
+        if (nextUser == null || !nextUser.getString("id").equals(userId)) {
+          viewHolder.txtViewMessageTimestamp.setVisibility(View.VISIBLE);
+          viewHolder.txtViewMessageTimestamp.setText(message.getString("timestamp"));
+        } else {
+          viewHolder.txtViewMessageTimestamp.setVisibility(View.GONE);
+        }
+
+        if (userId.equals(session.getUserId())) {
+          viewHolder.txtViewChatMateName.setGravity(Gravity.RIGHT);
+          viewHolder.txtViewPerChatContent.setGravity(Gravity.RIGHT);
+          viewHolder.txtViewMessageTimestamp.setGravity(Gravity.RIGHT);
+        } else {
+          viewHolder.txtViewChatMateName.setGravity(Gravity.LEFT);
+          viewHolder.txtViewPerChatContent.setGravity(Gravity.LEFT);
+          viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
+        }
+
         viewHolder.txtViewPerChatContent.setText(Html.fromHtml(message.getString("content")), TextView.BufferType.SPANNABLE);
         viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
-//        viewHolder.imgViewProfileImg.setImageURI(Util.toImageURI(user.getJSONObject("profilePic"), "small"));
+
       } catch (JSONException e) {
         e.printStackTrace();
       }
+
       return convertView;
     }
   }

@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by tonton on 1/14/15.
@@ -46,5 +47,51 @@ public class Util {
       uri = Uri.parse(APIService.HTTP_SCHEME + "://" + APIService.HOST + "/images/placeholder-img.png");
     }
     return uri;
+  }
+
+  /**
+   *
+   * @param user
+   * @return
+   */
+  public static String getFullName(JSONObject user) {
+    String fullName = "";
+    try {
+      String firstName = user.getString("firstName");
+      String lastName = user.getString("lastName");
+      if (firstName.isEmpty() || lastName.isEmpty() || user.isNull("firstName") || user.isNull("lastName")) {
+        fullName = user.getString("phoneNumber");
+      } else {
+        fullName = firstName + " " + lastName;
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    return fullName;
+  }
+
+  /**
+   *
+   * @param users
+   * @return
+   */
+  public static String getRoomName(JSONObject users, String currentUserId) {
+    StringBuilder sb = new StringBuilder();
+    try {
+      String userId;
+      Iterator<?> iUser = users.keys();
+      while (iUser.hasNext()) {
+        userId = (String) iUser.next();
+        if (!userId.equals(currentUserId)) {
+          if (sb.length() > 0) {
+            sb.append(", ");
+          }
+          sb.append(getFullName(users.getJSONObject(userId)));
+        }
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    return sb.toString();
   }
 }

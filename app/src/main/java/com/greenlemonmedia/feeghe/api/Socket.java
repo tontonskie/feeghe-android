@@ -48,7 +48,11 @@ abstract public class Socket {
     qstring += "&__sails_io_sdk_version=0.10.0&__sails_io_sdk_platform=mobile&__sails_io_sdk_language=java";
     qstring += "&t=" + new Date().getTime();
 
-    SocketIORequest socketRequest = new SocketIORequest(APIService.HTTP_SCHEME + "://" + APIService.HOST, "", qstring);
+    String wsUrl = APIService.HTTP_SCHEME + "://" + APIService.HOST;
+    if (APIService.PORT != null) {
+      wsUrl += ':' + APIService.PORT;
+    }
+    SocketIORequest socketRequest = new SocketIORequest(wsUrl, "", qstring);
     listener.onStartConnecting(socketRequest);
     SocketIOClient.connect(AsyncHttpClient.getDefaultInstance(), socketRequest, new ConnectCallback() {
 

@@ -6,26 +6,23 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
 import com.greenlemonmedia.feeghe.fragments.HomeFragment;
-import com.greenlemonmedia.feeghe.fragments.MessagesFragment;
+import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
-import com.greenlemonmedia.feeghe.fragments.RoomFragment;
+import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LogoutTask;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class MainActivity extends ActionBarActivity implements TabHost.OnTabChangeListener {
 
@@ -34,7 +31,8 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private UserService userService;
   private Session session;
   private Session.User currentUser;
-  private TabHost tabHost;
+  private TabHost mainLayout;
+  private TabWidget tabs;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -52,25 +50,26 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       return;
     }
 
-    tabHost = (TabHost) findViewById(R.id.tabHost);
-    tabHost.setup();
+    tabs = (TabWidget) findViewById(android.R.id.tabs);
+    mainLayout = (TabHost) findViewById(R.id.tabHost);
+    mainLayout.setup();
 
-    TabHost.TabSpec tabHome = tabHost.newTabSpec(TAB_HOME);
+    TabHost.TabSpec tabHome = mainLayout.newTabSpec(TAB_HOME);
     tabHome.setContent(new TabContent());
     tabHome.setIndicator("Home");
 
-    TabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
+    TabHost.TabSpec tabMessages = mainLayout.newTabSpec(TAB_MESSAGES);
     tabMessages.setContent(new TabContent());
     tabMessages.setIndicator("Messages");
 
-    TabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
+    TabHost.TabSpec tabContacts = mainLayout.newTabSpec(TAB_CONTACTS);
     tabContacts.setContent(new TabContent());
     tabContacts.setIndicator("Contacts");
 
-    tabHost.addTab(tabHome);
-    tabHost.addTab(tabMessages);
-    tabHost.addTab(tabContacts);
-    tabHost.setOnTabChangedListener(this);
+    mainLayout.addTab(tabHome);
+    mainLayout.addTab(tabMessages);
+    mainLayout.addTab(tabContacts);
+    mainLayout.setOnTabChangedListener(this);
 
     userService = new UserService(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
@@ -105,7 +104,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   public TabHost getTabHost() {
-    return tabHost;
+    return mainLayout;
   }
 
   @Override
@@ -134,7 +133,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   public void showRoomFragment(String roomId) {
     Bundle args = new Bundle();
     args.putString("id", roomId);
-    RoomFragment frag = new RoomFragment();
+    SelectedRoomFragment frag = new SelectedRoomFragment();
     frag.setArguments(args);
     showFragment(frag);
   }
@@ -148,7 +147,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   public void showMessagesFragment() {
-    showFragment(new MessagesFragment());
+    showFragment(new RoomsFragment());
   }
 
   public void showContactsFragment() {
