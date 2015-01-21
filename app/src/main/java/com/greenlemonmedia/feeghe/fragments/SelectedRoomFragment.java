@@ -40,11 +40,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private ListView listViewMessages;
   private Button btnSendNewMessage;
   private EditText txtNewMessage;
-  private ArrayList<JSONObject> listMessages;
   private RoomMessagesAdapter roomMessagesAdapter;
   private Session session;
   private MessageService messageService;
-  private Boolean scrollEnd = true;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -53,16 +51,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
   }
 
   public void scrollToEnd() {
-    if (scrollEnd) {
-      Log.d("test", "scrolled to end");
-      listViewMessages.setSelection(roomMessagesAdapter.getCount() - 1);
-    }
+    listViewMessages.setSelection(roomMessagesAdapter.getCount() - 1);
   }
 
   public void addToListViewMesages(JSONObject message) {
-    listMessages.add(message);
-    roomMessagesAdapter.notifyDataSetChanged();
-    scrollToEnd();
+    roomMessagesAdapter.add(message);
   }
 
   public void onActivityCreated(Bundle savedInstance) {
@@ -86,31 +79,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
       @Override
       public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         if ((firstVisibleItem + visibleItemCount) == totalItemCount) {
-          scrollEnd = true;
+          listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         } else {
-          scrollEnd = false;
+          listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         }
-        Log.d("test", scrollEnd.toString());
       }
     });
-
-    final APIService.Callback sendNewMessageCb = new APIService.Callback() {
-
-      @Override
-      public void onSuccess(ResponseObject response) {
-        
-      }
-
-      @Override
-      public void onFail(int statusCode, String error) {
-
-      }
-    };
 
     btnSendNewMessage.setOnClickListener(new View.OnClickListener() {
 
       @Override
       public void onClick(View v) {
+        final String tmpMessageId = "tmp-" + Util.createUniqueCode();
         JSONObject newMessage = new JSONObject();
         JSONObject dataForAppend = new JSONObject();
         String content = txtNewMessage.getText().toString();
@@ -124,13 +104,47 @@ public class SelectedRoomFragment extends MainActivityFragment {
           dataForAppend.put("content", content);
           dataForAppend.put("user", session.getCurrentUser().toJSON());
           dataForAppend.put("room", currentRoomId);
+          dataForAppend.put("timestamp", "Sending...");
+          dataForAppend.put("id", tmpMessageId);
 
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
 
-        messageService.socketSave(newMessage, sendNewMessageCb);
+        messageService.socketSave(newMessage, new APIService.Callback() {
+
+          @Override
+          public void onSuccess(final ResponseObject response) {
+            try {
+              int itemCount = roomMessagesAdapter.getCount();
+              for (int i = 0; i < itemCount; i++) {
+                if (roomMessagesAdapter.getItem(i).getString("id").equals(tmpMessageId)) {
+                  final int index = i;
+                  final JSONObject message = roomMessagesAdapter.getItem(i);
+                  context.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                      roomMessagesAdapter.remove(message);
+                      roomMessagesAdapter.insert(response.getContent(), index);
+                    }
+                  });
+                  break;
+                }
+              }
+            } catch (JSONException ex) {
+              ex.printStackTrace();
+            }
+          }
+
+          @Override
+          public void onFail(int statusCode, String error) {
+
+          }
+        });
+
         addToListViewMesages(dataForAppend);
+        scrollToEnd();
       }
     });
 
@@ -138,19 +152,23 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onEvent(JSONArray argument, Acknowledge acknowledge) {
-        String verb = "";
-        JSONObject data = null;
         try {
           JSONObject evt = argument.getJSONObject(0);
-          verb = evt.getString("verb");
-          data = evt.getJSONObject("data");
+          String verb = evt.getString("verb");
+          final JSONObject data = evt.getJSONObject("data");
+          if (verb.equals("created")) {
+            context.runOnUiThread(new Runnable() {
+
+              @Override
+              public void run() {
+                addToListViewMesages(data);
+              }
+            });
+          } else if (verb.equals("typing")) {
+
+          }
         } catch (JSONException e) {
           e.printStackTrace();
-        }
-        if (verb.equals("created")) {
-          addToListViewMesages(data);
-        } else if (verb.equals("typing")) {
-
         }
       }
     });
@@ -162,8 +180,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
         @Override
         public void onSuccess(ArrayList<JSONObject> messages) {
-          listMessages = messages;
-          roomMessagesAdapter = new RoomMessagesAdapter(listMessages);
+          roomMessagesAdapter = new RoomMessagesAdapter(messages);
           listViewMessages.setAdapter(roomMessagesAdapter);
         }
 

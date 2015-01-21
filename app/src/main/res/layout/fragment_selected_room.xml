@@ -10,14 +10,14 @@
 
   <ListView
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
     android:layout_above="@+id/linearLayout"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
-    android:transcriptMode="normal"/>
+    android:transcriptMode="alwaysScroll"/>
 
   <LinearLayout
     android:orientation="horizontal"
