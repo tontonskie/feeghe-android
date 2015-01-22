@@ -55,6 +55,11 @@ public class ContactsFragment extends MainActivityFragment {
     getContacts.execute();
   }
 
+  @Override
+  public String getTabId() {
+    return MainActivity.TAB_CONTACTS;
+  }
+
   private class ContactsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     public ContactsAdapter(ArrayList<JSONObject> contacts) {
@@ -70,7 +75,6 @@ public class ContactsFragment extends MainActivityFragment {
 
           @Override
           public void onSuccess(ResponseObject response) {
-            context.getTabHost().setCurrentTabByTag(MainActivity.TAB_MESSAGES);
             try {
               context.showRoomFragment(response.getContent().getString("id"));
             } catch (JSONException e) {

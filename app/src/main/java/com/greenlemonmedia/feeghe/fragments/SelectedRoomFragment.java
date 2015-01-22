@@ -14,8 +14,8 @@ import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,10 +54,13 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private JSONObject seenBy = new JSONObject();
   private TextView txtViewSeenBy;
   private Boolean hasNewMessage = false;
+  private Boolean onEndOfList = true;
+  private View listViewMessagesFooter;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
+    listViewMessagesFooter = inflater.inflate(R.layout.room_messages_footer, null, false);
     return inflater.inflate(R.layout.fragment_selected_room, container, false);
   }
 
@@ -78,10 +81,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
     messageService = new MessageService(context);
     session = Session.getInstance(context);
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
+    listViewMessages.addFooterView(listViewMessagesFooter);
+    txtViewTyping = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewTyping);
+    txtViewSeenBy = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewSeenBy);
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
-    txtViewTyping = (TextView) context.findViewById(R.id.txtViewTyping);
-    txtViewSeenBy = (TextView) context.findViewById(R.id.txtViewSeenBy);
 
     typingHandler = new Handler();
     cancelTypingTask = new Runnable() {
@@ -129,7 +133,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        if ((firstVisibleItem + visibleItemCount) == totalItemCount) {
+        if ((firstVisibleItem + visibleItemCount) >= totalItemCount) {
+          onEndOfList = true;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
           if (hasNewMessage) {
             ReadNewMessageTask readNewTask = new ReadNewMessageTask(
@@ -152,6 +157,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
             hasNewMessage = false;
           }
         } else {
+          onEndOfList = false;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         }
       }
@@ -309,15 +315,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
-    layoutParams.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
+    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
+    layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
     txtViewSeenBy.setLayoutParams(layoutParams);
     txtViewSeenBy.setText("Seen by " + Util.getRoomName(seenBy, session.getUserId()));
+    if (onEndOfList) {
+      scrollToEnd();
+    }
   }
 
   public void clearSeenBy() {
     seenBy = new JSONObject();
-    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
+    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = 0;
     txtViewSeenBy.setLayoutParams(layoutParams);
     txtViewSeenBy.setText("");
@@ -335,19 +344,27 @@ public class SelectedRoomFragment extends MainActivityFragment {
       ex.printStackTrace();
     }
     int typersCount = typers.length();
-    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) txtViewTyping.getLayoutParams();
+    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewTyping.getLayoutParams();
     if (typersCount > 0) {
       String suffix = " is typing...";
       if (typersCount > 1) {
         suffix = " are typing...";
       }
       txtViewTyping.setText(Util.getRoomName(typers, session.getUserId()) + suffix);
-      layoutParams.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
+      layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
     } else {
       txtViewTyping.setText("");
       layoutParams.height = 0;
     }
     txtViewTyping.setLayoutParams(layoutParams);
+    if (onEndOfList) {
+      scrollToEnd();
+    }
+  }
+
+  @Override
+  public String getTabId() {
+    return MainActivity.TAB_MESSAGES;
   }
 
   private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnLongClickListener {

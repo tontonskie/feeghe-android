@@ -136,7 +136,7 @@ public class NewUserFragment extends MainActivityFragment {
           }
         }
         if (contactIds.length() == 0) {
-          ((MainActivity) context).showHomeFragment();
+          ((MainActivity) context).showHomeFragment(false);
           return;
         }
         SyncContactsTask addContacts = new SyncContactsTask(
@@ -190,6 +190,11 @@ public class NewUserFragment extends MainActivityFragment {
       }
     );
     referContacts.execute();
+  }
+
+  @Override
+  public String getTabId() {
+    return null;
   }
 
   private class ContactsAdapter extends ArrayAdapter<JSONObject> {

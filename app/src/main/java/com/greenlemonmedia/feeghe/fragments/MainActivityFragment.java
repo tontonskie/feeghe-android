@@ -7,9 +7,11 @@ import com.greenlemonmedia.feeghe.MainActivity;
 /**
  * Created by tonton on 1/14/15.
  */
-public class MainActivityFragment extends Fragment {
+abstract public class MainActivityFragment extends Fragment {
 
   protected MainActivity getCurrentActivity() {
     return (MainActivity) getActivity();
   }
+
+  abstract public String getTabId();
 }

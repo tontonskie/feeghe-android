@@ -1,7 +1,8 @@
 package com.greenlemonmedia.feeghe;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
@@ -10,12 +11,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TabHost;
-import android.widget.TabWidget;
 
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
 import com.greenlemonmedia.feeghe.fragments.HomeFragment;
+import com.greenlemonmedia.feeghe.fragments.MainActivityFragment;
 import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
@@ -31,8 +32,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private UserService userService;
   private Session session;
   private Session.User currentUser;
-  private TabHost mainLayout;
-  private TabWidget tabs;
+  private TabHost tabHost;
+  private Boolean isManualTabChange = false;
+  private String currentFragmentTabId;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -50,26 +52,25 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       return;
     }
 
-    tabs = (TabWidget) findViewById(android.R.id.tabs);
-    mainLayout = (TabHost) findViewById(R.id.tabHost);
-    mainLayout.setup();
+    tabHost = (TabHost) findViewById(R.id.tabHost);
+    tabHost.setup();
 
-    TabHost.TabSpec tabHome = mainLayout.newTabSpec(TAB_HOME);
+    TabHost.TabSpec tabHome = tabHost.newTabSpec(TAB_HOME);
     tabHome.setContent(new TabContent());
     tabHome.setIndicator("Home");
 
-    TabHost.TabSpec tabMessages = mainLayout.newTabSpec(TAB_MESSAGES);
+    TabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
     tabMessages.setContent(new TabContent());
     tabMessages.setIndicator("Messages");
 
-    TabHost.TabSpec tabContacts = mainLayout.newTabSpec(TAB_CONTACTS);
+    TabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
     tabContacts.setContent(new TabContent());
     tabContacts.setIndicator("Contacts");
 
-    mainLayout.addTab(tabHome);
-    mainLayout.addTab(tabMessages);
-    mainLayout.addTab(tabContacts);
-    mainLayout.setOnTabChangedListener(this);
+    tabHost.addTab(tabHome);
+    tabHost.addTab(tabMessages);
+    tabHost.addTab(tabContacts);
+    tabHost.setOnTabChangedListener(this);
 
     userService = new UserService(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
@@ -103,31 +104,42 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     }
   }
 
-  public TabHost getTabHost() {
-    return mainLayout;
-  }
-
   @Override
   public void onTabChanged(String tabId) {
-    switch(tabId) {
-      case TAB_HOME:
-        showHomeFragment();
-        break;
-      case TAB_MESSAGES:
-        showMessagesFragment();
-        break;
-      case TAB_CONTACTS:
-        showContactsFragment();
-        break;
+    if (!isManualTabChange) {
+      switch(tabId) {
+        case TAB_HOME:
+          showHomeFragment();
+          break;
+        case TAB_MESSAGES:
+          showMessagesFragment();
+          break;
+        case TAB_CONTACTS:
+          showContactsFragment();
+          break;
+      }
     }
   }
 
-  private void showFragment(Fragment fragment) {
-    getFragmentManager()
-      .beginTransaction()
-      .replace(android.R.id.tabcontent, fragment)
-      .addToBackStack(null)
-      .commit();
+  public void setCurrentTab(String tabId) {
+    isManualTabChange = true;
+    tabHost.setCurrentTabByTag(tabId);
+    isManualTabChange = false;
+  }
+
+  private void showFragment(MainActivityFragment fragment) {
+    showFragment(fragment, true);
+  }
+
+  private void showFragment(MainActivityFragment fragment, Boolean withBackStack) {
+    FragmentManager fm = getFragmentManager();
+    FragmentTransaction ft = fm.beginTransaction();
+    ft.replace(android.R.id.tabcontent, fragment);
+    if (withBackStack && currentFragmentTabId != null) {
+      ft.addToBackStack(currentFragmentTabId);
+    }
+    currentFragmentTabId = fragment.getTabId();
+    ft.commit();
   }
 
   public void showRoomFragment(String roomId) {
@@ -136,14 +148,19 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     SelectedRoomFragment frag = new SelectedRoomFragment();
     frag.setArguments(args);
     showFragment(frag);
+    setCurrentTab(TAB_MESSAGES);
   }
 
   public void showNewUserFragment() {
-    showFragment(new NewUserFragment());
+    showFragment(new NewUserFragment(), false);
   }
 
   public void showHomeFragment() {
     showFragment(new HomeFragment());
+  }
+
+  public void showHomeFragment(Boolean withBackStack) {
+    showFragment(new HomeFragment(), withBackStack);
   }
 
   public void showMessagesFragment() {
@@ -180,6 +197,18 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       return true;
     }
     return super.onOptionsItemSelected(item);
+  }
+
+  public void onBackPressed() {
+    FragmentManager fm = getFragmentManager();
+    if (fm.getBackStackEntryCount() > 0) {
+      String fragTabId = fm.getBackStackEntryAt(fm.getBackStackEntryCount() - 1).getName();
+      setCurrentTab(fragTabId);
+      fm.popBackStack();
+      currentFragmentTabId = fragTabId;
+      return;
+    }
+    finish();
   }
 
   public void backToLogin() {
