@@ -14,10 +14,27 @@
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
-    android:layout_above="@+id/linearLayout"
+    android:layout_above="@+id/txtViewTyping"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>
+
+  <TextView
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:textAppearance="?android:attr/textAppearanceSmall"
+    android:id="@+id/txtViewTyping"
+    android:layout_above="@+id/txtViewSeenBy"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentEnd="true"/>
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:textAppearance="?android:attr/textAppearanceSmall"
+    android:id="@+id/txtViewSeenBy"
+    android:layout_above="@+id/linearLayout"
+    android:layout_alignParentEnd="false"/>
 
   <LinearLayout
     android:orientation="horizontal"
@@ -34,7 +51,7 @@
       android:layout_weight="8"
       android:background="#ffffffff"
       android:hint="Type your message here"
-      />
+      android:enabled="false"/>
 
     <Button
       android:layout_width="0dp"

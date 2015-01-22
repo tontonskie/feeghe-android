@@ -320,6 +320,10 @@ abstract public class APIService implements Serializable {
     public void onFail(int statusCode, String error);
   }
 
+  public interface EventCallback {
+    public void onEvent(JSONObject evt);
+  }
+
   /**
    *
    * @param method
@@ -335,6 +339,8 @@ abstract public class APIService implements Serializable {
       data.put("data", params);
       if (uri == null) {
         data.put("url", getBaseUri());
+      } else {
+        data.put("url", uri);
       }
       JSONObject headers = new JSONObject();
       headers.put("X-Feeghe-Token", session.getToken());
@@ -344,24 +350,37 @@ abstract public class APIService implements Serializable {
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    Socket.getClient().emit(method, args, new Acknowledge() {
+    if (callback != null) {
+      Socket.getClient().emit(method, args, new Acknowledge() {
 
-      @Override
-      public void acknowledge(JSONArray arguments) {
-        JSONObject result;
-        try {
-          result = arguments.getJSONObject(0);
-          int statusCode = result.getInt("statusCode");
-          if (statusCode == HttpStatus.SC_OK) {
-            callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
-          } else {
-            callback.onFail(statusCode, result.getString("body"));
+        @Override
+        public void acknowledge(JSONArray arguments) {
+          try {
+            JSONObject result = arguments.getJSONObject(0);
+            int statusCode = result.getInt("statusCode");
+            if (statusCode == HttpStatus.SC_OK) {
+              callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
+            } else {
+              callback.onFail(statusCode, result.getString("body"));
+            }
+          } catch (JSONException e) {
+            e.printStackTrace();
           }
-        } catch (JSONException e) {
-          e.printStackTrace();
         }
-      }
-    });
+      });
+    } else {
+      Socket.getClient().emit(method, args);
+    }
+  }
+
+  /**
+   *
+   * @param method
+   * @param uri
+   * @param data
+   */
+  public void apiSocketCall(String method, String uri, JSONObject data) {
+    apiSocketCall(method, uri, data, null);
   }
 
   /**
