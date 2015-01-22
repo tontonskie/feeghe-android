@@ -5,15 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 
 public class HomeFragment extends MainActivityFragment {
-
-
-  public HomeFragment() {
-    // Required empty public constructor
-  }
-
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -22,5 +17,8 @@ public class HomeFragment extends MainActivityFragment {
     return inflater.inflate(R.layout.fragment_home, container, false);
   }
 
-
+  @Override
+  public String getTabId() {
+    return MainActivity.TAB_HOME;
+  }
 }

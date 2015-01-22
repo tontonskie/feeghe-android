@@ -61,6 +61,11 @@ public class RoomsFragment extends MainActivityFragment {
     getRooms.execute();
   }
 
+  @Override
+  public String getTabId() {
+    return MainActivity.TAB_MESSAGES;
+  }
+
   private class RoomsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     public RoomsAdapter(ArrayList<JSONObject> rooms) {

@@ -362,6 +362,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
   }
 
+  @Override
+  public String getTabId() {
+    return MainActivity.TAB_MESSAGES;
+  }
+
   private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnLongClickListener {
 
     public RoomMessagesAdapter(ArrayList<JSONObject> messages) {
