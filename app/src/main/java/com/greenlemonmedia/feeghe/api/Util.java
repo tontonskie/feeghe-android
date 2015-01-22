@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.UUID;
 
 /**
  * Created by tonton on 1/14/15.
@@ -93,5 +94,9 @@ public class Util {
       ex.printStackTrace();
     }
     return sb.toString();
+  }
+
+  public static String createUniqueCode() {
+    return UUID.randomUUID().toString();
   }
 }

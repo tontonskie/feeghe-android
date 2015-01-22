@@ -2,9 +2,14 @@ package com.greenlemonmedia.feeghe.api;
 
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.AsyncHttpClient;
+import com.koushikdutta.async.http.socketio.Acknowledge;
 import com.koushikdutta.async.http.socketio.ConnectCallback;
+import com.koushikdutta.async.http.socketio.EventCallback;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.Date;
 
@@ -72,5 +77,24 @@ abstract public class Socket {
     if (!isConnected()) return;
     client.disconnect();
     client = null;
+  }
+
+  /**
+   *
+   * @param event
+   * @param callback
+   */
+  public static void on(String event, final APIService.EventCallback callback) {
+    client.on(event, new EventCallback() {
+
+      @Override
+      public void onEvent(JSONArray argument, Acknowledge acknowledge) {
+        try {
+          callback.onEvent(argument.getJSONObject(0));
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 }
