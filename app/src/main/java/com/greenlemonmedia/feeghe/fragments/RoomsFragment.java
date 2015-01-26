@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,9 +13,11 @@ import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
+import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.ResponseArray;
+import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
-import com.greenlemonmedia.feeghe.tasks.GetRoomsTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,10 +27,10 @@ import java.util.ArrayList;
 public class RoomsFragment extends MainActivityFragment {
 
   private MainActivity context;
-  private ArrayList<JSONObject> roomsList;
   private RoomsAdapter roomsAdapter;
   private ListView listViewRooms;
   private Session session;
+  private RoomService roomService;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,26 +42,35 @@ public class RoomsFragment extends MainActivityFragment {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
     session = Session.getInstance(context);
+    roomService = new RoomService(context);
     listViewRooms = (ListView) context.findViewById(R.id.listViewRooms);
 
-    GetRoomsTask getRooms = new GetRoomsTask(
-      context,
-      new GetRoomsTask.Listener() {
+    JSONObject request = null;
+    try {
+      JSONObject notNull = new JSONObject();
+      JSONObject checkUser = new JSONObject();
+      notNull.put("!", JSONObject.NULL);
+      checkUser.put("users." + session.getUserId(), notNull);
+      request = roomService.createWhereQuery(checkUser);
+      request.put("sort", "updatedAt DESC");
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+    roomService.query(request, new APIService.QueryCallback() {
 
-        @Override
-        public void onSuccess(ArrayList<JSONObject> rooms) {
-          roomsList = rooms;
-          roomsAdapter = new RoomsAdapter(roomsList);
-          listViewRooms.setAdapter(roomsAdapter);
-        }
-
-        @Override
-        public void onFail(int statusCode, String error) {
-
-        }
+      @Override
+      public void onSuccess(ResponseArray response) {
+        roomsAdapter = new RoomsAdapter(Util.toList(response));
+        listViewRooms.setAdapter(roomsAdapter);
+        preloader.dismiss();
       }
-    );
-    getRooms.execute();
+
+      @Override
+      public void onFail(int statusCode, String error) {
+
+      }
+    });
   }
 
   @Override

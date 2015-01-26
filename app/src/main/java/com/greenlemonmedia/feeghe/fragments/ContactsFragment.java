@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,9 +13,13 @@ import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
+import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.ContactService;
+import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
+import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GoToRoomTask;
-import com.greenlemonmedia.feeghe.tasks.GetContactsTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +30,8 @@ public class ContactsFragment extends MainActivityFragment {
 
   private MainActivity context;
   private ListView listViewContacts;
+  private ContactService contactService;
+  private Session session;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,24 +42,30 @@ public class ContactsFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     context = getCurrentActivity();
+    session = Session.getInstance(context);
+    contactService = new ContactService(context);
     listViewContacts = (ListView) context.findViewById(R.id.listViewContacts);
 
-    GetContactsTask getContacts = new GetContactsTask(
-      context,
-      new GetContactsTask.Listener() {
+    JSONObject query = new JSONObject();
+    try {
+      query.put("owner", session.getUserId());
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+    contactService.query(contactService.createWhereQuery(query), new APIService.QueryCallback() {
 
-        @Override
-        public void onSuccess(ArrayList<JSONObject> contacts) {
-          listViewContacts.setAdapter(new ContactsAdapter(contacts));
-        }
-
-        @Override
-        public void onFail(int statusCode, String error) {
-
-        }
+      @Override
+      public void onSuccess(ResponseArray response) {
+        listViewContacts.setAdapter(new ContactsAdapter(Util.toList(response)));
+        preloader.dismiss();
       }
-    );
-    getContacts.execute();
+
+      @Override
+      public void onFail(int statusCode, String error) {
+
+      }
+    });
   }
 
   @Override

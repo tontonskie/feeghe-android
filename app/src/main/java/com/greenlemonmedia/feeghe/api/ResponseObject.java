@@ -21,6 +21,16 @@ public class ResponseObject extends Response {
 
   /**
    *
+   * @param data
+   * @param fromCache
+   */
+  public ResponseObject(JSONObject data, boolean fromCache) {
+    super(fromCache);
+    content = data;
+  }
+
+  /**
+   *
    * @param statusCode
    * @param error
    */

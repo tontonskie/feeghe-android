@@ -23,9 +23,9 @@ public class ContactService extends APIService {
   /**
    *
    * @param ids
-   * @return
+   * @param callback
    */
-  public ResponseObject sync(JSONArray ids) {
+  public void sync(JSONArray ids, SaveCallback callback) {
     HttpPost postRequest = new HttpPost(getBaseUrl("sync"));
     JSONObject params = new JSONObject();
     try {
@@ -35,6 +35,6 @@ public class ContactService extends APIService {
       e.printStackTrace();
     }
     setBodyParams(postRequest, params);
-    return (ResponseObject) apiCall(postRequest);
+    apiAsyncCall(postRequest, callback);
   }
 }

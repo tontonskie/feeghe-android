@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,12 +24,12 @@ import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.MessageService;
+import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
+import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
-import com.greenlemonmedia.feeghe.tasks.GetMessagesTask;
-import com.greenlemonmedia.feeghe.tasks.ReadNewMessageTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -56,6 +57,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Boolean hasNewMessage = false;
   private Boolean onEndOfList = true;
   private View listViewMessagesFooter;
+  private RoomService roomService;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -78,8 +80,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
     context = getCurrentActivity();
     currentRoomId = getArguments().getString("id");
 
-    messageService = new MessageService(context);
     session = Session.getInstance(context);
+    messageService = new MessageService(context);
+    roomService = new RoomService(context);
+
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
     txtViewTyping = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewTyping);
@@ -137,23 +141,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
           onEndOfList = true;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
           if (hasNewMessage) {
-            ReadNewMessageTask readNewTask = new ReadNewMessageTask(
-              context,
-              currentRoomId,
-              new ReadNewMessageTask.Listener() {
+            roomService.visit(currentRoomId, new APIService.UpdateCallback() {
 
-                @Override
-                public void onSuccess(ResponseObject response) {
+              @Override
+              public void onSuccess(ResponseObject response) {
 
-                }
-
-                @Override
-                public void onFail(int statusCode, String error) {
-
-                }
               }
-            );
-            readNewTask.execute();
+
+              @Override
+              public void onFail(int statusCode, String error) {
+
+              }
+            });
             hasNewMessage = false;
           }
         } else {
@@ -195,7 +194,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           ex.printStackTrace();
         }
 
-        messageService.socketSave(newMessage, new APIService.Callback() {
+        messageService.socketSave(newMessage, new APIService.SocketCallback() {
 
           @Override
           public void onSuccess(final ResponseObject response) {
@@ -242,6 +241,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
               public void run() {
                 hasNewMessage = true;
                 addToListViewMesages(data);
+                context.playAlertSound();
               }
             });
           } else if (verb.equals("typing")) {
@@ -288,25 +288,29 @@ public class SelectedRoomFragment extends MainActivityFragment {
       }
     });
 
-    GetMessagesTask getMessages = new GetMessagesTask(
-      context,
-      currentRoomId,
-      new GetMessagesTask.Listener() {
+    JSONObject query = new JSONObject();
+    try {
+      query.put("room", currentRoomId);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+    messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
 
-        @Override
-        public void onSuccess(ArrayList<JSONObject> messages) {
-          roomMessagesAdapter = new RoomMessagesAdapter(messages);
-          listViewMessages.setAdapter(roomMessagesAdapter);
-          txtNewMessage.setEnabled(true);
-        }
-
-        @Override
-        public void onFail(int statusCode, String error) {
-          Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
-        }
+      @Override
+      public void onSuccess(ResponseArray response) {
+        roomMessagesAdapter = new RoomMessagesAdapter(Util.toList(response));
+        listViewMessages.setAdapter(roomMessagesAdapter);
+        txtNewMessage.setEnabled(true);
+        preloader.dismiss();
       }
-    );
-    getMessages.execute();
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        preloader.dismiss();
+        Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
+      }
+    });
   }
 
   public void updateSeenBy(JSONObject user) {

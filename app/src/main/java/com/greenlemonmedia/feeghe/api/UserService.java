@@ -27,9 +27,9 @@ public class UserService extends APIService {
    *
    * @param phoneNumber
    * @param password
-   * @return
+   * @param callback
    */
-  public ResponseObject login(String phoneNumber, String password) {
+  public void login(String phoneNumber, String password, GetCallback callback) {
     HttpPost postRequest = new HttpPost(getBaseUrl("login"));
     JSONObject params = new JSONObject();
     try {
@@ -39,15 +39,15 @@ public class UserService extends APIService {
       e.printStackTrace();
     }
     setBodyParams(postRequest, params);
-    return (ResponseObject) call(postRequest);
+    asynCall(postRequest, callback);
   }
 
   /**
    *
    * @param phoneNumber
-   * @return
+   * @param callback
    */
-  public ResponseObject register(String phoneNumber) {
+  public void register(String phoneNumber, SaveCallback callback) {
     HttpPost postRequest = new HttpPost(getBaseUrl("register"));
     JSONObject params = new JSONObject();
     try {
@@ -56,16 +56,16 @@ public class UserService extends APIService {
       e.printStackTrace();
     }
     setBodyParams(postRequest, params);
-    return (ResponseObject) call(postRequest);
+    apiAsyncCall(postRequest, callback);
   }
 
   /**
    *
    * @param verificationId
    * @param code
-   * @return
+   * @param callback
    */
-  public ResponseObject verify(String verificationId, String code) {
+  public void verify(String verificationId, String code, UpdateCallback callback) {
     HttpPut putRequest = new HttpPut(getBaseUrl("verify/" + verificationId));
     JSONObject params = new JSONObject();
     try {
@@ -74,15 +74,15 @@ public class UserService extends APIService {
       e.printStackTrace();
     }
     setBodyParams(putRequest, params);
-    return (ResponseObject) call(putRequest);
+    asynCall(putRequest, callback);
   }
 
   /**
    *
-   * @return
+   * @param callback
    */
-  public ResponseObject logout() {
-    return (ResponseObject) apiCall(new HttpDelete(getBaseUrl("logout")));
+  public void logout(DeleteCallback callback) {
+    apiAsyncCall(new HttpDelete(getBaseUrl("logout")), callback);
   }
 
   public void updateCurrentUser() {
