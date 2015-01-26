@@ -72,7 +72,7 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
           chatMates.put(paramChatMateId);
           chatMates.put(session.getUserId());
           saveData.put("users", chatMates);
-          roomService.socketSave(saveData, new APIService.Callback() {
+          roomService.socketSave(saveData, new APIService.SocketCallback() {
 
             @Override
             public void onSuccess(ResponseObject response) {

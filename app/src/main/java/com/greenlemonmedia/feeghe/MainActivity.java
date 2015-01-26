@@ -4,7 +4,11 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TabHost;
 
+import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
@@ -21,20 +27,21 @@ import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
-import com.greenlemonmedia.feeghe.tasks.LogoutTask;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
 
 public class MainActivity extends ActionBarActivity implements TabHost.OnTabChangeListener {
 
   private Activity context;
-  private ProgressDialog socketPreloader;
   private UserService userService;
   private Session session;
   private Session.User currentUser;
   private TabHost tabHost;
   private Boolean isManualTabChange = false;
   private String currentFragmentTabId;
+  private SoundPool soundPool;
+  private int alertSoundId;
+  private float streamVolume;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -72,21 +79,29 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabHost.addTab(tabContacts);
     tabHost.setOnTabChangedListener(this);
 
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+    } else {
+      soundPool = new SoundPool(2, AudioManager.STREAM_NOTIFICATION, 0);
+    }
+    AudioManager mgr = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    streamVolume = (float) mgr.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
+    streamVolume = (float) streamVolume / mgr.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION);
+    alertSoundId = soundPool.load(this, R.raw.alert, 1);
+
     userService = new UserService(this);
+    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
       @Override
       public void onStartConnecting(SocketIORequest request) {
-        socketPreloader = new ProgressDialog(context);
-        socketPreloader.setCancelable(false);
-        socketPreloader.setMessage("Please wait...");
-        socketPreloader.show();
+
       }
 
       @Override
       public void onConnect(SocketIOClient client) {
         currentUser = userService.getCurrentUser();
-        socketPreloader.dismiss();
+        preloader.dismiss();
         if (currentUser.hasStatus(Session.User.STATUS_INCOMPLETE)) {
           showNewUserFragment();
         } else {
@@ -125,6 +140,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     isManualTabChange = true;
     tabHost.setCurrentTabByTag(tabId);
     isManualTabChange = false;
+  }
+
+  public void playAlertSound() {
+    soundPool.play(alertSoundId, streamVolume, streamVolume, 1, 0, 1f);
   }
 
   private void showFragment(MainActivityFragment fragment) {
@@ -181,19 +200,22 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   public boolean onOptionsItemSelected(MenuItem item) {
     int id = item.getItemId();
     if (id == R.id.action_logout) {
-      LogoutTask logout = new LogoutTask(this, new LogoutTask.Listener() {
+      final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      userService.logout(new APIService.DeleteCallback() {
 
         @Override
-        public void onSuccess() {
+        public void onSuccess(ResponseObject response) {
+          session.setLoggedIn(false);
+          Socket.disconnect();
+          preloader.dismiss();
           backToLogin();
         }
 
         @Override
         public void onFail(int statusCode, String error) {
-
+          preloader.dismiss();
         }
       });
-      logout.execute();
       return true;
     }
     return super.onOptionsItemSelected(item);

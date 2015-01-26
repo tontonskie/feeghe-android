@@ -1,7 +1,10 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,15 +15,20 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TabWidget;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
+import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.ContactService;
+import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
-import com.greenlemonmedia.feeghe.tasks.SyncContactsTask;
-import com.greenlemonmedia.feeghe.tasks.NewUserTask;
-import com.greenlemonmedia.feeghe.tasks.ReferContactsTask;
+import com.greenlemonmedia.feeghe.api.UserService;
+import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,6 +49,11 @@ public class NewUserFragment extends MainActivityFragment {
   private CheckBox chkSyncContacts;
   private Button btnAddContacts;
   private Button btnSkipContacts;
+  private ContactService contactService;
+  private UserService userService;
+  private Session session;
+  private TabWidget tabs;
+  private ProgressDialog preloader;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,9 +65,19 @@ public class NewUserFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     context = getCurrentActivity();
+    session = Session.getInstance(context);
+    contactService = new ContactService(context);
+    userService = new UserService(context);
+    preloader = new ProgressDialog(context);
+    preloader.setCancelable(false);
+    preloader.setMessage("Please wait...");
+
     view = (ViewAnimator) getView();
     view.setOutAnimation(AnimationUtils.loadAnimation(context, R.anim.abc_slide_out_top));
     view.setInAnimation(AnimationUtils.loadAnimation(context, R.anim.abc_slide_in_bottom));
+
+    tabs = (TabWidget) context.findViewById(android.R.id.tabs);
+    tabs.setVisibility(View.GONE);
 
     listViewContacts = (ListView) view.findViewById(R.id.listViewContacts);
     selectGender = (Spinner) view.findViewById(R.id.selectGender);
@@ -80,25 +103,29 @@ public class NewUserFragment extends MainActivityFragment {
           return;
         }
         txtViewNewUserError.setVisibility(View.INVISIBLE);
-        NewUserTask newUserTask = new NewUserTask(
-          context,
-          selectGender.getSelectedItem().toString(),
-          password,
-          new NewUserTask.Listener() {
+        JSONObject data = new JSONObject();
+        try {
+          data.put("gender", selectGender.getSelectedItem().toString().toLowerCase());
+          data.put("newPassword", password);
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+        preloader.show();
+        userService.update(session.getUserId(), data, new APIService.UpdateCallback() {
 
-            @Override
-            public void onSuccess(ResponseObject updatedUser) {
-              showSyncContactsForm();
-            }
-
-            @Override
-            public void onFail(int statusCode, String error) {
-              txtViewNewUserError.setText(error);
-              txtViewNewUserError.setVisibility(View.VISIBLE);
-            }
+          @Override
+          public void onSuccess(ResponseObject updatedUser) {
+            session.getCurrentUser().update(updatedUser);
+            showSyncContactsForm();
           }
-        );
-        newUserTask.execute();
+
+          @Override
+          public void onFail(int statusCode, String error) {
+            txtViewNewUserError.setText(error);
+            txtViewNewUserError.setVisibility(View.VISIBLE);
+            preloader.dismiss();
+          }
+        });
       }
     });
 
@@ -136,26 +163,30 @@ public class NewUserFragment extends MainActivityFragment {
           }
         }
         if (contactIds.length() == 0) {
-          ((MainActivity) context).showHomeFragment(false);
+          goToHome(false);
           return;
         }
-        SyncContactsTask addContacts = new SyncContactsTask(
-          context,
-          contactIds,
-          new SyncContactsTask.Listener() {
+        preloader.show();
+        contactService.sync(contactIds, new APIService.SaveCallback() {
 
-            @Override
-            public void onSuccess(ResponseObject response) {
-              ((MainActivity) context).showHomeFragment();
+          @Override
+          public void onSuccess(ResponseObject response) {
+            JSONObject userUpdate = new JSONObject();
+            try {
+              userUpdate.put("contactsCount", response.getContent().getInt("contactsCount"));
+            } catch (JSONException e) {
+              e.printStackTrace();
             }
-
-            @Override
-            public void onFail(int statusCode, String error) {
-
-            }
+            session.getCurrentUser().update(userUpdate);
+            preloader.dismiss();
+            goToHome();
           }
-        );
-        addContacts.execute();
+
+          @Override
+          public void onFail(int statusCode, String error) {
+            preloader.dismiss();
+          }
+        });
       }
     });
 
@@ -164,37 +195,66 @@ public class NewUserFragment extends MainActivityFragment {
 
       @Override
       public void onClick(View v) {
-        ((MainActivity) context).showHomeFragment();
+        goToHome();
       }
     });
   }
 
   public void showSyncContactsForm() {
     view.showNext();
-    ReferContactsTask referContacts = new ReferContactsTask(
-      context,
-      new ReferContactsTask.Listener() {
-
-        @Override
-        public void onSuccess(ArrayList<JSONObject> contacts) {
-          listViewContacts.setAdapter(new ContactsAdapter(contacts));
-          btnAddContacts.setEnabled(true);
-          chkSyncContacts.setEnabled(true);
-          chkSyncContacts.setText("Sync Contacts");
-        }
-
-        @Override
-        public void onFail(int statusCode, String error) {
-
-        }
-      }
+    Cursor contactsCursor = context.getContentResolver().query(
+      ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+      null, null, null, null
     );
-    referContacts.execute();
+    String phoneNumber;
+    JSONArray contactsToCheck = new JSONArray();
+    int numberIndex = contactsCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+    while (contactsCursor.moveToNext()) {
+      phoneNumber = contactsCursor
+        .getString(numberIndex)
+        .replace("+", "")
+        .replace("-", "")
+        .replace(" ", "");
+      contactsToCheck.put(phoneNumber);
+    }
+    contactsCursor.close();
+    JSONObject userQuery = new JSONObject();
+    try {
+      userQuery.put("phoneNumber", contactsToCheck);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    userService.query(userService.createWhereQuery(userQuery), new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        listViewContacts.setAdapter(new ContactsAdapter(Util.toList(response)));
+        btnAddContacts.setEnabled(true);
+        chkSyncContacts.setEnabled(true);
+        chkSyncContacts.setText("Sync Contacts");
+        preloader.dismiss();
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        preloader.dismiss();
+      }
+    });
   }
 
   @Override
   public String getTabId() {
     return null;
+  }
+
+  public void goToHome() {
+    tabs.setVisibility(View.VISIBLE);
+    context.showHomeFragment();
+  }
+
+  public void goToHome(boolean withBackStack) {
+    tabs.setVisibility(View.VISIBLE);
+    context.showHomeFragment(withBackStack);
   }
 
   private class ContactsAdapter extends ArrayAdapter<JSONObject> {
@@ -220,7 +280,7 @@ public class NewUserFragment extends MainActivityFragment {
       }
       JSONObject contact = getItem(position);
       try {
-        viewHolder.checkBox.setText(contact.getString("firstName") + " " + contact.getString("lastName"));
+        viewHolder.checkBox.setText(Util.getFullName(contact));
         viewHolder.checkBox.setTag(contact.getString("id"));
       } catch (JSONException e) {
         e.printStackTrace();

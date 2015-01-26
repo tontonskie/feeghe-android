@@ -22,9 +22,9 @@ public class RoomService extends APIService {
   /**
    *
    * @param roomId
-   * @return
+   * @param callback
    */
-  public ResponseObject visit(String roomId) {
+  public void visit(String roomId, UpdateCallback callback) {
     HttpPut putRequest = new HttpPut(getBaseUrl("visit"));
     JSONObject params = new JSONObject();
     try {
@@ -33,6 +33,6 @@ public class RoomService extends APIService {
       e.printStackTrace();
     }
     setBodyParams(putRequest, params);
-    return (ResponseObject) apiCall(putRequest);
+    apiAsyncCall(putRequest, callback);
   }
 }

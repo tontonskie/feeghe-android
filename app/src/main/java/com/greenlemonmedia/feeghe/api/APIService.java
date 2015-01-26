@@ -2,7 +2,9 @@ package com.greenlemonmedia.feeghe.api;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 
+import com.greenlemonmedia.feeghe.storage.DbCache;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.socketio.Acknowledge;
 
@@ -40,6 +42,7 @@ abstract public class APIService implements Serializable {
   protected String modelName;
   protected Session session;
   protected DefaultHttpClient httpClient;
+  protected DbCache cache;
 
   /**
    *
@@ -48,6 +51,7 @@ abstract public class APIService implements Serializable {
   public APIService(String modelName, Context context) {
     this.modelName = modelName;
     session = Session.getInstance(context);
+    cache = DbCache.getInstance(context);
     httpClient = new DefaultHttpClient();
   }
 
@@ -136,6 +140,55 @@ abstract public class APIService implements Serializable {
   /**
    *
    * @param request
+   * @param callback
+   * @param isArray
+   */
+  protected void asyncCall(HttpUriRequest request, Callback callback, boolean isArray) {
+    setDefaultHeaders(request);
+    new AsyncCall(request, isArray, callback).execute();
+  }
+
+  /**
+   *
+   * @param request
+   * @param callback
+   */
+  protected void asynCall(HttpUriRequest request, Callback callback) {
+    asyncCall(request, callback, false);
+  }
+
+  /**
+   *
+   * @param request
+   * @param callback
+   * @param isArray
+   */
+  protected void apiAsyncCall(HttpUriRequest request, Callback callback, boolean isArray) {
+    setApiCredentials(request);
+    asyncCall(request, callback, isArray);
+  }
+
+  /**
+   *
+   * @param request
+   * @param callback
+   */
+  protected void apiAsyncCall(HttpUriRequest request, Callback callback) {
+    apiAsyncCall(request, callback, false);
+  }
+
+  /**
+   *
+   * @param request
+   * @return
+   */
+  protected Response call(HttpUriRequest request) {
+    return call(request, false);
+  }
+
+  /**
+   *
+   * @param request
    * @param isArray
    * @return
    */
@@ -148,15 +201,6 @@ abstract public class APIService implements Serializable {
       e.printStackTrace();
     }
     return result;
-  }
-
-  /**
-   *
-   * @param request
-   * @return
-   */
-  protected Response call(HttpUriRequest request) {
-    return call(request, false);
   }
 
   /**
@@ -221,6 +265,15 @@ abstract public class APIService implements Serializable {
   /**
    *
    * @param id
+   * @param callback
+   */
+  public void get(String id, GetCallback callback) {
+    apiAsyncCall(new HttpGet(getBaseUrl(id)), callback);
+  }
+
+  /**
+   *
+   * @param id
    * @return
    */
   public ResponseObject get(String id) {
@@ -230,11 +283,18 @@ abstract public class APIService implements Serializable {
   /**
    *
    * @param query
-   * @return
+   * @param callback
    */
-  public ResponseArray query(JSONObject query) {
+  public void query(JSONObject query, QueryCallback callback) {
     Uri.Builder uriBuilder = getBaseUrlBuilder();
     Iterator<String> keys = query.keys();
+//    String queryCacheId = DbCache.createQueryHash(query);
+//    if (!query.has("skip")) {
+//      JSONArray fromCache = cache.getArray(modelName, queryCacheId);
+//      if (fromCache.length() > 0) {
+//        return new ResponseArray(fromCache, true);
+//      }
+//    }
     try {
       String key;
       while (keys.hasNext()) {
@@ -249,7 +309,70 @@ abstract public class APIService implements Serializable {
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    return (ResponseArray) apiCall(new HttpGet(uriBuilder.toString()), true);
+    apiAsyncCall(new HttpGet(uriBuilder.toString()), callback, true);
+//    JSONArray forCache = response.getContent();
+//    int forCacheLength = forCache.length();
+//    try {
+//      for (int i = 0; i < forCacheLength; i++) {
+//        cache.set(modelName, queryCacheId, forCache.getJSONObject(i));
+//      }
+//    } catch (JSONException e) {
+//      e.printStackTrace();
+//    }
+//    return response;
+  }
+
+  /**
+   *
+   * @param query
+   * @return
+   */
+  public ResponseArray query(JSONObject query) {
+    Uri.Builder uriBuilder = getBaseUrlBuilder();
+    Iterator<String> keys = query.keys();
+    String queryCacheId = DbCache.createQueryHash(query);
+    if (!query.has("skip")) {
+      JSONArray fromCache = cache.getArray(modelName, queryCacheId);
+      if (fromCache.length() > 0) {
+        return new ResponseArray(fromCache, true);
+      }
+    }
+    try {
+      String key;
+      while (keys.hasNext()) {
+        key = (String) keys.next();
+        Object val = query.get(key);
+        if (val instanceof JSONObject || val instanceof JSONArray) {
+          uriBuilder.appendQueryParameter(key, val.toString());
+        } else {
+          uriBuilder.appendQueryParameter(key, String.valueOf(val));
+        }
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    ResponseArray response = (ResponseArray) apiCall(new HttpGet(uriBuilder.toString()), true);
+    JSONArray forCache = response.getContent();
+    int forCacheLength = forCache.length();
+    try {
+      for (int i = 0; i < forCacheLength; i++) {
+        cache.set(modelName, queryCacheId, forCache.getJSONObject(i));
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return response;
+  }
+
+  /**
+   *
+   * @param data
+   * @param callback
+   */
+  public void save(JSONObject data, SaveCallback callback) {
+    HttpPost postRequest = new HttpPost(getBaseUrl());
+    setBodyParams(postRequest, data);
+    apiAsyncCall(postRequest, callback);
   }
 
   /**
@@ -267,12 +390,33 @@ abstract public class APIService implements Serializable {
    *
    * @param id
    * @param data
+   * @param callback
+   */
+  public void update(String id, JSONObject data, UpdateCallback callback) {
+    HttpPut putRequest = new HttpPut(getBaseUrl(id));
+    setBodyParams(putRequest, data);
+    apiAsyncCall(putRequest, callback);
+  }
+
+  /**
+   *
+   * @param id
+   * @param data
    * @return
    */
   public ResponseObject update(String id, JSONObject data) {
     HttpPut putRequest = new HttpPut(getBaseUrl(id));
     setBodyParams(putRequest, data);
     return (ResponseObject) apiCall(putRequest);
+  }
+
+  /**
+   *
+   * @param id
+   * @param callback
+   */
+  public void delete(String id, DeleteCallback callback) {
+    apiAsyncCall(new HttpDelete(getBaseUrl(id)), callback);
   }
 
   /**
@@ -315,15 +459,6 @@ abstract public class APIService implements Serializable {
     return createWhereQuery(null);
   }
 
-  public interface Callback {
-    public void onSuccess(ResponseObject response);
-    public void onFail(int statusCode, String error);
-  }
-
-  public interface EventCallback {
-    public void onEvent(JSONObject evt);
-  }
-
   /**
    *
    * @param method
@@ -331,7 +466,7 @@ abstract public class APIService implements Serializable {
    * @param params
    * @param callback
    */
-  protected void apiSocketCall(String method, String uri, JSONObject params, final Callback callback) {
+  protected void apiSocketCall(String method, String uri, JSONObject params, final SocketCallback callback) {
     JSONArray args = new JSONArray();
     try {
       JSONObject data = new JSONObject();
@@ -389,7 +524,7 @@ abstract public class APIService implements Serializable {
    * @param data
    * @param callback
    */
-  public void apiSocketCall(String method, JSONObject data, Callback callback) {
+  public void apiSocketCall(String method, JSONObject data, SocketCallback callback) {
     apiSocketCall(method, null, data, callback);
   }
 
@@ -398,7 +533,7 @@ abstract public class APIService implements Serializable {
    * @param postData
    * @param callback
    */
-  public void socketSave(JSONObject postData, Callback callback) {
+  public void socketSave(JSONObject postData, SocketCallback callback) {
     apiSocketCall("post", postData, callback);
   }
 
@@ -408,7 +543,92 @@ abstract public class APIService implements Serializable {
    * @param postData
    * @param callback
    */
-  public void socketUpdate(String id, JSONObject postData, Callback callback) {
+  public void socketUpdate(String id, JSONObject postData, SocketCallback callback) {
     apiSocketCall("put", getBaseUri(id), postData, callback);
+  }
+
+  public interface Callback {
+    public void onFail(int statusCode, String error);
+  }
+
+  public interface APICallback extends Callback {
+    public void onSuccess(Response response);
+  }
+
+  public interface QueryCallback extends Callback {
+    public void onSuccess(ResponseArray response);
+  }
+
+  public interface SaveCallback extends Callback {
+    public void onSuccess(ResponseObject response);
+  }
+
+  public interface UpdateCallback extends Callback {
+    public void onSuccess(ResponseObject response);
+  }
+
+  public interface DeleteCallback extends Callback {
+    public void onSuccess(ResponseObject response);
+  }
+
+  public interface GetCallback extends Callback {
+    public void onSuccess(ResponseObject response);
+  }
+
+  public interface SocketCallback {
+    public void onSuccess(ResponseObject response);
+    public void onFail(int statusCode, String error);
+  }
+
+  public interface EventCallback {
+    public void onEvent(JSONObject evt);
+  }
+
+  private class AsyncCall extends AsyncTask<Void, Void, Response> {
+
+    private HttpUriRequest request;
+    private boolean isArray;
+    private Callback callback;
+
+    public AsyncCall(HttpUriRequest request, boolean isArray, Callback callback) {
+      this.request = request;
+      this.isArray = isArray;
+      this.callback = callback;
+    }
+
+    public void onPreExecute() {
+
+    }
+
+    @Override
+    protected Response doInBackground(Void... params) {
+      Response result = null;
+      try {
+        result = parseResponse(httpClient.execute(request), isArray);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return result;
+    }
+
+    public void onPostExecute(Response result) {
+      if (!result.isOk()) {
+        callback.onFail(result.getStatusCode(), result.getErrorMessage());
+        return;
+      }
+      if (callback instanceof GetCallback) {
+        ((GetCallback) callback).onSuccess((ResponseObject) result);
+      } else if (callback instanceof QueryCallback) {
+        ((QueryCallback) callback).onSuccess((ResponseArray) result);
+      } else if (callback instanceof DeleteCallback) {
+        ((DeleteCallback) callback).onSuccess((ResponseObject) result);
+      } else if (callback instanceof SaveCallback) {
+        ((SaveCallback) callback).onSuccess((ResponseObject) result);
+      } else if (callback instanceof UpdateCallback) {
+        ((UpdateCallback) callback).onSuccess((ResponseObject) result);
+      } else if (callback instanceof APICallback) {
+        ((APICallback) callback).onSuccess(result);
+      }
+    }
   }
 }

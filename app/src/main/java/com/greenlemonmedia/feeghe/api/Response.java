@@ -9,9 +9,10 @@ public class Response {
 
   protected int statusCode;
   protected String error;
+  protected boolean isCache = false;
 
   public Response() {
-    this.statusCode = HttpStatus.SC_OK;
+    statusCode = HttpStatus.SC_OK;
   }
 
   /**
@@ -20,7 +21,15 @@ public class Response {
    */
   public Response(int statusCode) {
     this.statusCode = statusCode;
-    this.error = null;
+  }
+
+  /**
+   *
+   * @param fromCache
+   */
+  public Response(boolean fromCache) {
+    this();
+    isCache = fromCache;
   }
 
   /**
@@ -39,6 +48,14 @@ public class Response {
    */
   public boolean hasError() {
     return error != null;
+  }
+
+  /**
+   *
+   * @return
+   */
+  public boolean isCache() {
+    return isCache;
   }
 
   /**

@@ -32,6 +32,16 @@ public class ResponseArray extends Response {
   /**
    *
    * @param data
+   * @param fromCache
+   */
+  public ResponseArray(JSONArray data, boolean fromCache) {
+    super(fromCache);
+    content = data;
+  }
+
+  /**
+   *
+   * @param data
    */
   public ResponseArray(JSONArray data) {
     super();
