@@ -71,6 +71,33 @@ public class DbCache {
   /**
    *
    * @param cacheTableName
+   * @param queryId
+   * @param data
+   */
+  public void set(String cacheTableName, String queryId, JSONArray data) {
+    int dataLength = data.length();
+    try {
+      for (int i = 0; i < dataLength; i++) {
+        set(cacheTableName, queryId, data.getJSONObject(i));
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   *
+   * @param cacheTableName
+   * @param query
+   * @param data
+   */
+  public void set(String cacheTableName, JSONObject query, JSONArray data) {
+    set(cacheTableName, createQueryHash(query), data);
+  }
+
+  /**
+   *
+   * @param cacheTableName
    * @param data
    * @return
    */

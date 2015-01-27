@@ -24,14 +24,13 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 
 /**
  * Created by tonton on 1/5/15.
  */
-abstract public class APIService implements Serializable {
+abstract public class APIService implements AsyncServiceInterface, ServiceInterface {
 
   public static final String PORT = null;
   public static final String HTTP_SCHEME = "http";
@@ -42,7 +41,8 @@ abstract public class APIService implements Serializable {
   protected String modelName;
   protected Session session;
   protected DefaultHttpClient httpClient;
-  protected DbCache cache;
+  protected DbCache dbCache;
+  protected CacheService cacheService;
 
   /**
    *
@@ -51,8 +51,19 @@ abstract public class APIService implements Serializable {
   public APIService(String modelName, Context context) {
     this.modelName = modelName;
     session = Session.getInstance(context);
-    cache = DbCache.getInstance(context);
+    dbCache = DbCache.getInstance(context);
     httpClient = new DefaultHttpClient();
+  }
+
+  /**
+   *
+   * @return
+   */
+  public CacheService getCacheEntry() {
+    if (cacheService == null) {
+      cacheService = new CacheService(modelName, dbCache);
+    }
+    return cacheService;
   }
 
   /**
@@ -288,13 +299,6 @@ abstract public class APIService implements Serializable {
   public void query(JSONObject query, QueryCallback callback) {
     Uri.Builder uriBuilder = getBaseUrlBuilder();
     Iterator<String> keys = query.keys();
-//    String queryCacheId = DbCache.createQueryHash(query);
-//    if (!query.has("skip")) {
-//      JSONArray fromCache = cache.getArray(modelName, queryCacheId);
-//      if (fromCache.length() > 0) {
-//        return new ResponseArray(fromCache, true);
-//      }
-//    }
     try {
       String key;
       while (keys.hasNext()) {
@@ -310,16 +314,6 @@ abstract public class APIService implements Serializable {
       ex.printStackTrace();
     }
     apiAsyncCall(new HttpGet(uriBuilder.toString()), callback, true);
-//    JSONArray forCache = response.getContent();
-//    int forCacheLength = forCache.length();
-//    try {
-//      for (int i = 0; i < forCacheLength; i++) {
-//        cache.set(modelName, queryCacheId, forCache.getJSONObject(i));
-//      }
-//    } catch (JSONException e) {
-//      e.printStackTrace();
-//    }
-//    return response;
   }
 
   /**
@@ -332,7 +326,7 @@ abstract public class APIService implements Serializable {
     Iterator<String> keys = query.keys();
     String queryCacheId = DbCache.createQueryHash(query);
     if (!query.has("skip")) {
-      JSONArray fromCache = cache.getArray(modelName, queryCacheId);
+      JSONArray fromCache = dbCache.getArray(modelName, queryCacheId);
       if (fromCache.length() > 0) {
         return new ResponseArray(fromCache, true);
       }
@@ -356,7 +350,7 @@ abstract public class APIService implements Serializable {
     int forCacheLength = forCache.length();
     try {
       for (int i = 0; i < forCacheLength; i++) {
-        cache.set(modelName, queryCacheId, forCache.getJSONObject(i));
+        dbCache.set(modelName, queryCacheId, forCache.getJSONObject(i));
       }
     } catch (JSONException e) {
       e.printStackTrace();
@@ -612,22 +606,24 @@ abstract public class APIService implements Serializable {
     }
 
     public void onPostExecute(Response result) {
-      if (!result.isOk()) {
-        callback.onFail(result.getStatusCode(), result.getErrorMessage());
-        return;
-      }
-      if (callback instanceof GetCallback) {
-        ((GetCallback) callback).onSuccess((ResponseObject) result);
-      } else if (callback instanceof QueryCallback) {
-        ((QueryCallback) callback).onSuccess((ResponseArray) result);
-      } else if (callback instanceof DeleteCallback) {
-        ((DeleteCallback) callback).onSuccess((ResponseObject) result);
-      } else if (callback instanceof SaveCallback) {
-        ((SaveCallback) callback).onSuccess((ResponseObject) result);
-      } else if (callback instanceof UpdateCallback) {
-        ((UpdateCallback) callback).onSuccess((ResponseObject) result);
-      } else if (callback instanceof APICallback) {
-        ((APICallback) callback).onSuccess(result);
+      if (callback != null) {
+        if (!result.isOk()) {
+          callback.onFail(result.getStatusCode(), result.getErrorMessage());
+          return;
+        }
+        if (callback instanceof GetCallback) {
+          ((GetCallback) callback).onSuccess((ResponseObject) result);
+        } else if (callback instanceof QueryCallback) {
+          ((QueryCallback) callback).onSuccess((ResponseArray) result);
+        } else if (callback instanceof DeleteCallback) {
+          ((DeleteCallback) callback).onSuccess((ResponseObject) result);
+        } else if (callback instanceof SaveCallback) {
+          ((SaveCallback) callback).onSuccess((ResponseObject) result);
+        } else if (callback instanceof UpdateCallback) {
+          ((UpdateCallback) callback).onSuccess((ResponseObject) result);
+        } else if (callback instanceof APICallback) {
+          ((APICallback) callback).onSuccess(result);
+        }
       }
     }
   }

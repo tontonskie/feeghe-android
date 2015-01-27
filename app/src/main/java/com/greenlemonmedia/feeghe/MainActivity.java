@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
@@ -41,7 +41,6 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private String currentFragmentTabId;
   private SoundPool soundPool;
   private int alertSoundId;
-  private float streamVolume;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -80,13 +79,11 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabHost.setOnTabChangedListener(this);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-
+      AudioAttributes audioAttr = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build();
+      soundPool = new SoundPool.Builder().setMaxStreams(5).setAudioAttributes(audioAttr).build();
     } else {
-      soundPool = new SoundPool(2, AudioManager.STREAM_NOTIFICATION, 0);
+      soundPool = new SoundPool(5, AudioManager.STREAM_NOTIFICATION, 0);
     }
-    AudioManager mgr = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-    streamVolume = (float) mgr.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
-    streamVolume = (float) streamVolume / mgr.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION);
     alertSoundId = soundPool.load(this, R.raw.alert, 1);
 
     userService = new UserService(this);
@@ -143,7 +140,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   public void playAlertSound() {
-    soundPool.play(alertSoundId, streamVolume, streamVolume, 1, 0, 1f);
+    soundPool.play(alertSoundId, 1f, 1f, 1, 0, 1);
   }
 
   private void showFragment(MainActivityFragment fragment) {
