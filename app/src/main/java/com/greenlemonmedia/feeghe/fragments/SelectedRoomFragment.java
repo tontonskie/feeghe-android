@@ -1,6 +1,5 @@
 package com.greenlemonmedia.feeghe.fragments;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +22,7 @@ import android.widget.Toast;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.CacheService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -58,6 +58,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Boolean onEndOfList = true;
   private View listViewMessagesFooter;
   private RoomService roomService;
+  private CacheService messageCacheService;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -90,6 +91,34 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtViewSeenBy = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewSeenBy);
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
+
+    JSONObject query = new JSONObject();
+    try {
+      query.put("room", currentRoomId);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    query = messageService.createWhereQuery(query);
+    messageCacheService = messageService.getCacheEntry();
+    messageCacheService.setQueryId(query);
+    ResponseArray response = messageCacheService.query(query);
+    if (response.getContent().length() == 0) {
+      messageService.query(query, new APIService.QueryCallback() {
+
+        @Override
+        public void onSuccess(ResponseArray response) {
+          showMessages(response);
+          messageCacheService.save(response.getContent());
+        }
+
+        @Override
+        public void onFail(int statusCode, String error) {
+          Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
+        }
+      });
+    } else {
+      showMessages(response);
+    }
 
     typingHandler = new Handler();
     cancelTypingTask = new Runnable() {
@@ -171,6 +200,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           return;
         }
 
+        btnSendNewMessage.setEnabled(false);
         processingNewMessage = true;
         txtNewMessage.setText("");
         processingNewMessage = false;
@@ -203,6 +233,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
               Toast.makeText(context, "Sent message position not found", Toast.LENGTH_LONG).show();
               return;
             }
+            messageCacheService.save(response.getContent());
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -221,6 +252,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
         addToListViewMesages(dataForAppend);
         scrollToEnd();
+        btnSendNewMessage.setEnabled(true);
       }
     });
 
@@ -235,6 +267,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
             return;
           }
           if (verb.equals("created")) {
+            messageCacheService.save(data);
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -287,30 +320,12 @@ public class SelectedRoomFragment extends MainActivityFragment {
         }
       }
     });
+  }
 
-    JSONObject query = new JSONObject();
-    try {
-      query.put("room", currentRoomId);
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
-    messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
-
-      @Override
-      public void onSuccess(ResponseArray response) {
-        roomMessagesAdapter = new RoomMessagesAdapter(Util.toList(response));
-        listViewMessages.setAdapter(roomMessagesAdapter);
-        txtNewMessage.setEnabled(true);
-        preloader.dismiss();
-      }
-
-      @Override
-      public void onFail(int statusCode, String error) {
-        preloader.dismiss();
-        Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
-      }
-    });
+  public void showMessages(ResponseArray response) {
+    roomMessagesAdapter = new RoomMessagesAdapter(Util.toList(response));
+    listViewMessages.setAdapter(roomMessagesAdapter);
+    txtNewMessage.setEnabled(true);
   }
 
   public void updateSeenBy(JSONObject user) {
