@@ -324,13 +324,6 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
   public ResponseArray query(JSONObject query) {
     Uri.Builder uriBuilder = getBaseUrlBuilder();
     Iterator<String> keys = query.keys();
-    String queryCacheId = DbCache.createQueryHash(query);
-    if (!query.has("skip")) {
-      JSONArray fromCache = dbCache.getArray(modelName, queryCacheId);
-      if (fromCache.length() > 0) {
-        return new ResponseArray(fromCache, true);
-      }
-    }
     try {
       String key;
       while (keys.hasNext()) {
@@ -345,17 +338,7 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    ResponseArray response = (ResponseArray) apiCall(new HttpGet(uriBuilder.toString()), true);
-    JSONArray forCache = response.getContent();
-    int forCacheLength = forCache.length();
-    try {
-      for (int i = 0; i < forCacheLength; i++) {
-        dbCache.set(modelName, queryCacheId, forCache.getJSONObject(i));
-      }
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    return response;
+    return (ResponseArray) apiCall(new HttpGet(uriBuilder.toString()), true);
   }
 
   /**
