@@ -22,7 +22,8 @@ import android.widget.Toast;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
-import com.greenlemonmedia.feeghe.api.CacheService;
+import com.greenlemonmedia.feeghe.api.CacheCollection;
+import com.greenlemonmedia.feeghe.api.CacheEntry;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -58,8 +59,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Boolean onEndOfList = true;
   private View listViewMessagesFooter;
   private RoomService roomService;
-  private CacheService messageCacheService;
+  private CacheCollection messageCacheCollection;
   private JSONObject currentRoom;
+  private CacheEntry roomCacheEntry;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -90,6 +92,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     session = Session.getInstance(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
+    roomCacheEntry = roomService.getCacheEntry(currentRoomId);
 
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
@@ -105,15 +108,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
       e.printStackTrace();
     }
     query = messageService.createWhereQuery(query);
-    messageCacheService = messageService.getCacheEntry(query);
-    ResponseArray response = messageCacheService.query(query);
+    messageCacheCollection = messageService.getCacheCollection(query);
+    ResponseArray response = messageCacheCollection.getContent();
     if (response.getContent().length() == 0) {
       messageService.query(query, new APIService.QueryCallback() {
 
         @Override
         public void onSuccess(ResponseArray response) {
           showMessages(response);
-          messageCacheService.save(response.getContent());
+          messageCacheCollection.save(response.getContent());
         }
 
         @Override
@@ -238,7 +241,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
               Toast.makeText(context, "Sent message position not found", Toast.LENGTH_LONG).show();
               return;
             }
-            messageCacheService.save(response.getContent());
+            messageCacheCollection.save(response.getContent());
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -272,7 +275,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
             return;
           }
           if (verb.equals("created")) {
-            messageCacheService.save(data);
+            messageCacheCollection.save(data);
             context.runOnUiThread(new Runnable() {
 
               @Override

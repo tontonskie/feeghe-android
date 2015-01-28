@@ -14,7 +14,7 @@ import android.widget.TextView;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
-import com.greenlemonmedia.feeghe.api.CacheService;
+import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Util;
@@ -32,7 +32,7 @@ public class RoomsFragment extends MainActivityFragment {
   private ListView listViewRooms;
   private Session session;
   private RoomService roomService;
-  private CacheService roomCacheService;
+  private CacheCollection roomCacheCollection;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,8 +59,8 @@ public class RoomsFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    roomCacheService = roomService.getCacheEntry(request);
-    ResponseArray response = roomCacheService.query();
+    roomCacheCollection = roomService.getCacheCollection(request);
+    ResponseArray response = roomCacheCollection.getContent();
     if (response.getContent().length() == 0) {
       final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
       roomService.query(request, new APIService.QueryCallback() {
@@ -68,7 +68,7 @@ public class RoomsFragment extends MainActivityFragment {
         @Override
         public void onSuccess(ResponseArray response) {
           showRooms(response);
-          roomCacheService.save(response.getContent());
+          roomCacheCollection.save(response.getContent());
           preloader.dismiss();
         }
 

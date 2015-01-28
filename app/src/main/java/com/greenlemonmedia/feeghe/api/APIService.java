@@ -24,6 +24,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,7 +32,7 @@ import java.util.Iterator;
 /**
  * Created by tonton on 1/5/15.
  */
-abstract public class APIService implements AsyncServiceInterface, ServiceInterface {
+abstract public class APIService implements Serializable {
 
   public static final String PORT = null;
   public static final String HTTP_SCHEME = "http";
@@ -43,7 +44,8 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected HashMap<String, CacheService> cacheEntries;
+  protected HashMap<String, CacheCollection> cacheCollections;
+  protected HashMap<String, CacheEntry> cacheEntries;
 
   /**
    *
@@ -62,15 +64,30 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
    * @param query
    * @return
    */
-  public CacheService getCacheEntry(JSONObject query) {
+  public CacheCollection getCacheCollection(JSONObject query) {
+    if (cacheCollections == null) {
+      cacheCollections = new HashMap<>();
+    }
+    String queryId = DbCache.createQueryHash(query);
+    if (!cacheCollections.containsKey(queryId)) {
+      cacheCollections.put(queryId, new CacheCollection(modelName, dbCache, queryId));
+    }
+    return cacheCollections.get(queryId);
+  }
+
+  /**
+   *
+   * @param id
+   * @return
+   */
+  public CacheEntry getCacheEntry(String id) {
     if (cacheEntries == null) {
       cacheEntries = new HashMap<>();
     }
-    String queryId = DbCache.createQueryHash(query);
-    if (!cacheEntries.containsKey(queryId)) {
-      cacheEntries.put(queryId, new CacheService(modelName, dbCache, queryId));
+    if (!cacheEntries.containsKey(id)) {
+      cacheEntries.put(id, new CacheEntry(modelName, id, dbCache));
     }
-    return cacheEntries.get(queryId);
+    return cacheEntries.get(id);
   }
 
   /**

@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -18,7 +19,7 @@ import java.text.SimpleDateFormat;
 /**
  * Created by tonton on 1/23/15.
  */
-public class DbCache {
+public class DbCache implements Serializable {
 
   private DbHelper dbHelper;
   private SQLiteDatabase dbWriter;
@@ -191,6 +192,15 @@ public class DbCache {
     }
     result.close();
     return fromCache;
+  }
+
+  /**
+   *
+   * @param cacheTableName
+   * @param objectId
+   */
+  public void delete(String cacheTableName, String objectId) {
+    dbWriter.delete(cacheTableName, "obj_id = ?", new String[] { objectId });
   }
 
   public class DbHelper extends SQLiteOpenHelper {
