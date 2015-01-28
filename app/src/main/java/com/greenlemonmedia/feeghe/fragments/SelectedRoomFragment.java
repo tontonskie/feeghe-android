@@ -59,6 +59,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private View listViewMessagesFooter;
   private RoomService roomService;
   private CacheService messageCacheService;
+  private JSONObject currentRoom;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -79,7 +80,12 @@ public class SelectedRoomFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
-    currentRoomId = getArguments().getString("id");
+    try {
+      currentRoom = new JSONObject(getArguments().getString("roomInfo"));
+      currentRoomId = currentRoom.getString("id");
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
 
     session = Session.getInstance(context);
     messageService = new MessageService(context);
@@ -99,8 +105,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       e.printStackTrace();
     }
     query = messageService.createWhereQuery(query);
-    messageCacheService = messageService.getCacheEntry();
-    messageCacheService.setQueryId(query);
+    messageCacheService = messageService.getCacheEntry(query);
     ResponseArray response = messageCacheService.query(query);
     if (response.getContent().length() == 0) {
       messageService.query(query, new APIService.QueryCallback() {
@@ -328,6 +333,13 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtNewMessage.setEnabled(true);
   }
 
+  public void setSeenBy(JSONObject users) {
+    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
+    layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+    txtViewSeenBy.setLayoutParams(layoutParams);
+    txtViewSeenBy.setText("Seen by " + Util.getRoomName(users, session.getUserId()));
+  }
+
   public void updateSeenBy(JSONObject user) {
     try {
       seenBy.put(user.getString("id"), user);
@@ -459,6 +471,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
         viewHolder.txtViewPerChatContent.setText(Html.fromHtml(message.getString("content")), TextView.BufferType.SPANNABLE);
         viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
+
+        if (position == (getCount() - 1)) {
+          setSeenBy(currentRoom.getJSONObject("users"));
+        }
 
       } catch (JSONException e) {
         e.printStackTrace();

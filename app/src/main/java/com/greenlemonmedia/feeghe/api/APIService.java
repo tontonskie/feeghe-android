@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -42,11 +43,12 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected CacheService cacheService;
+  protected HashMap<String, CacheService> cacheEntries;
 
   /**
    *
    * @param modelName
+   * @param context
    */
   public APIService(String modelName, Context context) {
     this.modelName = modelName;
@@ -57,13 +59,18 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
 
   /**
    *
+   * @param query
    * @return
    */
-  public CacheService getCacheEntry() {
-    if (cacheService == null) {
-      cacheService = new CacheService(modelName, dbCache);
+  public CacheService getCacheEntry(JSONObject query) {
+    if (cacheEntries == null) {
+      cacheEntries = new HashMap<>();
     }
-    return cacheService;
+    String queryId = DbCache.createQueryHash(query);
+    if (!cacheEntries.containsKey(queryId)) {
+      cacheEntries.put(queryId, new CacheService(modelName, dbCache, queryId));
+    }
+    return cacheEntries.get(queryId);
   }
 
   /**

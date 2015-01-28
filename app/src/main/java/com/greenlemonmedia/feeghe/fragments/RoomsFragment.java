@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.CacheService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Util;
@@ -31,6 +32,7 @@ public class RoomsFragment extends MainActivityFragment {
   private ListView listViewRooms;
   private Session session;
   private RoomService roomService;
+  private CacheService roomCacheService;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -41,9 +43,10 @@ public class RoomsFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
+    listViewRooms = (ListView) context.findViewById(R.id.listViewRooms);
+
     session = Session.getInstance(context);
     roomService = new RoomService(context);
-    listViewRooms = (ListView) context.findViewById(R.id.listViewRooms);
 
     JSONObject request = null;
     try {
@@ -56,21 +59,32 @@ public class RoomsFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
-    roomService.query(request, new APIService.QueryCallback() {
+    roomCacheService = roomService.getCacheEntry(request);
+    ResponseArray response = roomCacheService.query();
+    if (response.getContent().length() == 0) {
+      final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      roomService.query(request, new APIService.QueryCallback() {
 
-      @Override
-      public void onSuccess(ResponseArray response) {
-        roomsAdapter = new RoomsAdapter(Util.toList(response));
-        listViewRooms.setAdapter(roomsAdapter);
-        preloader.dismiss();
-      }
+        @Override
+        public void onSuccess(ResponseArray response) {
+          showRooms(response);
+          roomCacheService.save(response.getContent());
+          preloader.dismiss();
+        }
 
-      @Override
-      public void onFail(int statusCode, String error) {
+        @Override
+        public void onFail(int statusCode, String error) {
 
-      }
-    });
+        }
+      });
+    } else {
+      showRooms(response);
+    }
+  }
+
+  public void showRooms(ResponseArray response) {
+    roomsAdapter = new RoomsAdapter(Util.toList(response));
+    listViewRooms.setAdapter(roomsAdapter);
   }
 
   @Override
@@ -86,11 +100,12 @@ public class RoomsFragment extends MainActivityFragment {
 
     @Override
     public void onClick(View v) {
-      context.showRoomFragment(((RoomViewHolder) v.getTag()).id);
+      context.showRoomFragment(((RoomViewHolder) v.getTag()).info);
     }
 
     private class RoomViewHolder {
       String id;
+      String info;
       TextView txtViewRoomRecentChat;
       TextView txtViewRoomName;
       ImageView imgViewRoomImg;
@@ -113,6 +128,7 @@ public class RoomsFragment extends MainActivityFragment {
       JSONObject room = getItem(position);
       try {
         viewHolder.id = room.getString("id");
+        viewHolder.info = room.toString();
         viewHolder.txtViewRoomName.setText(Util.getRoomName(room.getJSONObject("users"), session.getUserId()));
         viewHolder.txtViewRoomRecentChat.setText(room.getString("recentChat"));
       } catch (JSONException e) {

@@ -30,6 +30,8 @@ import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
 
+import org.json.JSONObject;
+
 public class MainActivity extends ActionBarActivity implements TabHost.OnTabChangeListener {
 
   private Activity context;
@@ -158,9 +160,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     ft.commit();
   }
 
-  public void showRoomFragment(String roomId) {
+  public void showRoomFragment(String roomInfo) {
     Bundle args = new Bundle();
-    args.putString("id", roomId);
+    args.putString("roomInfo", roomInfo);
     SelectedRoomFragment frag = new SelectedRoomFragment();
     frag.setArguments(args);
     showFragment(frag);

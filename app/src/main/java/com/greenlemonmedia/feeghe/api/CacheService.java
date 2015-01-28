@@ -18,17 +18,10 @@ public class CacheService implements ServiceInterface {
    *
    * @param dbCache
    */
-  public CacheService(String modelName, DbCache dbCache) {
+  public CacheService(String modelName, DbCache dbCache, String queryId) {
     cache = dbCache;
     cacheKey = modelName;
-  }
-
-  /**
-   *
-   * @param query
-   */
-  public void setQueryId(JSONObject query) {
-    queryId = DbCache.createQueryHash(query);
+    this.queryId = queryId;
   }
 
   /**
@@ -39,6 +32,14 @@ public class CacheService implements ServiceInterface {
   @Override
   public ResponseArray query(JSONObject query) {
     return new ResponseArray(cache.getArray(cacheKey, query), true);
+  }
+
+  /**
+   *
+   * @return
+   */
+  public ResponseArray query() {
+    return new ResponseArray(cache.getArray(cacheKey, queryId), true);
   }
 
   /**
