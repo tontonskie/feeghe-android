@@ -112,6 +112,16 @@ public class ContactsFragment extends MainActivityFragment {
     return MainActivity.TAB_CONTACTS;
   }
 
+  @Override
+  protected void setupUIEvents() {
+
+  }
+
+  @Override
+  protected void setupSocketEvents() {
+
+  }
+
   private class ContactsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     public ContactsAdapter(ArrayList<JSONObject> contacts) {

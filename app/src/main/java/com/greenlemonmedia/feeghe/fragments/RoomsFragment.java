@@ -101,6 +101,17 @@ public class RoomsFragment extends MainActivityFragment {
       }
     });
 
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  @Override
+  protected void setupUIEvents() {
+
+  }
+
+  @Override
+  protected void setupSocketEvents() {
     Socket.on("message", new APIService.EventCallback() {
 
       @Override

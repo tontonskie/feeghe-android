@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -24,6 +25,7 @@ import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.CacheEntry;
+import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -64,6 +66,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private JSONObject currentRoom;
   private CacheEntry roomCacheEntry;
   private JSONObject currentRoomUsers;
+  private Button btnShowUseFace;
+  private FaceService faceService;
+  private LinearLayout newMessageOptionBtns;
+  private InputMethodManager newMessageManager;
+  private LinearLayout newMessageOptionDisplay;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -93,6 +100,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
 
     session = Session.getInstance(context);
+    faceService = new FaceService(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
     roomCacheEntry = roomService.getCacheEntry(currentRoomId);
@@ -103,6 +111,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtViewSeenBy = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewSeenBy);
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
+    btnShowUseFace = (Button) context.findViewById(R.id.btnShowUseFace);
+    newMessageOptionBtns = (LinearLayout) context.findViewById(R.id.newMessageOptionBtns);
+    newMessageManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    newMessageOptionDisplay = (LinearLayout) context.findViewById(R.id.newMessageOptionDisplay);
 
     JSONObject query = new JSONObject();
     try {
@@ -131,6 +143,12 @@ public class SelectedRoomFragment extends MainActivityFragment {
       showMessages(response);
     }
 
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  @Override
+  protected void setupUIEvents() {
     typingHandler = new Handler();
     cancelTypingTask = new Runnable() {
 
@@ -256,6 +274,19 @@ public class SelectedRoomFragment extends MainActivityFragment {
       }
     });
 
+    btnShowUseFace.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        newMessageManager.hideSoftInputFromWindow(txtNewMessage.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        newMessageOptionBtns.setVisibility(View.GONE);
+        newMessageOptionDisplay.setVisibility(View.VISIBLE);
+      }
+    });
+  }
+
+  @Override
+  protected void setupSocketEvents() {
     Socket.on("message", new APIService.EventCallback() {
 
       @Override

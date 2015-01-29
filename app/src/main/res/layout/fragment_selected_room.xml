@@ -14,7 +14,7 @@
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
-    android:layout_above="@+id/linearLayout"
+    android:layout_above="@+id/newMessageBoxContainer"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>
@@ -24,8 +24,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:weightSum="10"
-    android:layout_alignParentBottom="true"
-    android:id="@+id/linearLayout">
+    android:layout_alignParentBottom="false"
+    android:id="@+id/newMessageBoxContainer"
+    android:layout_above="@+id/newMessageOptionsContainer">
 
     <EditText
       android:layout_width="0dp"
@@ -42,6 +43,50 @@
       android:text="Send"
       android:id="@+id/btnSendNewMessage"
       android:layout_weight="2"/>
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/newMessageOptionsContainer"
+    android:layout_alignParentBottom="true"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+      android:id="@+id/newMessageOptionBtns"
+      android:orientation="horizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:weightSum="10">
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Use Face"
+        android:id="@+id/btnShowUseFace"
+        android:layout_weight="5"/>
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Attach"
+        android:id="@+id/btnAttach"
+        android:layout_weight="5"/>
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/newMessageOptionDisplay"
+      android:orientation="horizontal"
+      android:layout_width="match_parent"
+      android:layout_height="200dp"
+      android:visibility="gone">
+
+      <GridView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/gridUseFace"/>
+    </LinearLayout>
+
   </LinearLayout>
 
 </RelativeLayout>
