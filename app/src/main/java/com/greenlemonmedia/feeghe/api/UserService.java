@@ -101,4 +101,9 @@ public class UserService extends APIService {
     }
     return currentUser;
   }
+
+  @Override
+  public JSONObject getCacheQuery() {
+    return null;
+  }
 }

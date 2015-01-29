@@ -35,4 +35,20 @@ public class RoomService extends APIService {
     setBodyParams(putRequest, params);
     apiAsyncCall(putRequest, callback);
   }
+
+  @Override
+  public JSONObject getCacheQuery() {
+    JSONObject request = null;
+    try {
+      JSONObject notNull = new JSONObject();
+      JSONObject checkUser = new JSONObject();
+      notNull.put("!", JSONObject.NULL);
+      checkUser.put("users." + session.getUserId(), notNull);
+      request = createWhereQuery(checkUser);
+      request.put("sort", "updatedAt DESC");
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return request;
+  }
 }

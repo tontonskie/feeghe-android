@@ -24,13 +24,15 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
  * Created by tonton on 1/5/15.
  */
-abstract public class APIService implements AsyncServiceInterface, ServiceInterface {
+abstract public class APIService implements Serializable {
 
   public static final String PORT = null;
   public static final String HTTP_SCHEME = "http";
@@ -42,11 +44,13 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected CacheService cacheService;
+  protected HashMap<String, CacheCollection> cacheCollections;
+  protected HashMap<String, CacheEntry> cacheEntries;
 
   /**
    *
    * @param modelName
+   * @param context
    */
   public APIService(String modelName, Context context) {
     this.modelName = modelName;
@@ -59,11 +63,37 @@ abstract public class APIService implements AsyncServiceInterface, ServiceInterf
    *
    * @return
    */
-  public CacheService getCacheEntry() {
-    if (cacheService == null) {
-      cacheService = new CacheService(modelName, dbCache);
+  abstract public JSONObject getCacheQuery();
+
+  /**
+   *
+   * @param query
+   * @return
+   */
+  public CacheCollection getCacheCollection(JSONObject query) {
+    if (cacheCollections == null) {
+      cacheCollections = new HashMap<>();
     }
-    return cacheService;
+    String queryId = DbCache.createQueryHash(query);
+    if (!cacheCollections.containsKey(queryId)) {
+      cacheCollections.put(queryId, new CacheCollection(modelName, dbCache, queryId));
+    }
+    return cacheCollections.get(queryId);
+  }
+
+  /**
+   *
+   * @param id
+   * @return
+   */
+  public CacheEntry getCacheEntry(String id) {
+    if (cacheEntries == null) {
+      cacheEntries = new HashMap<>();
+    }
+    if (!cacheEntries.containsKey(id)) {
+      cacheEntries.put(id, new CacheEntry(modelName, id, dbCache));
+    }
+    return cacheEntries.get(id);
   }
 
   /**

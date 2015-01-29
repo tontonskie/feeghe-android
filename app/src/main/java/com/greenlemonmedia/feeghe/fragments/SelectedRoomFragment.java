@@ -22,7 +22,8 @@ import android.widget.Toast;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
-import com.greenlemonmedia.feeghe.api.CacheService;
+import com.greenlemonmedia.feeghe.api.CacheCollection;
+import com.greenlemonmedia.feeghe.api.CacheEntry;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -35,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
 
@@ -58,7 +60,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Boolean onEndOfList = true;
   private View listViewMessagesFooter;
   private RoomService roomService;
-  private CacheService messageCacheService;
+  private CacheCollection messageCacheCollection;
+  private JSONObject currentRoom;
+  private CacheEntry roomCacheEntry;
+  private JSONObject currentRoomUsers;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -79,11 +84,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
-    currentRoomId = getArguments().getString("id");
+    try {
+      currentRoom = new JSONObject(getArguments().getString("roomInfo"));
+      currentRoomId = currentRoom.getString("id");
+      currentRoomUsers = currentRoom.getJSONObject("users");
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
 
     session = Session.getInstance(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
+    roomCacheEntry = roomService.getCacheEntry(currentRoomId);
 
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
@@ -99,16 +111,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
       e.printStackTrace();
     }
     query = messageService.createWhereQuery(query);
-    messageCacheService = messageService.getCacheEntry();
-    messageCacheService.setQueryId(query);
-    ResponseArray response = messageCacheService.query(query);
+    messageCacheCollection = messageService.getCacheCollection(query);
+    ResponseArray response = messageCacheCollection.getContent();
     if (response.getContent().length() == 0) {
       messageService.query(query, new APIService.QueryCallback() {
 
         @Override
         public void onSuccess(ResponseArray response) {
           showMessages(response);
-          messageCacheService.save(response.getContent());
+          messageCacheCollection.save(response.getContent());
         }
 
         @Override
@@ -170,18 +181,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           onEndOfList = true;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
           if (hasNewMessage) {
-            roomService.visit(currentRoomId, new APIService.UpdateCallback() {
-
-              @Override
-              public void onSuccess(ResponseObject response) {
-
-              }
-
-              @Override
-              public void onFail(int statusCode, String error) {
-
-              }
-            });
+            roomService.visit(currentRoomId, null);
             hasNewMessage = false;
           }
         } else {
@@ -233,7 +233,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
               Toast.makeText(context, "Sent message position not found", Toast.LENGTH_LONG).show();
               return;
             }
-            messageCacheService.save(response.getContent());
+            messageCacheCollection.save(response.getContent());
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -267,14 +267,13 @@ public class SelectedRoomFragment extends MainActivityFragment {
             return;
           }
           if (verb.equals("created")) {
-            messageCacheService.save(data);
+            messageCacheCollection.save(data);
             context.runOnUiThread(new Runnable() {
 
               @Override
               public void run() {
                 hasNewMessage = true;
                 addToListViewMesages(data);
-                context.playAlertSound();
               }
             });
           } else if (verb.equals("typing")) {
@@ -328,9 +327,19 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtNewMessage.setEnabled(true);
   }
 
+  public void setSeenBy(JSONObject users) {
+    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
+    layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+    txtViewSeenBy.setLayoutParams(layoutParams);
+    txtViewSeenBy.setText("Seen by " + Util.getRoomName(users, session.getUserId()));
+  }
+
   public void updateSeenBy(JSONObject user) {
     try {
-      seenBy.put(user.getString("id"), user);
+      String userId = user.getString("id");
+      seenBy.put(userId, user);
+      currentRoomUsers.getJSONObject(userId).put("unreadCount", 0);
+      roomCacheEntry.update(currentRoom);
     } catch (JSONException e) {
       e.printStackTrace();
     }
@@ -345,6 +354,17 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
   public void clearSeenBy() {
     seenBy = new JSONObject();
+    Iterator<String> i = currentRoomUsers.keys();
+    try {
+      JSONObject roomUser;
+      while (i.hasNext()) {
+        roomUser = currentRoomUsers.getJSONObject((String) i.next());
+        roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    roomCacheEntry.update(currentRoom);
     LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = 0;
     txtViewSeenBy.setLayoutParams(layoutParams);
@@ -459,6 +479,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
         viewHolder.txtViewPerChatContent.setText(Html.fromHtml(message.getString("content")), TextView.BufferType.SPANNABLE);
         viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
+
+        if (position == (getCount() - 1)) {
+          setSeenBy(currentRoom.getJSONObject("users"));
+        }
 
       } catch (JSONException e) {
         e.printStackTrace();
