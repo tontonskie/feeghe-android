@@ -34,4 +34,9 @@ public class MessageService extends APIService {
     }
     apiSocketCall("post", getBaseUri("typing"), data);
   }
+
+  @Override
+  public JSONObject getCacheQuery() {
+    return null;
+  }
 }

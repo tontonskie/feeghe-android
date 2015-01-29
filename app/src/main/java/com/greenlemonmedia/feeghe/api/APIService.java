@@ -61,6 +61,12 @@ abstract public class APIService implements Serializable {
 
   /**
    *
+   * @return
+   */
+  abstract public JSONObject getCacheQuery();
+
+  /**
+   *
    * @param query
    * @return
    */

@@ -37,4 +37,15 @@ public class ContactService extends APIService {
     setBodyParams(postRequest, params);
     apiAsyncCall(postRequest, callback);
   }
+
+  @Override
+  public JSONObject getCacheQuery() {
+    JSONObject query = new JSONObject();
+    try {
+      query.put("owner", session.getUserId());
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return createWhereQuery(query);
+  }
 }

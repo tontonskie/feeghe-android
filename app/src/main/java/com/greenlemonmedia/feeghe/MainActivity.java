@@ -14,10 +14,16 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.LinearLayout;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 
 import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.CacheCollection;
+import com.greenlemonmedia.feeghe.api.CacheEntry;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
+import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
@@ -30,6 +36,7 @@ import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MainActivity extends ActionBarActivity implements TabHost.OnTabChangeListener {
@@ -43,6 +50,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private String currentFragmentTabId;
   private SoundPool soundPool;
   private int alertSoundId;
+  private CacheCollection roomCacheCollection;
+  private RoomService roomService;
+  private TabWidget tabs;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -55,11 +65,22 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 
     context = this;
     session = Session.getInstance(context);
+    userService = new UserService(context);
+    roomService = new RoomService(context);
+    roomCacheCollection = roomService.getCacheCollection(roomService.getCacheQuery());
+
     if (!session.isLoggedIn()) {
       backToLogin();
       return;
     }
 
+    setupTabs();
+    setupSounds();
+    setupSocketConnection();
+    setupKeyboardDetection();
+  }
+
+  private void setupTabs() {
     tabHost = (TabHost) findViewById(R.id.tabHost);
     tabHost.setup();
 
@@ -79,7 +100,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabHost.addTab(tabMessages);
     tabHost.addTab(tabContacts);
     tabHost.setOnTabChangedListener(this);
+    tabs = tabHost.getTabWidget();
+  }
 
+  private void setupSounds() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       AudioAttributes audioAttr = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build();
       soundPool = new SoundPool.Builder().setMaxStreams(5).setAudioAttributes(audioAttr).build();
@@ -87,8 +111,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       soundPool = new SoundPool(5, AudioManager.STREAM_NOTIFICATION, 0);
     }
     alertSoundId = soundPool.load(this, R.raw.alert, 1);
+  }
 
-    userService = new UserService(this);
+  private void setupSocketConnection() {
     final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
@@ -106,16 +131,65 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
         } else {
           showHomeFragment();
         }
+        initSocketEvents();
       }
     });
   }
 
-  private class TabContent implements TabHost.TabContentFactory {
+  private void setupKeyboardDetection() {
+    final LinearLayout container = (LinearLayout) findViewById(R.id.container);
+    container.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 
-    @Override
-    public View createTabContent(String tag) {
-      return new View(context);
-    }
+      @Override
+      public void onGlobalLayout() {
+        if ((container.getRootView().getHeight() - container.getHeight()) > container.getRootView().getHeight() / 3) {
+          tabs.setVisibility(View.GONE);
+        } else {
+          tabs.setVisibility(View.VISIBLE);
+        }
+      }
+    });
+  }
+
+  private void initSocketEvents() {
+    Socket.on("room", new APIService.EventCallback() {
+
+      @Override
+      public void onEvent(JSONObject evt) {
+        try {
+          String verb = evt.getString("verb");
+          JSONObject data = evt.getJSONObject("data");
+          if (verb.equals("created")) {
+            roomCacheCollection.save(data);
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+      }
+    });
+
+    Socket.on("message", new APIService.EventCallback() {
+
+      @Override
+      public void onEvent(JSONObject evt) {
+        try {
+          String verb = evt.getString("verb");
+          JSONObject message = evt.getJSONObject("data");
+          if (verb.equals("created")) {
+            playAlertSound();
+            CacheEntry roomCache = roomService.getCacheEntry(message.getString("room"));
+            ResponseObject roomCacheResponse = roomCache.getContent();
+            if (roomCacheResponse != null) {
+              JSONObject roomCacheContent = roomCacheResponse.getContent();
+              roomCacheContent.put("recentChat", message.getString("content"));
+              roomCache.update(roomCacheContent);
+            }
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+      }
+    });
   }
 
   @Override
@@ -160,9 +234,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     ft.commit();
   }
 
-  public void showRoomFragment(String roomInfo) {
+  public void showRoomFragment(JSONObject roomInfo) {
     Bundle args = new Bundle();
-    args.putString("roomInfo", roomInfo);
+    args.putString("roomInfo", roomInfo.toString());
     SelectedRoomFragment frag = new SelectedRoomFragment();
     frag.setArguments(args);
     showFragment(frag);
@@ -234,5 +308,13 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 
   public void backToLogin() {
     startActivity(new Intent(this, LoginActivity.class));
+  }
+
+  private class TabContent implements TabHost.TabContentFactory {
+
+    @Override
+    public View createTabContent(String tag) {
+      return new View(context);
+    }
   }
 }

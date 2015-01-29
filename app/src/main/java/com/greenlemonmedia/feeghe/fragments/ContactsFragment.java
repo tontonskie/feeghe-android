@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -21,6 +22,7 @@ import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GoToRoomTask;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,6 +34,9 @@ public class ContactsFragment extends MainActivityFragment {
   private ListView listViewContacts;
   private ContactService contactService;
   private Session session;
+  private CacheCollection contactCacheCollection;
+  private ContactsAdapter contactsAdapter;
+  private ProgressDialog contactsPreloader;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -46,19 +51,48 @@ public class ContactsFragment extends MainActivityFragment {
     contactService = new ContactService(context);
     listViewContacts = (ListView) context.findViewById(R.id.listViewContacts);
 
-    JSONObject query = new JSONObject();
-    try {
-      query.put("owner", session.getUserId());
-    } catch (JSONException e) {
-      e.printStackTrace();
+    JSONObject query = contactService.getCacheQuery();
+    contactCacheCollection = contactService.getCacheCollection(query);
+    final ResponseArray responseFromCache = contactCacheCollection.getContent();
+    if (responseFromCache.getContent().length() != 0) {
+      showContacts(responseFromCache);
+    } else {
+      contactsPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
     }
-    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
-    contactService.query(contactService.createWhereQuery(query), new APIService.QueryCallback() {
+
+    contactService.query(query, new APIService.QueryCallback() {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        listViewContacts.setAdapter(new ContactsAdapter(Util.toList(response)));
-        preloader.dismiss();
+        if (contactsAdapter == null) {
+          showContacts(response);
+          contactCacheCollection.save(response.getContent());
+          contactsPreloader.dismiss();
+        } else {
+          JSONArray contactsFromServer = response.getContent();
+          JSONArray contactsFromCache = responseFromCache.getContent();
+          int contactsCacheLength = contactsFromCache.length();
+          int contactsServerLength = contactsFromServer.length();
+          try {
+            for (int i = 0; i < contactsServerLength; i++) {
+              boolean inCache = false;
+              JSONObject contactFromServer = (JSONObject) contactsFromServer.getJSONObject(i);
+              String roomId = contactFromServer.getString("id");
+              for (int j = 0; j < contactsCacheLength; j++) {
+                if (contactsFromCache.getJSONObject(j).getString("id").equals(roomId)) {
+                  inCache = true;
+                  break;
+                }
+              }
+              if (!inCache) {
+                contactCacheCollection.save(contactFromServer);
+                contactsAdapter.add(contactFromServer);
+              }
+            }
+          } catch (JSONException ex) {
+            ex.printStackTrace();
+          }
+        }
       }
 
       @Override
@@ -66,6 +100,11 @@ public class ContactsFragment extends MainActivityFragment {
 
       }
     });
+  }
+
+  public void showContacts(ResponseArray response) {
+    contactsAdapter = new ContactsAdapter(Util.toList(response));
+    listViewContacts.setAdapter(contactsAdapter);
   }
 
   @Override
@@ -88,11 +127,7 @@ public class ContactsFragment extends MainActivityFragment {
 
           @Override
           public void onSuccess(ResponseObject response) {
-            try {
-              context.showRoomFragment(response.getContent().getString("id"));
-            } catch (JSONException e) {
-              e.printStackTrace();
-            }
+            context.showRoomFragment(response.getContent());
           }
 
           @Override

@@ -12,6 +12,7 @@ public class CacheEntry {
   protected DbCache cache;
   private String objectId;
   protected String tableName;
+  private boolean isDeleted = false;
 
   /**
    *
@@ -29,15 +30,28 @@ public class CacheEntry {
    *
    * @return
    */
-  public void delete() {
-    cache.delete(tableName, objectId);
+  public boolean isDeleted() {
+    return isDeleted;
   }
 
   /**
    *
    * @return
    */
+  public void delete() {
+    cache.delete(tableName, objectId);
+    isDeleted = true;
+  }
+
+
+  /**
+   *
+   * @return
+   */
   public ResponseObject getContent() {
+    if (isDeleted) {
+      return null;
+    }
     return new ResponseObject(cache.get(tableName, objectId));
   }
 
@@ -47,6 +61,16 @@ public class CacheEntry {
    * @return
    */
   public void update(JSONObject data) {
+    if (isDeleted) {
+      throw new CacheEntryException("CacheEntry " + objectId + " already deleted");
+    }
     cache.update(tableName, objectId, data);
+  }
+
+  private class CacheEntryException extends RuntimeException {
+
+    public CacheEntryException(String message) {
+      super(message);
+    }
   }
 }

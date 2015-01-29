@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
 
@@ -62,6 +63,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private CacheCollection messageCacheCollection;
   private JSONObject currentRoom;
   private CacheEntry roomCacheEntry;
+  private JSONObject currentRoomUsers;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -85,6 +87,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     try {
       currentRoom = new JSONObject(getArguments().getString("roomInfo"));
       currentRoomId = currentRoom.getString("id");
+      currentRoomUsers = currentRoom.getJSONObject("users");
     } catch (JSONException e) {
       e.printStackTrace();
     }
@@ -178,18 +181,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           onEndOfList = true;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
           if (hasNewMessage) {
-            roomService.visit(currentRoomId, new APIService.UpdateCallback() {
-
-              @Override
-              public void onSuccess(ResponseObject response) {
-
-              }
-
-              @Override
-              public void onFail(int statusCode, String error) {
-
-              }
-            });
+            roomService.visit(currentRoomId, null);
             hasNewMessage = false;
           }
         } else {
@@ -282,7 +274,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
               public void run() {
                 hasNewMessage = true;
                 addToListViewMesages(data);
-                context.playAlertSound();
               }
             });
           } else if (verb.equals("typing")) {
@@ -345,7 +336,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
   public void updateSeenBy(JSONObject user) {
     try {
-      seenBy.put(user.getString("id"), user);
+      String userId = user.getString("id");
+      seenBy.put(userId, user);
+      currentRoomUsers.getJSONObject(userId).put("unreadCount", 0);
+      roomCacheEntry.update(currentRoom);
     } catch (JSONException e) {
       e.printStackTrace();
     }
@@ -360,6 +354,17 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
   public void clearSeenBy() {
     seenBy = new JSONObject();
+    Iterator<String> i = currentRoomUsers.keys();
+    try {
+      JSONObject roomUser;
+      while (i.hasNext()) {
+        roomUser = currentRoomUsers.getJSONObject((String) i.next());
+        roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    roomCacheEntry.update(currentRoom);
     LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = 0;
     txtViewSeenBy.setLayoutParams(layoutParams);
