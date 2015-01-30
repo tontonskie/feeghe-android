@@ -55,4 +55,12 @@ public class ResponseArray extends Response {
   public JSONArray getContent() {
     return content;
   }
+
+  /**
+   *
+   * @return
+   */
+  public int length() {
+    return getContent().length();
+  }
 }

@@ -53,7 +53,7 @@ public class ContactsFragment extends MainActivityFragment {
 
     JSONObject query = contactService.getCacheQuery();
     contactCacheCollection = contactService.getCacheCollection(query);
-    final ResponseArray responseFromCache = contactCacheCollection.getContent();
+    final ResponseArray responseFromCache = contactCacheCollection.getData();
     if (responseFromCache.getContent().length() != 0) {
       showContacts(responseFromCache);
     } else {
@@ -69,25 +69,11 @@ public class ContactsFragment extends MainActivityFragment {
           contactCacheCollection.save(response.getContent());
           contactsPreloader.dismiss();
         } else {
-          JSONArray contactsFromServer = response.getContent();
-          JSONArray contactsFromCache = responseFromCache.getContent();
-          int contactsCacheLength = contactsFromCache.length();
-          int contactsServerLength = contactsFromServer.length();
+          JSONArray addedContacts = contactCacheCollection.update(response).getContent();
+          int addedContactsLength = addedContacts.length();
           try {
-            for (int i = 0; i < contactsServerLength; i++) {
-              boolean inCache = false;
-              JSONObject contactFromServer = (JSONObject) contactsFromServer.getJSONObject(i);
-              String roomId = contactFromServer.getString("id");
-              for (int j = 0; j < contactsCacheLength; j++) {
-                if (contactsFromCache.getJSONObject(j).getString("id").equals(roomId)) {
-                  inCache = true;
-                  break;
-                }
-              }
-              if (!inCache) {
-                contactCacheCollection.save(contactFromServer);
-                contactsAdapter.add(contactFromServer);
-              }
+            for (int i = 0; i < addedContactsLength; i++) {
+              contactsAdapter.add(addedContacts.getJSONObject(i));
             }
           } catch (JSONException ex) {
             ex.printStackTrace();

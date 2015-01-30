@@ -14,16 +14,24 @@ public class FaceService extends APIService {
     super("face", context);
   }
 
-  @Override
-  public JSONObject getCacheQuery() {
-    JSONObject cacheQuery = null;
+  /**
+   *
+   * @param callback
+   */
+  public void getUsableFaces(QueryCallback callback) {
+    JSONObject query = null;
     String jsonParamString = "{\"or\":[{\"favoritedBy." + session.getUserId();
     jsonParamString += "\":{\"!\":null}},{\"user\":\"" + session.getUserId() + "\"}]}";
     try {
-      cacheQuery = createWhereQuery(new JSONObject(jsonParamString));
+      query = createWhereQuery(new JSONObject(jsonParamString));
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    return cacheQuery;
+    query(query, callback);
+  }
+
+  @Override
+  public JSONObject getCacheQuery() {
+    return null;
   }
 }

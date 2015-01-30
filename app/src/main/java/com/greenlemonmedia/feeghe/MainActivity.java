@@ -11,6 +11,7 @@ import android.media.SoundPool;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,7 +22,7 @@ import android.widget.TabWidget;
 
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
-import com.greenlemonmedia.feeghe.api.CacheEntry;
+import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
@@ -33,6 +34,9 @@ import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.koushikdutta.async.http.socketio.DisconnectCallback;
+import com.koushikdutta.async.http.socketio.ErrorCallback;
+import com.koushikdutta.async.http.socketio.ReconnectCallback;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
 
@@ -53,6 +57,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private CacheCollection roomCacheCollection;
   private RoomService roomService;
   private TabWidget tabs;
+  private MessageService messageService;
 
   public static final String TAB_HOME = "home";
   public static final String TAB_MESSAGES = "messages";
@@ -66,8 +71,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     context = this;
     session = Session.getInstance(context);
     userService = new UserService(context);
+    messageService = new MessageService(context);
     roomService = new RoomService(context);
-    roomCacheCollection = roomService.getCacheCollection(roomService.getCacheQuery());
+    roomCacheCollection = roomService.getCacheCollection();
 
     if (!session.isLoggedIn()) {
       backToLogin();
@@ -177,17 +183,41 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
           JSONObject message = evt.getJSONObject("data");
           if (verb.equals("created")) {
             playAlertSound();
-            CacheEntry roomCache = roomService.getCacheEntry(message.getString("room"));
-            ResponseObject roomCacheResponse = roomCache.getContent();
-            if (roomCacheResponse != null) {
-              JSONObject roomCacheContent = roomCacheResponse.getContent();
-              roomCacheContent.put("recentChat", message.getString("content"));
-              roomCache.update(roomCacheContent);
-            }
+            JSONObject roomUpdate = new JSONObject();
+            roomUpdate.put("recentChat", message.getString("content"));
+            roomCacheCollection.update(message.getString("room"), roomUpdate);
+            messageService.getCacheCollection(messageService.getCacheQuery(message.getString("room"))).save(message);
           }
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
+      }
+    });
+
+    SocketIOClient socketClient = Socket.getClient();
+    socketClient.setDisconnectCallback(new DisconnectCallback() {
+
+      @Override
+      public void onDisconnect(Exception e) {
+        if (e != null) {
+          Log.d("socket disconnect", e.getMessage());
+        }
+      }
+    });
+
+    socketClient.setErrorCallback(new ErrorCallback() {
+
+      @Override
+      public void onError(String error) {
+        Log.d("socket error", error);
+      }
+    });
+
+    socketClient.setReconnectCallback(new ReconnectCallback() {
+
+      @Override
+      public void onReconnect() {
+        Log.d("socket reconnect", "reconnect");
       }
     });
   }

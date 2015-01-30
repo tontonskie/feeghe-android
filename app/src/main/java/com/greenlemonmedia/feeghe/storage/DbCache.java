@@ -53,18 +53,17 @@ public class DbCache implements Serializable {
    * @return
    */
   public static String createQueryHash(JSONObject query) {
-    MessageDigest md = null;
+    StringBuffer sb = new StringBuffer();
     try {
-      md = MessageDigest.getInstance("SHA-1");
+      MessageDigest md = MessageDigest.getInstance("SHA-1");
+      md.reset();
+      md.update(query.toString().getBytes());
+      byte[] result = md.digest();
+      for (int i = 0; i < result.length; i++) {
+        sb.append(String.format("%02x", result[i]));
+      }
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
-    }
-    md.reset();
-    md.update(query.toString().getBytes());
-    byte[] result = md.digest();
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < result.length; i++) {
-      sb.append(String.format("%02x", result[i]));
     }
     return sb.toString();
   }
@@ -84,26 +83,6 @@ public class DbCache implements Serializable {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-  }
-
-  /**
-   *
-   * @param cacheTableName
-   * @param query
-   * @param data
-   */
-  public void set(String cacheTableName, JSONObject query, JSONArray data) {
-    set(cacheTableName, createQueryHash(query), data);
-  }
-
-  /**
-   *
-   * @param cacheTableName
-   * @param data
-   * @return
-   */
-  public void set(String cacheTableName, JSONObject query, JSONObject data) {
-    set(cacheTableName, createQueryHash(query), data);
   }
 
   /**
@@ -141,38 +120,17 @@ public class DbCache implements Serializable {
   /**
    *
    * @param cacheTableName
-   * @param query
-   * @return
-   */
-  public JSONArray getArray(String cacheTableName, JSONObject query) {
-    return getArray(cacheTableName, createQueryHash(query));
-  }
-
-  /**
-   *
-   * @param cacheTableName
    * @param queryId
    * @return
    */
-  public JSONArray getArray(String cacheTableName, String queryId) {
+  public Cursor getRows(String cacheTableName, String queryId) {
     Cursor result;
     if (queryId != null) {
       result = dbWriter.query(cacheTableName, null, "query_id = ?", new String[] { queryId }, null, null, null);
     } else {
       result = dbWriter.query(cacheTableName, null, null, null, null, null, null);
     }
-    JSONArray fromCache = new JSONArray();
-    try {
-      result.moveToFirst();
-      while (!result.isAfterLast()) {
-        fromCache.put(new JSONObject(result.getString(result.getColumnIndex("content"))));
-        result.moveToNext();
-      }
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    result.close();
-    return fromCache;
+    return result;
   }
 
   /**
@@ -181,17 +139,19 @@ public class DbCache implements Serializable {
    * @param objectId
    * @return
    */
-  public JSONObject get(String cacheTableName, String objectId) {
+  public DbCacheRow getRow(String cacheTableName, String objectId) {
     Cursor result = dbWriter.query(cacheTableName, null, "obj_id = ?", new String[] { objectId }, null, null, null);
     result.moveToFirst();
-    JSONObject fromCache = null;
-    try {
-      fromCache = new JSONObject(result.getString(result.getColumnIndex("content")));
-    } catch (JSONException e) {
-      e.printStackTrace();
+    DbCacheRow row = null;
+    if (result.getCount() != 0) {
+      row = new DbCacheRow();
+      row.id = result.getInt(result.getColumnIndex("id"));
+      row.objectId = result.getString(result.getColumnIndex("obj_id"));
+      row.queryId = result.getString(result.getColumnIndex("query_id"));
+      row.content = result.getString(result.getColumnIndex("content"));
     }
     result.close();
-    return fromCache;
+    return row;
   }
 
   /**
@@ -201,6 +161,13 @@ public class DbCache implements Serializable {
    */
   public void delete(String cacheTableName, String objectId) {
     dbWriter.delete(cacheTableName, "obj_id = ?", new String[] { objectId });
+  }
+
+  private class DbCacheRow {
+    public int id;
+    public String queryId;
+    public String objectId;
+    public String content;
   }
 
   public class DbHelper extends SQLiteOpenHelper {
@@ -237,6 +204,13 @@ public class DbCache implements Serializable {
         "updated_at datetime current_timestamp);"
       );
       db.execSQL("create table room(" +
+        "id integer primary key autoincrement, " +
+        "obj_id varchar not null unique, " +
+        "query_id varchar not null, " +
+        "content text not null, " +
+        "updated_at datetime current_timestamp);"
+      );
+      db.execSQL("create table face(" +
         "id integer primary key autoincrement, " +
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
