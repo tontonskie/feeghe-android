@@ -39,4 +39,19 @@ public class MessageService extends APIService {
   public JSONObject getCacheQuery() {
     return null;
   }
+
+  /**
+   *
+   * @param roomId
+   * @return
+   */
+  public JSONObject getCacheQuery(String roomId) {
+    JSONObject messageQuery = new JSONObject();
+    try {
+      messageQuery.put("room", roomId);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return createWhereQuery(messageQuery);
+  }
 }

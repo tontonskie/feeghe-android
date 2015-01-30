@@ -53,8 +53,8 @@ public class RoomsFragment extends MainActivityFragment {
     JSONObject request = roomService.getCacheQuery();
     roomCacheCollection = roomService.getCacheCollection(request);
 
-    final ResponseArray responseFromCache = roomCacheCollection.getContent();
-    if (responseFromCache.getContent().length() != 0) {
+    final ResponseArray responseFromCache = roomCacheCollection.getData();
+    if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
     } else {
       roomsPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
@@ -69,25 +69,11 @@ public class RoomsFragment extends MainActivityFragment {
           roomCacheCollection.save(response.getContent());
           roomsPreloader.dismiss();
         } else {
-          JSONArray roomsFromServer = response.getContent();
-          JSONArray roomsFromCache = responseFromCache.getContent();
-          int roomsCacheLength = roomsFromCache.length();
-          int roomsServerLength = roomsFromServer.length();
+          JSONArray addedRooms = roomCacheCollection.update(response).getContent();
+          int addedRoomsLength = addedRooms.length();
           try {
-            for (int i = 0; i < roomsServerLength; i++) {
-              boolean inCache = false;
-              JSONObject roomFromServer = (JSONObject) roomsFromServer.getJSONObject(i);
-              String roomId = roomFromServer.getString("id");
-              for (int j = 0; j < roomsCacheLength; j++) {
-                if (roomsFromCache.getJSONObject(j).getString("id").equals(roomId)) {
-                  inCache = true;
-                  break;
-                }
-              }
-              if (!inCache) {
-                roomCacheCollection.save(roomFromServer);
-                roomsAdapter.add(roomFromServer);
-              }
+            for (int i = 0; i < addedRoomsLength; i++) {
+              roomsAdapter.add(addedRooms.getJSONObject(i));
             }
           } catch (JSONException ex) {
             ex.printStackTrace();
@@ -101,6 +87,17 @@ public class RoomsFragment extends MainActivityFragment {
       }
     });
 
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  @Override
+  protected void setupUIEvents() {
+
+  }
+
+  @Override
+  protected void setupSocketEvents() {
     Socket.on("message", new APIService.EventCallback() {
 
       @Override

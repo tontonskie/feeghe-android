@@ -34,18 +34,17 @@ import java.util.Iterator;
  */
 abstract public class APIService implements Serializable {
 
-  public static final String PORT = null;
+  public static final String PORT = "";
   public static final String HTTP_SCHEME = "http";
   public static final String HOST = "dev.feeghe.com";
   public static final String PATH = "api";
-  public static final String URL = HTTP_SCHEME + "://" + HOST + "/" + PATH + "/";
+  public static final String URL = HTTP_SCHEME + "://" + HOST + (PORT.isEmpty() ? "" : ":" + PORT) + "/" + PATH + "/";
 
   protected String modelName;
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected HashMap<String, CacheCollection> cacheCollections;
-  protected HashMap<String, CacheEntry> cacheEntries;
+  protected static HashMap<String, CacheCollection> cacheCollections;
 
   /**
    *
@@ -75,25 +74,22 @@ abstract public class APIService implements Serializable {
       cacheCollections = new HashMap<>();
     }
     String queryId = DbCache.createQueryHash(query);
-    if (!cacheCollections.containsKey(queryId)) {
-      cacheCollections.put(queryId, new CacheCollection(modelName, dbCache, queryId));
+    if (!cacheCollections.containsKey(modelName + '-' + queryId)) {
+      cacheCollections.put(modelName + '-' + queryId, new CacheCollection(modelName, dbCache, queryId));
     }
-    return cacheCollections.get(queryId);
+    return cacheCollections.get(modelName + '-' + queryId);
   }
 
   /**
    *
-   * @param id
    * @return
    */
-  public CacheEntry getCacheEntry(String id) {
-    if (cacheEntries == null) {
-      cacheEntries = new HashMap<>();
+  public CacheCollection getCacheCollection() {
+    JSONObject cacheQuery = getCacheQuery();
+    if (cacheQuery == null) {
+      throw new RuntimeException("Cache Query cannot be NULL");
     }
-    if (!cacheEntries.containsKey(id)) {
-      cacheEntries.put(id, new CacheEntry(modelName, id, dbCache));
-    }
-    return cacheEntries.get(id);
+    return getCacheCollection(cacheQuery);
   }
 
   /**
@@ -136,7 +132,7 @@ abstract public class APIService implements Serializable {
    */
   public Uri.Builder getBaseUrlBuilder() {
     Uri.Builder uriBuilder;
-    if (PORT != null) {
+    if (!PORT.isEmpty()) {
       uriBuilder = Uri.parse(HTTP_SCHEME + "://" + HOST + ":" + PORT).buildUpon();
     } else {
       uriBuilder = new Uri.Builder()
@@ -492,11 +488,11 @@ abstract public class APIService implements Serializable {
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    if (callback != null) {
-      Socket.getClient().emit(method, args, new Acknowledge() {
+    Socket.getClient().emit(method, args, new Acknowledge() {
 
-        @Override
-        public void acknowledge(JSONArray arguments) {
+      @Override
+      public void acknowledge(JSONArray arguments) {
+        if (callback != null) {
           try {
             JSONObject result = arguments.getJSONObject(0);
             int statusCode = result.getInt("statusCode");
@@ -509,10 +505,8 @@ abstract public class APIService implements Serializable {
             e.printStackTrace();
           }
         }
-      });
-    } else {
-      Socket.getClient().emit(method, args);
-    }
+      }
+    });
   }
 
   /**

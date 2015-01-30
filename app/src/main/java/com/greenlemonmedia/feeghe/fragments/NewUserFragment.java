@@ -17,7 +17,6 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TabWidget;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -85,8 +84,16 @@ public class NewUserFragment extends MainActivityFragment {
     txtNewPassword = (EditText) view.findViewById(R.id.txtNewPassword);
     txtConfirmPassword = (EditText) view.findViewById(R.id.txtConfirmPassword);
     chkSyncContacts = (CheckBox) view.findViewById(R.id.chkSyncContacts);
-
     btnChangePass = (Button) view.findViewById(R.id.btnChangePass);
+    btnAddContacts = (Button) view.findViewById(R.id.btnAddContacts);
+    btnSkipContacts = (Button) view.findViewById(R.id.btnSkipContacts);
+
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  @Override
+  protected void setupUIEvents() {
     btnChangePass.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -148,7 +155,6 @@ public class NewUserFragment extends MainActivityFragment {
       }
     });
 
-    btnAddContacts = (Button) view.findViewById(R.id.btnAddContacts);
     btnAddContacts.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -190,7 +196,6 @@ public class NewUserFragment extends MainActivityFragment {
       }
     });
 
-    btnSkipContacts = (Button) view.findViewById(R.id.btnSkipContacts);
     btnSkipContacts.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -198,6 +203,11 @@ public class NewUserFragment extends MainActivityFragment {
         goToHome();
       }
     });
+  }
+
+  @Override
+  protected void setupSocketEvents() {
+
   }
 
   public void showSyncContactsForm() {

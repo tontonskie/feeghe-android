@@ -54,7 +54,7 @@ abstract public class Socket {
     qstring += "&t=" + new Date().getTime();
 
     String wsUrl = APIService.HTTP_SCHEME + "://" + APIService.HOST;
-    if (APIService.PORT != null) {
+    if (!APIService.PORT.isEmpty()) {
       wsUrl += ':' + APIService.PORT;
     }
     SocketIORequest socketRequest = new SocketIORequest(wsUrl, "", qstring);

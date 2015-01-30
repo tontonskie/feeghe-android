@@ -1,19 +1,23 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -23,7 +27,7 @@ import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
-import com.greenlemonmedia.feeghe.api.CacheEntry;
+import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -32,6 +36,7 @@ import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -62,8 +67,16 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private RoomService roomService;
   private CacheCollection messageCacheCollection;
   private JSONObject currentRoom;
-  private CacheEntry roomCacheEntry;
+  private CacheCollection roomCacheCollection;
   private JSONObject currentRoomUsers;
+  private Button btnShowUseFace;
+  private FaceService faceService;
+  private LinearLayout newMessageOptionBtns;
+  private InputMethodManager newMessageManager;
+  private LinearLayout newMessageOptionDisplay;
+  private CacheCollection faceCacheCollection;
+  private UsableFacesAdapter facesAdapter;
+  private GridView gridUsableFaces;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -93,9 +106,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
 
     session = Session.getInstance(context);
+    faceService = new FaceService(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
-    roomCacheEntry = roomService.getCacheEntry(currentRoomId);
+    roomCacheCollection = roomService.getCacheCollection();
 
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
@@ -103,23 +117,24 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtViewSeenBy = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewSeenBy);
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
+    btnShowUseFace = (Button) context.findViewById(R.id.btnShowUseFace);
+    newMessageOptionBtns = (LinearLayout) context.findViewById(R.id.newMessageOptionBtns);
+    newMessageManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    newMessageOptionDisplay = (LinearLayout) context.findViewById(R.id.newMessageOptionDisplay);
+    gridUsableFaces = (GridView) context.findViewById(R.id.gridUsableFaces);
 
-    JSONObject query = new JSONObject();
-    try {
-      query.put("room", currentRoomId);
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    query = messageService.createWhereQuery(query);
-    messageCacheCollection = messageService.getCacheCollection(query);
-    ResponseArray response = messageCacheCollection.getContent();
-    if (response.getContent().length() == 0) {
-      messageService.query(query, new APIService.QueryCallback() {
+    JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
+    messageCacheCollection = messageService.getCacheCollection(messageQuery);
+    ResponseArray response = messageCacheCollection.getData();
+    if (response.length() == 0) {
+      final ProgressDialog messagesPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      messageService.query(messageQuery, new APIService.QueryCallback() {
 
         @Override
         public void onSuccess(ResponseArray response) {
-          showMessages(response);
+          setMessages(response);
           messageCacheCollection.save(response.getContent());
+          messagesPreloader.dismiss();
         }
 
         @Override
@@ -128,9 +143,55 @@ public class SelectedRoomFragment extends MainActivityFragment {
         }
       });
     } else {
-      showMessages(response);
+      setMessages(response);
     }
 
+    JSONObject faceQuery = null;
+    String jsonParamString = "{\"or\":[{\"favoritedBy." + session.getUserId();
+    jsonParamString += "\":{\"!\":null}},{\"user\":\"" + session.getUserId() + "\"}]}";
+    try {
+      faceQuery = faceService.createWhereQuery(new JSONObject(jsonParamString));
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    faceCacheCollection = faceService.getCacheCollection(faceQuery);
+    ResponseArray facesFromCache = faceCacheCollection.getData();
+    if (facesFromCache.length() != 0) {
+      setUsableFaces(facesFromCache);
+    }
+
+    faceService.query(faceQuery, new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        if (facesAdapter == null) {
+          setUsableFaces(response);
+          faceCacheCollection.save(response.getContent());
+        } else {
+          JSONArray addedFaces = faceCacheCollection.update(response).getContent();
+          int addedFacesLength = addedFaces.length();
+          try {
+            for (int i = 0; i < addedFacesLength; i++) {
+              facesAdapter.add(addedFaces.getJSONObject(i));
+            }
+          } catch (JSONException ex) {
+            ex.printStackTrace();
+          }
+        }
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        Toast.makeText(context, "Usable faces error: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
+      }
+    });
+
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  @Override
+  protected void setupUIEvents() {
     typingHandler = new Handler();
     cancelTypingTask = new Runnable() {
 
@@ -230,10 +291,16 @@ public class SelectedRoomFragment extends MainActivityFragment {
           public void onSuccess(final ResponseObject response) {
             final int index = roomMessagesAdapter.getPosition(dataForAppend);
             if (index < 0) {
-              Toast.makeText(context, "Sent message position not found", Toast.LENGTH_LONG).show();
               return;
             }
             messageCacheCollection.save(response.getContent());
+            JSONObject roomUpdate = new JSONObject();
+            try {
+              roomUpdate.put("recentChat", response.getContent().getString("content"));
+            } catch (JSONException ex) {
+              ex.printStackTrace();
+            }
+            roomCacheCollection.update(currentRoomId, roomUpdate);
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -246,7 +313,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
           @Override
           public void onFail(int statusCode, String error) {
-            Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
+
           }
         });
 
@@ -256,6 +323,19 @@ public class SelectedRoomFragment extends MainActivityFragment {
       }
     });
 
+    btnShowUseFace.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        newMessageManager.hideSoftInputFromWindow(txtNewMessage.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        newMessageOptionBtns.setVisibility(View.GONE);
+        newMessageOptionDisplay.setVisibility(View.VISIBLE);
+      }
+    });
+  }
+
+  @Override
+  protected void setupSocketEvents() {
     Socket.on("message", new APIService.EventCallback() {
 
       @Override
@@ -267,7 +347,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
             return;
           }
           if (verb.equals("created")) {
-            messageCacheCollection.save(data);
             context.runOnUiThread(new Runnable() {
 
               @Override
@@ -321,10 +400,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
     });
   }
 
-  public void showMessages(ResponseArray response) {
+  public void setMessages(ResponseArray response) {
     roomMessagesAdapter = new RoomMessagesAdapter(Util.toList(response));
     listViewMessages.setAdapter(roomMessagesAdapter);
     txtNewMessage.setEnabled(true);
+  }
+
+  public void setUsableFaces(ResponseArray response) {
+    facesAdapter = new UsableFacesAdapter(Util.toList(response));
+    gridUsableFaces.setAdapter(facesAdapter);
   }
 
   public void setSeenBy(JSONObject users) {
@@ -339,7 +423,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       String userId = user.getString("id");
       seenBy.put(userId, user);
       currentRoomUsers.getJSONObject(userId).put("unreadCount", 0);
-      roomCacheEntry.update(currentRoom);
+      roomCacheCollection.replace(currentRoomId, currentRoom);
     } catch (JSONException e) {
       e.printStackTrace();
     }
@@ -364,7 +448,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    roomCacheEntry.update(currentRoom);
+    roomCacheCollection.replace(currentRoomId, currentRoom);
     LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = 0;
     txtViewSeenBy.setLayoutParams(layoutParams);
@@ -404,6 +488,13 @@ public class SelectedRoomFragment extends MainActivityFragment {
   @Override
   public String getTabId() {
     return MainActivity.TAB_MESSAGES;
+  }
+
+  private class UsableFacesAdapter extends ArrayAdapter<JSONObject> {
+
+    public UsableFacesAdapter(ArrayList<JSONObject> faces) {
+      super(context, R.layout.per_chat, faces);
+    }
   }
 
   private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnLongClickListener {
@@ -460,7 +551,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
         }
 
         if (nextUser == null || !nextUser.getString("id").equals(userId)) {
-//        if ((nextUser == null || !nextUser.getString("id").equals(userId)) && !userId.equals(session.getUserId())) {
           viewHolder.txtViewMessageTimestamp.setVisibility(View.VISIBLE);
           viewHolder.txtViewMessageTimestamp.setText(message.getString("timestamp"));
         } else {
@@ -477,7 +567,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
         }
 
-        viewHolder.txtViewPerChatContent.setText(Html.fromHtml(message.getString("content")), TextView.BufferType.SPANNABLE);
+        viewHolder.txtViewPerChatContent.setText(message.getString("content"));
         viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
 
         if (position == (getCount() - 1)) {

@@ -21,4 +21,14 @@ public class HomeFragment extends MainActivityFragment {
   public String getTabId() {
     return MainActivity.TAB_HOME;
   }
+
+  @Override
+  protected void setupUIEvents() {
+
+  }
+
+  @Override
+  protected void setupSocketEvents() {
+
+  }
 }

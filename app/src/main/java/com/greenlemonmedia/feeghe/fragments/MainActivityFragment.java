@@ -14,4 +14,8 @@ abstract public class MainActivityFragment extends Fragment {
   }
 
   abstract public String getTabId();
+
+  abstract protected void setupUIEvents();
+
+  abstract protected void setupSocketEvents();
 }
