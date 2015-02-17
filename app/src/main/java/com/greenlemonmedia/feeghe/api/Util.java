@@ -1,5 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.net.Uri;
 
 import org.json.JSONArray;
@@ -21,8 +23,16 @@ public class Util {
    * @return
    */
   public static ArrayList<JSONObject> toList(ResponseArray response) {
+    return toList(response.getContent());
+  }
+
+  /**
+   *
+   * @param content
+   * @return
+   */
+  public static ArrayList<JSONObject> toList(JSONArray content) {
     ArrayList<JSONObject> contentList = new ArrayList<>();
-    JSONArray content = response.getContent();
     int length = content.length();
     try {
       for (int i = 0; i < length; i++) {
@@ -96,7 +106,30 @@ public class Util {
     return sb.toString();
   }
 
+  /**
+   *
+   * @return
+   */
   public static String createUniqueCode() {
     return UUID.randomUUID().toString();
+  }
+
+  /**
+   *
+   * @param context
+   * @param message
+   * @return
+   */
+  public static ProgressDialog showPreloader(Context context, String message) {
+    return ProgressDialog.show(context, "", message, true, false);
+  }
+
+  /**
+   *
+   * @param context
+   * @return
+   */
+  public static ProgressDialog showPreloader(Context context) {
+    return showPreloader(context, "Please wait...");
   }
 }

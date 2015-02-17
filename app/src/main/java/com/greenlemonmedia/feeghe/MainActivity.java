@@ -337,7 +337,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   public void backToLogin() {
-    startActivity(new Intent(this, LoginActivity.class));
+    startActivity(new Intent(this, RegisterActivity.class));
   }
 
   private class TabContent implements TabHost.TabContentFactory {

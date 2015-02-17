@@ -44,6 +44,7 @@ abstract public class APIService implements Serializable {
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
+  protected Context context;
   protected static HashMap<String, CacheCollection> cacheCollections;
 
   /**
@@ -52,6 +53,7 @@ abstract public class APIService implements Serializable {
    * @param context
    */
   public APIService(String modelName, Context context) {
+    this.context = context;
     this.modelName = modelName;
     session = Session.getInstance(context);
     dbCache = DbCache.getInstance(context);

@@ -1,6 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
 import android.content.Context;
+import android.telephony.TelephonyManager;
 
 import com.greenlemonmedia.feeghe.storage.Session;
 
@@ -50,8 +51,11 @@ public class UserService extends APIService {
   public void register(String phoneNumber, SaveCallback callback) {
     HttpPost postRequest = new HttpPost(getBaseUrl("register"));
     JSONObject params = new JSONObject();
+    TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
     try {
       params.put("number", phoneNumber);
+      params.put("platform", "android");
+      params.put("deviceId", tel.getDeviceId());
     } catch (JSONException e) {
       e.printStackTrace();
     }

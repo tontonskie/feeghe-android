@@ -24,6 +24,7 @@ public class Session {
 
   public static final String LOGGED_IN_KEY = "logged_in";
   public static final String TOKEN_KEY = "token";
+  public static final String VERIFICATION_KEY = "verification";
   public static final String USER_KEY = "user";
   public static final String PREFERENCE_NAME = "feeghe_user_session";
   public static final int PREFERENCE_MODE = 0;
@@ -220,5 +221,33 @@ public class Session {
    */
   public boolean isLoggedIn() {
     return session.getBoolean(LOGGED_IN_KEY, false);
+  }
+
+  /**
+   *
+   * @param key
+   * @return
+   */
+  public String get(String key) {
+    return session.getString(key, null);
+  }
+
+  /**
+   *
+   * @param key
+   * @param value
+   */
+  public void set(String key, String value) {
+    editor.putString(key, value);
+    editor.commit();
+  }
+
+  /**
+   *
+   * @param key
+   */
+  public void remove(String key) {
+    editor.remove(key);
+    editor.commit();
   }
 }
