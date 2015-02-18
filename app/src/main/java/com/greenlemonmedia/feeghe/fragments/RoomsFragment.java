@@ -53,11 +53,11 @@ public class RoomsFragment extends MainActivityFragment {
     JSONObject request = roomService.getCacheQuery();
     roomCacheCollection = roomService.getCacheCollection(request);
 
-    final ResponseArray responseFromCache = roomCacheCollection.getData();
+    ResponseArray responseFromCache = roomCacheCollection.getData();
     if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
     } else {
-      roomsPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      roomsPreloader = Util.showPreloader(context);
     }
 
     roomService.query(request, new APIService.QueryCallback() {

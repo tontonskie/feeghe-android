@@ -132,4 +132,13 @@ public class Util {
   public static ProgressDialog showPreloader(Context context) {
     return showPreloader(context, "Please wait...");
   }
+
+  /**
+   *
+   * @param path
+   * @return
+   */
+  public static String getStaticUrl(String path) {
+    return APIService.HTTP_SCHEME + "://" + APIService.STATIC_HOST + "/uploads/" + path;
+  }
 }

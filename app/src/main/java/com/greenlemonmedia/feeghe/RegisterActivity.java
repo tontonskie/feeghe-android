@@ -212,15 +212,15 @@ public class RegisterActivity extends Activity {
     startActivity(new Intent(this, MainActivity.class));
   }
 
-  private class CountryCodeViewHolder {
-    public ImageView imgViewCountry;
-    public TextView txtCountryCode;
-  }
-
   private class CountryCodesAdapter extends ArrayAdapter<JSONObject> {
 
     public CountryCodesAdapter(ArrayList<JSONObject> countryCodes) {
       super(context, R.layout.per_country_code, countryCodes);
+    }
+
+    private class CountryCodeViewHolder {
+      public ImageView imgViewCountry;
+      public TextView txtCountryCode;
     }
 
     private View getCountryCodeView(int position, View convertView, ViewGroup parent, boolean forGetView) {

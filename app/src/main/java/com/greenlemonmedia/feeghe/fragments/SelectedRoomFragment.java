@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -16,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -33,6 +35,7 @@ import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,6 +78,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private CacheCollection faceCacheCollection;
   private UsableFacesAdapter facesAdapter;
   private GridView gridUsableFaces;
+  private Button btnCloseOptionDisplay;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -120,6 +124,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     newMessageManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
     newMessageOptionDisplay = (LinearLayout) context.findViewById(R.id.newMessageOptionDisplay);
     gridUsableFaces = (GridView) context.findViewById(R.id.gridUsableFaces);
+    btnCloseOptionDisplay = (Button) context.findViewById(R.id.btnCloseOptionDisplay);
 
     JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
     messageCacheCollection = messageService.getCacheCollection(messageQuery);
@@ -332,6 +337,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
         newMessageOptionDisplay.setVisibility(View.VISIBLE);
       }
     });
+
+    btnCloseOptionDisplay.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        newMessageOptionBtns.setVisibility(View.VISIBLE);
+        newMessageOptionDisplay.setVisibility(View.GONE);
+      }
+    });
   }
 
   @Override
@@ -490,10 +504,42 @@ public class SelectedRoomFragment extends MainActivityFragment {
     return MainActivity.TAB_MESSAGES;
   }
 
-  private class UsableFacesAdapter extends ArrayAdapter<JSONObject> {
+  private class UsableFacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     public UsableFacesAdapter(ArrayList<JSONObject> faces) {
-      super(context, R.layout.per_chat, faces);
+      super(context, R.layout.per_usable_face, faces);
+    }
+
+    @Override
+    public void onClick(View v) {
+      Toast.makeText(context, "Test", Toast.LENGTH_SHORT).show();
+    }
+
+    private class UsableFaceViewHolder {
+      public ImageView imgViewUsableFace;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+      UsableFaceViewHolder viewHolder;
+      if (convertView == null) {
+        LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = vi.inflate(R.layout.per_usable_face, null);
+        viewHolder = new UsableFaceViewHolder();
+        viewHolder.imgViewUsableFace = (ImageView) convertView.findViewById(R.id.imgViewUsableFace);
+        viewHolder.imgViewUsableFace.setOnClickListener(this);
+        convertView.setTag(viewHolder);
+      } else {
+        viewHolder = (UsableFaceViewHolder) convertView.getTag();
+      }
+
+      try {
+        String facePic = Util.getStaticUrl(getItem(position).getJSONObject("photo").getString("small"));
+        Picasso.with(context).load(Uri.parse(facePic)).into(viewHolder.imgViewUsableFace);
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+
+      return convertView;
     }
   }
 
