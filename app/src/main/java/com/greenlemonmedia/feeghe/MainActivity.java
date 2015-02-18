@@ -23,12 +23,13 @@ import android.widget.TabWidget;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.MessageService;
-import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
+import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
-import com.greenlemonmedia.feeghe.fragments.HomeFragment;
+import com.greenlemonmedia.feeghe.fragments.UploadFragment;
+import com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment;
 import com.greenlemonmedia.feeghe.fragments.MainActivityFragment;
 import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
@@ -50,7 +51,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private Session session;
   private Session.User currentUser;
   private TabHost tabHost;
-  private Boolean isManualTabChange = false;
+  private boolean isManualTabChange = false;
   private String currentFragmentTabId;
   private SoundPool soundPool;
   private int alertSoundId;
@@ -59,9 +60,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private TabWidget tabs;
   private MessageService messageService;
 
-  public static final String TAB_HOME = "home";
+  public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
   public static final String TAB_CONTACTS = "contacts";
+  public static final String TAB_UPLOAD = "upload";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +78,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     roomCacheCollection = roomService.getCacheCollection();
 
     if (!session.isLoggedIn()) {
-      backToLogin();
+      backToRegistration();
       return;
     }
 
@@ -90,10 +92,6 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabHost = (TabHost) findViewById(R.id.tabHost);
     tabHost.setup();
 
-    TabHost.TabSpec tabHome = tabHost.newTabSpec(TAB_HOME);
-    tabHome.setContent(new TabContent());
-    tabHome.setIndicator("Home");
-
     TabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
     tabMessages.setContent(new TabContent());
     tabMessages.setIndicator("Messages");
@@ -102,9 +100,18 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabContacts.setContent(new TabContent());
     tabContacts.setIndicator("Contacts");
 
-    tabHost.addTab(tabHome);
+    TabHost.TabSpec tabUpload = tabHost.newTabSpec(TAB_UPLOAD);
+    tabUpload.setContent(new TabContent());
+    tabUpload.setIndicator("Upload");
+
+    TabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
+    tabWallOfFaces.setContent(new TabContent());
+    tabWallOfFaces.setIndicator("Faces");
+
     tabHost.addTab(tabMessages);
     tabHost.addTab(tabContacts);
+    tabHost.addTab(tabUpload);
+    tabHost.addTab(tabWallOfFaces);
     tabHost.setOnTabChangedListener(this);
     tabs = tabHost.getTabWidget();
   }
@@ -120,7 +127,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   private void setupSocketConnection() {
-    final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+    final ProgressDialog preloader = Util.showPreloader(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
       @Override
@@ -135,7 +142,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
         if (currentUser.hasStatus(Session.User.STATUS_INCOMPLETE)) {
           showNewUserFragment();
         } else {
-          showHomeFragment();
+          showMessagesFragment();
         }
         initSocketEvents();
       }
@@ -225,15 +232,18 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   @Override
   public void onTabChanged(String tabId) {
     if (!isManualTabChange) {
-      switch(tabId) {
-        case TAB_HOME:
-          showHomeFragment();
+      switch (tabId) {
+        case TAB_WALL_OF_FACES:
+          showWallOfFacesFragment();
           break;
         case TAB_MESSAGES:
           showMessagesFragment();
           break;
         case TAB_CONTACTS:
           showContactsFragment();
+          break;
+        case TAB_UPLOAD:
+          showUploadFragment();
           break;
       }
     }
@@ -253,7 +263,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     showFragment(fragment, true);
   }
 
-  private void showFragment(MainActivityFragment fragment, Boolean withBackStack) {
+  private void showFragment(MainActivityFragment fragment, boolean withBackStack) {
     FragmentManager fm = getFragmentManager();
     FragmentTransaction ft = fm.beginTransaction();
     ft.replace(android.R.id.tabcontent, fragment);
@@ -262,6 +272,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     }
     currentFragmentTabId = fragment.getTabId();
     ft.commit();
+  }
+
+  public void showUploadFragment() {
+    showFragment(new UploadFragment());
   }
 
   public void showRoomFragment(JSONObject roomInfo) {
@@ -277,12 +291,12 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     showFragment(new NewUserFragment(), false);
   }
 
-  public void showHomeFragment() {
-    showFragment(new HomeFragment());
+  public void showWallOfFacesFragment() {
+    showFragment(new WallOfFacesFragment());
   }
 
-  public void showHomeFragment(Boolean withBackStack) {
-    showFragment(new HomeFragment(), withBackStack);
+  public void showMessagesFragment(boolean withBackStack) {
+    showFragment(new RoomsFragment(), withBackStack);
   }
 
   public void showMessagesFragment() {
@@ -301,26 +315,6 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    int id = item.getItemId();
-    if (id == R.id.action_logout) {
-      final ProgressDialog preloader = ProgressDialog.show(context, null, "Please wait...", true, false);
-      userService.logout(new APIService.DeleteCallback() {
-
-        @Override
-        public void onSuccess(ResponseObject response) {
-          session.setLoggedIn(false);
-          Socket.disconnect();
-          preloader.dismiss();
-          backToLogin();
-        }
-
-        @Override
-        public void onFail(int statusCode, String error) {
-          preloader.dismiss();
-        }
-      });
-      return true;
-    }
     return super.onOptionsItemSelected(item);
   }
 
@@ -336,7 +330,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     finish();
   }
 
-  public void backToLogin() {
+  public void backToRegistration() {
     startActivity(new Intent(this, RegisterActivity.class));
   }
 

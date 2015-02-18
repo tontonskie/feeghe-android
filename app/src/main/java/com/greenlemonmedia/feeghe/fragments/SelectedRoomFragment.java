@@ -5,9 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
-import android.text.Html;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,14 +53,14 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private MessageService messageService;
   private JSONObject typers = new JSONObject();
   private TextView txtViewTyping;
-  private Boolean meTyping = false;
-  private Boolean processingNewMessage = false;
+  private boolean meTyping = false;
+  private boolean processingNewMessage = false;
   private Handler typingHandler;
   private Runnable cancelTypingTask;
   private JSONObject seenBy = new JSONObject();
   private TextView txtViewSeenBy;
-  private Boolean hasNewMessage = false;
-  private Boolean onEndOfList = true;
+  private boolean hasNewMessage = false;
+  private boolean onEndOfList = true;
   private View listViewMessagesFooter;
   private RoomService roomService;
   private CacheCollection messageCacheCollection;
@@ -127,7 +125,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     messageCacheCollection = messageService.getCacheCollection(messageQuery);
     ResponseArray response = messageCacheCollection.getData();
     if (response.length() == 0) {
-      final ProgressDialog messagesPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      final ProgressDialog messagesPreloader = Util.showPreloader(context);
       messageService.query(messageQuery, new APIService.QueryCallback() {
 
         @Override
@@ -305,7 +303,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
               @Override
               public void run() {
+                roomMessagesAdapter.setNotifyOnChange(false);
                 roomMessagesAdapter.remove(dataForAppend);
+                roomMessagesAdapter.setNotifyOnChange(true);
                 roomMessagesAdapter.insert(response.getContent(), index);
               }
             });
@@ -455,7 +455,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtViewSeenBy.setText("");
   }
 
-  public void updateTypers(JSONObject user, Boolean isTyping) {
+  public void updateTypers(JSONObject user, boolean isTyping) {
     try {
       String typerUserId = user.getString("id");
       if (isTyping) {

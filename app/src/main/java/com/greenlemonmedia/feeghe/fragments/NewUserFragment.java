@@ -259,12 +259,12 @@ public class NewUserFragment extends MainActivityFragment {
 
   public void goToHome() {
     tabs.setVisibility(View.VISIBLE);
-    context.showHomeFragment();
+    context.showWallOfFacesFragment();
   }
 
   public void goToHome(boolean withBackStack) {
     tabs.setVisibility(View.VISIBLE);
-    context.showHomeFragment(withBackStack);
+    context.showMessagesFragment(withBackStack);
   }
 
   private class ContactsAdapter extends ArrayAdapter<JSONObject> {
