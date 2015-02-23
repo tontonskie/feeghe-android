@@ -139,6 +139,25 @@ public class Util {
    * @return
    */
   public static String getStaticUrl(String path) {
-    return APIService.HTTP_SCHEME + "://" + APIService.STATIC_HOST + "/uploads/" + path;
+    String host = APIService.HTTP_SCHEME + "://" + APIService.STATIC_HOST;
+    String prefix = "/uploads/";
+    if (path.indexOf(prefix) == 0) {
+      return host + path;
+    }
+    prefix = host + prefix;
+    if (path.indexOf(prefix) == 0) {
+      return path;
+    }
+    return prefix + path;
+  }
+
+  /**
+   *
+   * @param faceId
+   * @param path
+   * @return
+   */
+  public static String getImageTag(String faceId, String path) {
+    return "<img face=\"" + faceId + "\" src=\"" + path + "\">";
   }
 }

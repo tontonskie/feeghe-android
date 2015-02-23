@@ -2,11 +2,16 @@ package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
+import android.text.style.ImageSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,7 +40,9 @@ import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -512,11 +519,58 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
     @Override
     public void onClick(View v) {
-      Toast.makeText(context, "Test", Toast.LENGTH_SHORT).show();
+      FaceImageTag face = (FaceImageTag) v.getTag();
+      int cursorPos = txtNewMessage.getSelectionStart();
+      SpannableStringBuilder message = new SpannableStringBuilder(txtNewMessage.getText());
+
+      String faceImgTag = Util.getImageTag(face.id, face.src);
+      message.insert(cursorPos, faceImgTag);
+      message.setSpan(
+        new ImageSpan(context, face.img),
+        cursorPos,
+        cursorPos + faceImgTag.length(),
+        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+      );
+
+      txtNewMessage.setText(message);
     }
 
     private class UsableFaceViewHolder {
       public ImageView imgViewUsableFace;
+    }
+
+    private class FaceImageTag {
+      public String id;
+      public Bitmap img;
+      public String src;
+    }
+
+    private class FaceImageTarget implements Target {
+
+      private ImageView faceImgView;
+      private FaceImageTag faceImgTag;
+
+      public FaceImageTarget(ImageView imgView, FaceImageTag imgTag) {
+        faceImgView = imgView;
+        faceImgTag = imgTag;
+      }
+
+      @Override
+      public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+        faceImgTag.img = bitmap;
+        faceImgView.setTag(faceImgTag);
+        faceImgView.setImageBitmap(bitmap);
+      }
+
+      @Override
+      public void onBitmapFailed(Drawable errorDrawable) {
+
+      }
+
+      @Override
+      public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+      }
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -532,12 +586,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
         viewHolder = (UsableFaceViewHolder) convertView.getTag();
       }
 
+      JSONObject faceInfo = getItem(position);
+      FaceImageTag faceImgTag = new FaceImageTag();
       try {
-        String facePic = Util.getStaticUrl(getItem(position).getJSONObject("photo").getString("small"));
-        Picasso.with(context).load(Uri.parse(facePic)).into(viewHolder.imgViewUsableFace);
+        faceImgTag.id = faceInfo.getString("id");
+        faceImgTag.src = faceInfo.getJSONObject("photo").getString("small");
       } catch (JSONException e) {
         e.printStackTrace();
       }
+
+      Picasso.with(context)
+        .load(Uri.parse(Util.getStaticUrl(faceImgTag.src)))
+        .into(new FaceImageTarget(viewHolder.imgViewUsableFace, faceImgTag));
 
       return convertView;
     }
@@ -613,7 +673,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
         }
 
-        viewHolder.txtViewPerChatContent.setText(message.getString("content"));
+        if (!message.isNull("faces")) {
+          new LoadFaceChatTask(
+            viewHolder.txtViewPerChatContent,
+            message.getString("content")
+          ).execute();
+          viewHolder.txtViewPerChatContent.setText("...");
+        } else {
+          viewHolder.txtViewPerChatContent.setText(message.getString("content"));
+        }
         viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
 
         if (position == (getCount() - 1)) {
