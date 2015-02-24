@@ -40,7 +40,7 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
 
         @Override
         public Drawable getDrawable(String source) {
-          Drawable bmpDrawable = null;
+          Drawable bmpDrawable;
           try {
             Bitmap bmp = Util.getPicasso(context)
               .load(Uri.parse(Util.getStaticUrl(source)))
@@ -48,8 +48,7 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
             bmpDrawable = new BitmapDrawable(context.getResources(), bmp);
             bmpDrawable.setBounds(0, 0, bmpDrawable.getIntrinsicWidth(), bmpDrawable.getIntrinsicHeight());
           } catch (IOException e) {
-            listener.onFail(0, e.getMessage());
-            e.printStackTrace();
+            return null;
           }
           return bmpDrawable;
         }
@@ -59,6 +58,10 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
   }
 
   public void onPostExecute(Spanned parsedContent) {
-    listener.onSuccess(parsedContent);
+    if (parsedContent == null) {
+      listener.onFail(0, "Error downloading image");
+    } else {
+      listener.onSuccess(parsedContent);
+    }
   }
 }

@@ -3,6 +3,7 @@ package com.greenlemonmedia.feeghe.fragments;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -20,6 +22,7 @@ import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -166,8 +169,8 @@ public class RoomsFragment extends MainActivityFragment {
       ImageView imgViewRoomImg;
     }
 
-    public View getView(int position, View convertView, ViewGroup parent) {
-      RoomViewHolder viewHolder;
+    public View getView(final int position, View convertView, ViewGroup parent) {
+      final RoomViewHolder viewHolder;
       if (convertView == null) {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = vi.inflate(R.layout.per_room, null);
@@ -180,15 +183,45 @@ public class RoomsFragment extends MainActivityFragment {
       } else {
         viewHolder = (RoomViewHolder) convertView.getTag();
       }
-      JSONObject room = getItem(position);
+
+      final JSONObject room = getItem(position);
       try {
         viewHolder.id = room.getString("id");
         viewHolder.info = room;
         viewHolder.txtViewRoomName.setText(Util.getRoomName(room.getJSONObject("users"), session.getUserId()));
-        viewHolder.txtViewRoomRecentChat.setText(room.getString("recentChat"));
+        if (!room.has("recentChatWithFaces")) {
+          viewHolder.txtViewRoomRecentChat.setText("Loading...");
+          LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
+            context,
+            room.getString("recentChat"),
+            new LoadFaceChatTask.Listener() {
+
+              @Override
+              public void onSuccess(Spanned text) {
+                if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
+                  viewHolder.txtViewRoomRecentChat.setText(text);
+                }
+                try {
+                  room.putOpt("recentChatWithFaces", text);
+                } catch (JSONException e) {
+                  e.printStackTrace();
+                }
+              }
+
+              @Override
+              public void onFail(int statusCode, String error) {
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+              }
+            }
+          );
+          loadFaceChatTask.execute();
+        } else {
+          viewHolder.txtViewRoomRecentChat.setText((Spanned) room.get("recentChatWithFaces"));
+        }
       } catch (JSONException e) {
         e.printStackTrace();
       }
+
       return convertView;
     }
   }

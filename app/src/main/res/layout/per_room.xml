@@ -18,29 +18,70 @@
     android:orientation="vertical"
     android:layout_width="0dp"
     android:layout_height="match_parent"
-    android:weightSum="10"
     android:layout_weight="8"
     android:id="@+id/perRoomContentContainer">
 
-    <TextView
+    <LinearLayout
+      android:orientation="horizontal"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceMedium"
-      android:text="Medium Text"
-      android:id="@+id/txtViewRoomName"
-      android:textStyle="bold"
-      android:scrollHorizontally="true"
-      android:ellipsize="end"
-      android:maxLines="1"
-      />
+      android:weightSum="10"
+      android:id="@+id/perRoomHeading">
 
-    <TextView
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Loading..."
+        android:id="@+id/txtViewRoomName"
+        android:scrollHorizontally="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_weight="9"
+        android:textStyle="bold"
+        />
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="..."
+        android:id="@+id/txtViewRoomUnread"
+        android:maxLines="1"
+        android:layout_weight="1"
+        />
+
+    </LinearLayout>
+
+    <LinearLayout
+      android:orientation="horizontal"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceMedium"
-      android:text="Medium Text"
-      android:id="@+id/txtViewRoomRecentChat"
-      />
+      android:weightSum="10"
+      android:id="@+id/perRoomSubdetails">
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Loading..."
+        android:id="@+id/txtViewRoomRecentChat"
+        android:scrollHorizontally="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_weight="8"
+        />
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="..."
+        android:id="@+id/txtViewRoomTimestamp"
+        android:maxLines="1"
+        android:layout_weight="2"
+        />
+
+    </LinearLayout>
   </LinearLayout>
-
 </LinearLayout>

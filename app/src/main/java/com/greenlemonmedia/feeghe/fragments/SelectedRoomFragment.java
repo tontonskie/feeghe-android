@@ -50,7 +50,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
@@ -623,7 +622,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       TextView txtViewMessageTimestamp;
     }
 
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
       final MessageViewHolder viewHolder;
       if (convertView == null) {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -687,7 +686,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
                 @Override
                 public void onSuccess(Spanned text) {
-                  viewHolder.txtViewPerChatContent.setText(text);
+                  if (position >= listViewMessages.getFirstVisiblePosition() && position <= listViewMessages.getLastVisiblePosition()) {
+                    viewHolder.txtViewPerChatContent.setText(text);
+                  }
                   try {
                     message.putOpt("contentWithFaces", text);
                   } catch (JSONException e) {
