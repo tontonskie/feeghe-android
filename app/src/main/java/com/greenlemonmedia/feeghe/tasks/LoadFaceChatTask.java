@@ -8,10 +8,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.text.Html;
 import android.text.Spanned;
-import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.api.Util;
-import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 
@@ -21,13 +19,17 @@ import java.io.IOException;
 public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
 
   private String messageContent;
-  private TextView faceMessageView;
   private Context context;
+  private Listener listener;
 
-  public LoadFaceChatTask(TextView txtView, String content) {
+  public interface Listener extends TaskListener {
+    public void onSuccess(Spanned text);
+  }
+
+  public LoadFaceChatTask(Context uiContext, String content, Listener faceChatListener) {
     messageContent = content;
-    faceMessageView = txtView;
-    context = txtView.getContext();
+    context = uiContext;
+    listener = faceChatListener;
   }
 
   @Override
@@ -40,12 +42,13 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
         public Drawable getDrawable(String source) {
           Drawable bmpDrawable = null;
           try {
-            Bitmap bmp = Picasso.with(context)
+            Bitmap bmp = Util.getPicasso(context)
               .load(Uri.parse(Util.getStaticUrl(source)))
               .get();
             bmpDrawable = new BitmapDrawable(context.getResources(), bmp);
             bmpDrawable.setBounds(0, 0, bmpDrawable.getIntrinsicWidth(), bmpDrawable.getIntrinsicHeight());
           } catch (IOException e) {
+            listener.onFail(0, e.getMessage());
             e.printStackTrace();
           }
           return bmpDrawable;
@@ -56,6 +59,6 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
   }
 
   public void onPostExecute(Spanned parsedContent) {
-    faceMessageView.setText(parsedContent);
+    listener.onSuccess(parsedContent);
   }
 }

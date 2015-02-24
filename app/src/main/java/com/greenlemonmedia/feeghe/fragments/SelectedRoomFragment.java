@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.view.Gravity;
@@ -49,6 +50,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
@@ -595,7 +597,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         e.printStackTrace();
       }
 
-      Picasso.with(context)
+      Util.getPicasso(context)
         .load(Uri.parse(Util.getStaticUrl(faceImgTag.src)))
         .into(new FaceImageTarget(viewHolder.imgViewUsableFace, faceImgTag));
 
@@ -615,13 +617,14 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
 
     private class MessageViewHolder {
+      LinearLayout perChatContainer;
       TextView txtViewPerChatContent;
       TextView txtViewChatMateName;
       TextView txtViewMessageTimestamp;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
-      MessageViewHolder viewHolder;
+      final MessageViewHolder viewHolder;
       if (convertView == null) {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = vi.inflate(R.layout.per_chat, null);
@@ -629,13 +632,14 @@ public class SelectedRoomFragment extends MainActivityFragment {
         viewHolder.txtViewChatMateName = (TextView) convertView.findViewById(R.id.txtViewChatMateName);
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
         viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
-        viewHolder.txtViewPerChatContent.setOnLongClickListener(this);
+        viewHolder.perChatContainer = (LinearLayout) convertView.findViewById(R.id.perChatContainer);
+        viewHolder.perChatContainer.setOnLongClickListener(this);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (MessageViewHolder) convertView.getTag();
       }
 
-      JSONObject message = getItem(position);
+      final JSONObject message = getItem(position);
       try {
 
         JSONObject previousUser = null;
@@ -674,15 +678,36 @@ public class SelectedRoomFragment extends MainActivityFragment {
         }
 
         if (!message.isNull("faces")) {
-          new LoadFaceChatTask(
-            viewHolder.txtViewPerChatContent,
-            message.getString("content")
-          ).execute();
-          viewHolder.txtViewPerChatContent.setText("...");
+          if (!message.has("contentWithFaces")) {
+            viewHolder.txtViewPerChatContent.setText("Loading...");
+            LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
+              context,
+              message.getString("content"),
+              new LoadFaceChatTask.Listener() {
+
+                @Override
+                public void onSuccess(Spanned text) {
+                  viewHolder.txtViewPerChatContent.setText(text);
+                  try {
+                    message.putOpt("contentWithFaces", text);
+                  } catch (JSONException e) {
+                    e.printStackTrace();
+                  }
+                }
+
+                @Override
+                public void onFail(int statusCode, String error) {
+                  Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+                }
+              }
+            );
+            loadFaceChatTask.execute();
+          } else {
+            viewHolder.txtViewPerChatContent.setText((Spanned) message.get("contentWithFaces"));
+          }
         } else {
           viewHolder.txtViewPerChatContent.setText(message.getString("content"));
         }
-        viewHolder.txtViewPerChatContent.setTag(message.getString("id"));
 
         if (position == (getCount() - 1)) {
           setSeenBy(currentRoom.getJSONObject("users"));

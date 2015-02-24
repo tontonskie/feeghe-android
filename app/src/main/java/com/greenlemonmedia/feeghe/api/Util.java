@@ -4,6 +4,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 
+import com.squareup.picasso.Picasso;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -159,5 +161,17 @@ public class Util {
    */
   public static String getImageTag(String faceId, String path) {
     return "<img face=\"" + faceId + "\" src=\"" + path + "\">";
+  }
+
+  /**
+   *
+   * @param context
+   * @return
+   */
+  public static Picasso getPicasso(Context context) {
+    Picasso instance = Picasso.with(context);
+    instance.setIndicatorsEnabled(true);
+    instance.setLoggingEnabled(true);
+    return instance;
   }
 }
