@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.Activity;
 import android.app.Fragment;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -18,4 +19,12 @@ abstract public class MainActivityFragment extends Fragment {
   abstract protected void setupUIEvents();
 
   abstract protected void setupSocketEvents();
+
+  abstract public String getFragmentId();
+
+  @Override
+  public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    ((MainActivity) activity).setCurrentFragmentId(getFragmentId());
+  }
 }

@@ -164,7 +164,7 @@
     <ListView
       android:layout_width="match_parent"
       android:layout_height="0dp"
-      android:id="@+id/listViewContacts"
+      android:id="@+id/tabContentFeegheContacts"
       android:choiceMode="multipleChoice"
       android:layout_marginBottom="10dp"
       android:layout_weight=".7"/>

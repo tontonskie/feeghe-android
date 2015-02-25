@@ -36,4 +36,9 @@ public class UploadFragment extends MainActivityFragment {
   protected void setupSocketEvents() {
 
   }
+
+  @Override
+  public String getFragmentId() {
+    return MainActivity.FRAG_UPLOAD;
+  }
 }

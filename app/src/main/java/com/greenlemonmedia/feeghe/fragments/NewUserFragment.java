@@ -78,7 +78,7 @@ public class NewUserFragment extends MainActivityFragment {
     tabs = (TabWidget) context.findViewById(android.R.id.tabs);
     tabs.setVisibility(View.GONE);
 
-    listViewContacts = (ListView) view.findViewById(R.id.listViewContacts);
+    listViewContacts = (ListView) view.findViewById(R.id.tabContentFeegheContacts);
     selectGender = (Spinner) view.findViewById(R.id.selectGender);
     txtViewNewUserError = (TextView) view.findViewById(R.id.txtViewNewUserError);
     txtNewPassword = (EditText) view.findViewById(R.id.txtNewPassword);
@@ -210,6 +210,11 @@ public class NewUserFragment extends MainActivityFragment {
 
   }
 
+  @Override
+  public String getFragmentId() {
+    return MainActivity.FRAG_NEW_USER;
+  }
+
   public void showSyncContactsForm() {
     view.showNext();
     Cursor contactsCursor = context.getContentResolver().query(
@@ -270,7 +275,7 @@ public class NewUserFragment extends MainActivityFragment {
   private class ContactsAdapter extends ArrayAdapter<JSONObject> {
 
     public ContactsAdapter(ArrayList<JSONObject> contacts) {
-      super(context, R.layout.refer_contact, contacts);
+      super(context, R.layout.per_refer_contact, contacts);
     }
 
     private class ContactViewHolder {
@@ -281,7 +286,7 @@ public class NewUserFragment extends MainActivityFragment {
       ContactViewHolder viewHolder;
       if (convertView == null) {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        convertView = vi.inflate(R.layout.refer_contact, null);
+        convertView = vi.inflate(R.layout.per_refer_contact, null);
         viewHolder = new ContactViewHolder();
         viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.chkContact);
         convertView.setTag(viewHolder);

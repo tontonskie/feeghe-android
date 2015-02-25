@@ -5,12 +5,40 @@
              android:orientation="vertical"
              tools:context="com.greenlemonmedia.feeghe.fragments.ContactsFragment">
 
-  <!-- TODO: Update blank fragment layout -->
+  <TabHost
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/tabHostContacts">
 
+    <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:orientation="vertical">
 
-  <ListView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/listViewContacts"
-    android:choiceMode="multipleChoice"/>
+      <TabWidget
+        android:id="@android:id/tabs"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+      </TabWidget>
+
+      <FrameLayout
+        android:id="@android:id/tabcontent"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <ListView
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:id="@+id/tabContentPhoneContacts"
+          android:choiceMode="multipleChoice"/>
+
+        <ListView
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:id="@+id/tabContentFeegheContacts"
+          android:choiceMode="multipleChoice"/>
+
+      </FrameLayout>
+    </LinearLayout>
+  </TabHost>
 </LinearLayout>

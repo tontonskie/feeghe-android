@@ -31,4 +31,9 @@ public class WallOfFacesFragment extends MainActivityFragment {
   protected void setupSocketEvents() {
 
   }
+
+  @Override
+  public String getFragmentId() {
+    return MainActivity.FRAG_WALL_OF_FACES;
+  }
 }

@@ -50,6 +50,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
@@ -80,7 +81,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private JSONObject currentRoomUsers;
   private Button btnShowUseFace;
   private FaceService faceService;
-  private LinearLayout newMessageOptionBtns;
   private InputMethodManager newMessageManager;
   private LinearLayout newMessageOptionDisplay;
   private CacheCollection faceCacheCollection;
@@ -128,7 +128,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
     btnShowUseFace = (Button) context.findViewById(R.id.btnShowUseFace);
-    newMessageOptionBtns = (LinearLayout) context.findViewById(R.id.newMessageOptionBtns);
     newMessageManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
     newMessageOptionDisplay = (LinearLayout) context.findViewById(R.id.newMessageOptionDisplay);
     gridUsableFaces = (GridView) context.findViewById(R.id.gridUsableFaces);
@@ -341,7 +340,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
       @Override
       public void onClick(View v) {
         newMessageManager.hideSoftInputFromWindow(txtNewMessage.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        newMessageOptionBtns.setVisibility(View.GONE);
         newMessageOptionDisplay.setVisibility(View.VISIBLE);
       }
     });
@@ -350,7 +348,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onClick(View v) {
-        newMessageOptionBtns.setVisibility(View.VISIBLE);
         newMessageOptionDisplay.setVisibility(View.GONE);
       }
     });
@@ -420,6 +417,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
         }
       }
     });
+  }
+
+  @Override
+  public String getFragmentId() {
+    return MainActivity.FRAG_SELECTED_ROOM;
   }
 
   public void setMessages(ResponseArray response) {
@@ -606,8 +608,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
   private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnLongClickListener {
 
+    private HashMap<String, Spanned> contentWithFaces;
+
     public RoomMessagesAdapter(ArrayList<JSONObject> messages) {
       super(context, R.layout.per_chat, messages);
+      contentWithFaces = new HashMap<>();
     }
 
     @Override
@@ -676,8 +681,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
         }
 
-        if (!message.isNull("faces")) {
-          if (!message.has("contentWithFaces")) {
+        if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
+          if (!contentWithFaces.containsKey(message.getString("id"))) {
             viewHolder.txtViewPerChatContent.setText("Loading...");
             LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
               context,
@@ -689,11 +694,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
                   if (position >= listViewMessages.getFirstVisiblePosition() && position <= listViewMessages.getLastVisiblePosition()) {
                     viewHolder.txtViewPerChatContent.setText(text);
                   }
-                  try {
-                    message.putOpt("contentWithFaces", text);
-                  } catch (JSONException e) {
-                    e.printStackTrace();
-                  }
+                  contentWithFaces.put(message.optString("id"), text);
                 }
 
                 @Override
@@ -704,7 +705,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
             );
             loadFaceChatTask.execute();
           } else {
-            viewHolder.txtViewPerChatContent.setText((Spanned) message.get("contentWithFaces"));
+            viewHolder.txtViewPerChatContent.setText(contentWithFaces.get(message.getString("id")));
           }
         } else {
           viewHolder.txtViewPerChatContent.setText(message.getString("content"));

@@ -59,11 +59,19 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private RoomService roomService;
   private TabWidget tabs;
   private MessageService messageService;
+  private String currentFragmentId;
 
   public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
   public static final String TAB_CONTACTS = "contacts";
   public static final String TAB_UPLOAD = "upload";
+
+  public static final String FRAG_SELECTED_ROOM = "selected_room_fragment";
+  public static final String FRAG_ROOMS = "rooms_fragment";
+  public static final String FRAG_CONTACTS = "contacts_fragment";
+  public static final String FRAG_UPLOAD = "upload_fragment";
+  public static final String FRAG_NEW_USER = "new_user_fragment";
+  public static final String FRAG_WALL_OF_FACES = "wall_of_faces_fragment";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -253,6 +261,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     isManualTabChange = true;
     tabHost.setCurrentTabByTag(tabId);
     isManualTabChange = false;
+  }
+
+  public void setCurrentFragmentId(String id) {
+    currentFragmentId = id;
   }
 
   public void playAlertSound() {

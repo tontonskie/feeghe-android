@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:weightSum="10">
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="0dp"
+    android:layout_height="fill_parent"
+    android:layout_weight="7">
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:id="@+id/txtViewListContactName"
+      android:textSize="20dp"
+      android:gravity="center_vertical"/>
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:id="@+id/txtViewListContactNumber"
+      android:textSize="12dp"
+      android:gravity="center_vertical"/>
+  </LinearLayout>
+
+  <Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:text="Call"
+    android:id="@+id/btnShowChat"
+    android:layout_weight="1.25"
+    />
+
+  <Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:text="Chat"
+    android:id="@+id/btnShowCall"
+    android:layout_weight="1.25"
+    />
+
+</LinearLayout>

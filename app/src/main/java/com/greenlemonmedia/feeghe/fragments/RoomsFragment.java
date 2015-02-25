@@ -29,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class RoomsFragment extends MainActivityFragment {
 
@@ -121,10 +122,15 @@ public class RoomsFragment extends MainActivityFragment {
                   for (int i = 0; i < roomsCount; i++) {
                     if (roomsAdapter.getItem(i).getString("id").equals(roomId)) {
                       JSONObject roomUpdate = roomsAdapter.getItem(i);
-                      roomUpdate.put("recentChat", recentChat);
+                      roomsAdapter.setNotifyOnChange(false);
                       roomsAdapter.remove(roomUpdate);
+                      roomsAdapter.setNotifyOnChange(true);
+                      JSONObject roomUser = roomUpdate.put("recentChat", recentChat)
+                        .getJSONObject("users")
+                        .getJSONObject(session.getUserId());
+                      roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
                       roomsAdapter.insert(roomUpdate, i);
-                      break;
+                      return;
                     }
                   }
                 } catch (JSONException ex) {
@@ -140,6 +146,11 @@ public class RoomsFragment extends MainActivityFragment {
     });
   }
 
+  @Override
+  public String getFragmentId() {
+    return MainActivity.FRAG_ROOMS;
+  }
+
   public void showRooms(ResponseArray response) {
     roomsAdapter = new RoomsAdapter(Util.toList(response));
     listViewRooms.setAdapter(roomsAdapter);
@@ -152,8 +163,11 @@ public class RoomsFragment extends MainActivityFragment {
 
   private class RoomsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
+    private HashMap<String, Spanned> recentChatWithFaces;
+
     public RoomsAdapter(ArrayList<JSONObject> rooms) {
       super(context, R.layout.per_room, rooms);
+      recentChatWithFaces = new HashMap<>();
     }
 
     @Override
@@ -167,6 +181,7 @@ public class RoomsFragment extends MainActivityFragment {
       TextView txtViewRoomRecentChat;
       TextView txtViewRoomName;
       ImageView imgViewRoomImg;
+      TextView txtViewRoomUnread;
     }
 
     public View getView(final int position, View convertView, ViewGroup parent) {
@@ -177,7 +192,8 @@ public class RoomsFragment extends MainActivityFragment {
         viewHolder = new RoomViewHolder();
         viewHolder.imgViewRoomImg = (ImageView) convertView.findViewById(R.id.imgViewRoomImg);
         viewHolder.txtViewRoomName = (TextView) convertView.findViewById(R.id.txtViewRoomName);
-        viewHolder.txtViewRoomRecentChat = (TextView) convertView.findViewById(R.id.txtViewRoomRecentChat );
+        viewHolder.txtViewRoomRecentChat = (TextView) convertView.findViewById(R.id.txtViewRoomRecentChat);
+        viewHolder.txtViewRoomUnread = (TextView) convertView.findViewById(R.id.txtViewRoomUnread);
         convertView.setTag(viewHolder);
         convertView.setOnClickListener(this);
       } else {
@@ -188,8 +204,17 @@ public class RoomsFragment extends MainActivityFragment {
       try {
         viewHolder.id = room.getString("id");
         viewHolder.info = room;
-        viewHolder.txtViewRoomName.setText(Util.getRoomName(room.getJSONObject("users"), session.getUserId()));
-        if (!room.has("recentChatWithFaces")) {
+        JSONObject usersInRoom = room.getJSONObject("users");
+        viewHolder.txtViewRoomName.setText(Util.getRoomName(usersInRoom, session.getUserId()));
+
+        int unreadCount = usersInRoom.getJSONObject(session.getUserId()).getInt("unreadCount");
+        if (unreadCount > 0) {
+          viewHolder.txtViewRoomUnread.setText(unreadCount + "");
+        } else {
+          viewHolder.txtViewRoomUnread.setText("");
+        }
+
+        if (!recentChatWithFaces.containsKey(room.getString("id"))) {
           viewHolder.txtViewRoomRecentChat.setText("Loading...");
           LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
             context,
@@ -201,11 +226,7 @@ public class RoomsFragment extends MainActivityFragment {
                 if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
                   viewHolder.txtViewRoomRecentChat.setText(text);
                 }
-                try {
-                  room.putOpt("recentChatWithFaces", text);
-                } catch (JSONException e) {
-                  e.printStackTrace();
-                }
+                recentChatWithFaces.put(room.optString("id"), text);
               }
 
               @Override
@@ -216,7 +237,7 @@ public class RoomsFragment extends MainActivityFragment {
           );
           loadFaceChatTask.execute();
         } else {
-          viewHolder.txtViewRoomRecentChat.setText((Spanned) room.get("recentChatWithFaces"));
+          viewHolder.txtViewRoomRecentChat.setText(recentChatWithFaces.get(room.getString("id")));
         }
       } catch (JSONException e) {
         e.printStackTrace();
