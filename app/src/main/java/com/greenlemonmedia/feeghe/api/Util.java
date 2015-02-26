@@ -170,7 +170,6 @@ public class Util {
    */
   public static Picasso getPicasso(Context context) {
     Picasso instance = Picasso.with(context);
-    instance.setIndicatorsEnabled(true);
     instance.setLoggingEnabled(true);
     return instance;
   }

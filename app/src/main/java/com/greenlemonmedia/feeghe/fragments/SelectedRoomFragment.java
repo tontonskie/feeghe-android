@@ -621,7 +621,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
 
     private class MessageViewHolder {
-      LinearLayout perChatContainer;
       TextView txtViewPerChatContent;
       TextView txtViewChatMateName;
       TextView txtViewMessageTimestamp;
@@ -636,8 +635,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         viewHolder.txtViewChatMateName = (TextView) convertView.findViewById(R.id.txtViewChatMateName);
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
         viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
-        viewHolder.perChatContainer = (LinearLayout) convertView.findViewById(R.id.perChatContainer);
-        viewHolder.perChatContainer.setOnLongClickListener(this);
+        convertView.setOnLongClickListener(this);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (MessageViewHolder) convertView.getTag();

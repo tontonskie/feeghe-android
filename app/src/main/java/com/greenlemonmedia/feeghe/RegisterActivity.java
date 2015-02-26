@@ -2,10 +2,8 @@ package com.greenlemonmedia.feeghe;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.view.View;
@@ -41,7 +39,6 @@ public class RegisterActivity extends Activity {
   private EditText editTxtPhoneNumber;
   private UserService userService;
   private ViewFlipper viewSwitcher;
-  private BroadcastReceiver verificationCodeReceiver;
   private Button btnCancelVerification;
   private Button btnVerify;
   private String verificationId;
@@ -71,14 +68,6 @@ public class RegisterActivity extends Activity {
     editTxtVerificationCode = (EditText) findViewById(R.id.editTxtVerificationCode);
     txtVerificationError = (TextView) findViewById(R.id.txtVerificationError);
     txtRegisterError = (TextView) findViewById(R.id.txtRegisterError);
-
-    verificationCodeReceiver = new BroadcastReceiver() {
-
-      @Override
-      public void onReceive(Context context, Intent intent) {
-
-      }
-    };
 
     verificationId = session.get(Session.VERIFICATION_KEY);
     if (verificationId != null) {
@@ -145,7 +134,6 @@ public class RegisterActivity extends Activity {
               e.printStackTrace();
             }
             session.set(Session.VERIFICATION_KEY, verificationId);
-            registerReceiver(verificationCodeReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
             viewSwitcher.showNext();
             preloader.dismiss();
           }
@@ -176,7 +164,6 @@ public class RegisterActivity extends Activity {
 
           @Override
           public void onSuccess(ResponseObject response) {
-            unregisterReceiver(verificationCodeReceiver);
             JSONObject data = response.getContent();
             try {
               session.setCredentials(data.getString("token"), data.getString("user"));
@@ -202,7 +189,6 @@ public class RegisterActivity extends Activity {
       @Override
       public void onClick(View v) {
         session.remove(Session.VERIFICATION_KEY);
-        unregisterReceiver(verificationCodeReceiver);
         viewSwitcher.showPrevious();
       }
     });

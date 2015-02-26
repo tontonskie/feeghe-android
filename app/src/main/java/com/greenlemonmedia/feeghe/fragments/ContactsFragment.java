@@ -13,7 +13,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -65,16 +64,16 @@ public class ContactsFragment extends MainActivityFragment {
     tabHostContacts = (TabHost) context.findViewById(R.id.tabHostContacts);
     tabHostContacts.setup();
 
-    TabHost.TabSpec tabPhoneContacts = tabHostContacts.newTabSpec(TAB_PHONE_CONTACTS);
-    tabPhoneContacts.setContent(R.id.tabContentPhoneContacts);
-    tabPhoneContacts.setIndicator("Phone Contacts");
-
     TabHost.TabSpec tabFeegheContacts = tabHostContacts.newTabSpec(TAB_FEEGHE_CONTACTS);
     tabFeegheContacts.setContent(R.id.tabContentFeegheContacts);
     tabFeegheContacts.setIndicator("Feeghe Contacts");
 
-    tabHostContacts.addTab(tabPhoneContacts);
+    TabHost.TabSpec tabPhoneContacts = tabHostContacts.newTabSpec(TAB_PHONE_CONTACTS);
+    tabPhoneContacts.setContent(R.id.tabContentPhoneContacts);
+    tabPhoneContacts.setIndicator("Phone Contacts");
+
     tabHostContacts.addTab(tabFeegheContacts);
+    tabHostContacts.addTab(tabPhoneContacts);
 
     JSONObject query = contactService.getCacheQuery();
     contactCacheCollection = contactService.getCacheCollection(query);
@@ -82,7 +81,7 @@ public class ContactsFragment extends MainActivityFragment {
     if (responseFromCache.getContent().length() != 0) {
       showFeegheContacts(responseFromCache);
     } else {
-      contactsPreloader = ProgressDialog.show(context, null, "Please wait...", true, false);
+      contactsPreloader = Util.showPreloader(context);
     }
 
     contactService.query(query, new APIService.QueryCallback() {
@@ -108,7 +107,7 @@ public class ContactsFragment extends MainActivityFragment {
 
       @Override
       public void onFail(int statusCode, String error) {
-
+        contactsPreloader.dismiss();
       }
     });
 

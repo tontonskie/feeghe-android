@@ -32,6 +32,6 @@ public class FaceService extends APIService {
 
   @Override
   public JSONObject getCacheQuery() {
-    return null;
+    return createWhereQuery(new JSONObject());
   }
 }
