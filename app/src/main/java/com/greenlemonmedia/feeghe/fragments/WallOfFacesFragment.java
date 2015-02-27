@@ -22,6 +22,7 @@ import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.modals.SelectedFaceModal;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +39,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private EditText editTxtSearchFace;
   private CacheCollection faceCacheCollection;
   private Button btnSearchFace;
+  private SelectedFaceModal selectedFaceModal;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,6 +54,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
     editTxtSearchFace = (EditText) context.findViewById(R.id.editTxtSearchFace);
     btnSearchFace = (Button) context.findViewById(R.id.btnSearchFace);
+
+    selectedFaceModal = new SelectedFaceModal(context);
 
     JSONObject cacheQuery = faceService.getCacheQuery();
     faceCacheCollection = faceService.getCacheCollection(cacheQuery);
@@ -129,10 +133,12 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
     @Override
     public void onClick(View v) {
-
+      selectedFaceModal.setData(((FaceViewHolder) v.getTag()).info);
+      selectedFaceModal.show();
     }
 
     private class FaceViewHolder {
+      public JSONObject info;
       public ImageView imgViewFace;
       public TextView txtViewFaceTitle;
     }
@@ -152,6 +158,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
 
       JSONObject face = getItem(position);
+      viewHolder.info = face;
       try {
         Util.getPicasso(context)
           .load(Uri.parse(Util.getStaticUrl(face.getJSONObject("photo").getString("small"))))
