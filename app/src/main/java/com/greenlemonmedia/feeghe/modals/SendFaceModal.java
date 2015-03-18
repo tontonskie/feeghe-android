@@ -81,7 +81,7 @@ public class SendFaceModal extends MainActivityModal {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (contactsAdapter != null) {
+        if (contactsAdapter == null) {
           setContacts(response);
           contactsCache.save(response.getContent());
         } else {
