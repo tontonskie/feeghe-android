@@ -50,6 +50,25 @@ public class FaceService extends APIService {
     apiAsyncCall(putRequest, callback);
   }
 
+  /**
+   *
+   * @param faceId
+   * @param favorite
+   * @param callback
+   */
+  public void favorite(String faceId, boolean favorite, UpdateCallback callback) {
+    HttpPut putRequest = new HttpPut(getBaseUrl(faceId + "/favorite"));
+    JSONObject params = new JSONObject();
+    try {
+      params.put("user", session.getUserId());
+      params.put("favorite", favorite);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    setBodyParams(putRequest, params);
+    apiAsyncCall(putRequest, callback);
+  }
+
   @Override
   public JSONObject getCacheQuery() {
     return createWhereQuery(new JSONObject());

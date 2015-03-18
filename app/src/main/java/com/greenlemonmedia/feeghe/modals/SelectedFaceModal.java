@@ -108,7 +108,33 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
+        JSONObject data = (JSONObject) getData();
+        try {
+          btnSaveSelectedFace.setText("Loading...");
+          btnSaveSelectedFace.setEnabled(false);
+          faceService.favorite(data.getString("id"), !data.getBoolean("favorite"), new APIService.UpdateCallback() {
 
+            @Override
+            public void onSuccess(ResponseObject response) {
+              JSONObject newData = response.getContent();
+              setData(newData);
+              faceService.getCacheCollection().replace(newData.optString("id", ""), newData);
+              btnSaveSelectedFace.setEnabled(true);
+              if (newData.optBoolean("favorite", false)) {
+                btnSaveSelectedFace.setText("Unfavorite");
+              } else {
+                btnSaveSelectedFace.setText("Save");
+              }
+            }
+
+            @Override
+            public void onFail(int statusCode, String error) {
+              Toast.makeText(getContext(), statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+            }
+          });
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
       }
     });
   }
@@ -123,6 +149,11 @@ public class SelectedFaceModal extends MainActivityModal {
         btnLikeFace.setText("Unlike \n" + face.getInt("likesCount"));
       } else {
         btnLikeFace.setText("Like \n" + face.getInt("likesCount"));
+      }
+      if (face.getBoolean("favorite")) {
+        btnSaveSelectedFace.setText("Unfavorite");
+      } else {
+        btnSaveSelectedFace.setText("Save");
       }
 
       if (!face.isNull("tags")) {
