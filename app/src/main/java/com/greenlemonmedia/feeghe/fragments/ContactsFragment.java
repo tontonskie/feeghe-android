@@ -93,7 +93,7 @@ public class ContactsFragment extends MainActivityFragment {
           contactCacheCollection.save(response.getContent());
           contactsPreloader.dismiss();
         } else {
-          JSONArray addedContacts = contactCacheCollection.update(response).getContent();
+          JSONArray addedContacts = contactCacheCollection.updateCollection(response).getContent();
           int addedContactsLength = addedContacts.length();
           try {
             for (int i = 0; i < addedContactsLength; i++) {

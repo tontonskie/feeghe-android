@@ -163,6 +163,15 @@ public class DbCache implements Serializable {
     dbWriter.delete(cacheTableName, "obj_id = ?", new String[] { objectId });
   }
 
+  /**
+   *
+   * @param cacheTableName
+   * @param queryId
+   */
+  public void deleteByQueryId(String cacheTableName, String queryId) {
+    dbWriter.delete(cacheTableName, "query_id = ?", new String[] { queryId });
+  }
+
   private class DbCacheRow {
     public int id;
     public String queryId;

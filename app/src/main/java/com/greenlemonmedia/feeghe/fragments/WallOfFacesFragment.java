@@ -3,7 +3,6 @@ package com.greenlemonmedia.feeghe.fragments;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -72,7 +70,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
           setFaces(response);
           faceCacheCollection.save(response.getContent());
         } else {
-          JSONArray addedFaces = faceCacheCollection.update(response).getContent();
+          JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
           int addedFacesLength = addedFaces.length();
           try {
             for (int i = 0; i < addedFacesLength; i++) {

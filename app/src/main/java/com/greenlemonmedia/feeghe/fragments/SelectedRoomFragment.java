@@ -178,7 +178,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           setUsableFaces(response);
           faceCacheCollection.save(response.getContent());
         } else {
-          JSONArray addedFaces = faceCacheCollection.update(response).getContent();
+          JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
           int addedFacesLength = addedFaces.length();
           try {
             for (int i = 0; i < addedFacesLength; i++) {

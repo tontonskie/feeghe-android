@@ -14,6 +14,9 @@ import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
+import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.FaceService;
+import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.Util;
 
 import org.json.JSONArray;
@@ -31,8 +34,8 @@ public class SelectedFaceModal extends MainActivityModal {
   private TextView txtViewSelectedFaceTags;
   private TextView txtViewSelectedFaceTagsCount;
   private Button btnSendSelectedFace;
-  private Button btnShareSelectedFace;
   private Button btnSaveSelectedFace;
+  private FaceService faceService;
 
   public SelectedFaceModal(MainActivity activity) {
     super(activity);
@@ -42,13 +45,14 @@ public class SelectedFaceModal extends MainActivityModal {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.modal_selected_face);
 
+    faceService = new FaceService(getContext());
+
     imgViewSelectedFace = (ImageView) findViewById(R.id.imgViewSelectedFace);
     txtViewSelectedFaceTitle = (TextView) findViewById(R.id.txtViewSelectedFaceTitle);
     txtViewSelectedFaceTags = (TextView) findViewById(R.id.txtViewSelectedFaceTags);
     txtViewSelectedFaceUsage = (TextView) findViewById(R.id.txtViewSelectedFaceUsage);
     txtViewSelectedFaceTagsCount = (TextView) findViewById(R.id.txtViewSelectedFaceTagsCount);
     btnSendSelectedFace = (Button) findViewById(R.id.btnSendSelectedFace);
-    btnShareSelectedFace = (Button) findViewById(R.id.btnShareSelectedFace);
     btnSaveSelectedFace = (Button) findViewById(R.id.btnSaveSelectedFace);
 
     setupUIEvents();
@@ -60,15 +64,23 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
+        JSONObject face = (JSONObject) getData();
+        try {
+          faceService.like(face.getString("id"), !face.getBoolean("liked"), new APIService.UpdateCallback() {
 
-      }
-    });
+            @Override
+            public void onSuccess(ResponseObject response) {
 
-    btnShareSelectedFace.setOnClickListener(new View.OnClickListener() {
+            }
 
-      @Override
-      public void onClick(View v) {
+            @Override
+            public void onFail(int statusCode, String error) {
 
+            }
+          });
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
       }
     });
 

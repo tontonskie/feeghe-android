@@ -99,6 +99,12 @@ public class CacheCollection {
     }
   }
 
+  public void deleteCollection() {
+    cache.deleteByQueryId(tableName, queryId);
+    objectIds = new ArrayList<>();
+    cacheData = new ResponseArray(new JSONArray(), true);
+  }
+
   /**
    *
    * @param id
@@ -193,21 +199,18 @@ public class CacheCollection {
    * @param responseFromServer
    * @return
    */
-  public ResponseArray update(ResponseArray responseFromServer) {
-    JSONArray addedData = new JSONArray();
-    JSONArray dataFromServer = responseFromServer.getContent();
-    int dataFromServerLength = dataFromServer.length();
-    try {
-      for (int i = 0; i < dataFromServerLength; i++) {
-        JSONObject dataEntry = (JSONObject) dataFromServer.getJSONObject(i);
-        if (objectIds.indexOf(dataEntry.getString("id")) < 0) {
-          save(dataEntry);
-          addedData.put(dataEntry);
-        }
-      }
-    } catch (JSONException ex) {
-      ex.printStackTrace();
-    }
-    return new ResponseArray(addedData, true);
+  public ResponseArray updateCollection(ResponseArray responseFromServer) {
+    return updateCollection(responseFromServer.getContent());
+  }
+
+  /**
+   *
+   * @param dataFromServer
+   * @return
+   */
+  public ResponseArray updateCollection(JSONArray dataFromServer) {
+    deleteCollection();
+    save(dataFromServer);
+    return cacheData;
   }
 }

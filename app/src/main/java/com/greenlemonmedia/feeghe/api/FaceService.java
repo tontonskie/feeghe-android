@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.api;
 
 import android.content.Context;
 
+import org.apache.http.client.methods.HttpPut;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,6 +29,25 @@ public class FaceService extends APIService {
       e.printStackTrace();
     }
     query(query, callback);
+  }
+
+  /**
+   *
+   * @param faceId
+   * @param like
+   * @param callback
+   */
+  public void like(String faceId, boolean like, UpdateCallback callback) {
+    HttpPut putRequest = new HttpPut(getBaseUrl(faceId + "/like"));
+    JSONObject params = new JSONObject();
+    try {
+      params.put("user", session.getUserId());
+      params.put("like", like);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    setBodyParams(putRequest, params);
+    apiAsyncCall(putRequest, callback);
   }
 
   @Override
