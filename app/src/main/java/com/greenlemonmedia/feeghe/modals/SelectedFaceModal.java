@@ -66,7 +66,10 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
-
+        dismiss();
+        SendFaceModal sendFaceModal = new SendFaceModal(getActivity());
+        sendFaceModal.setData(getData());
+        sendFaceModal.show();
       }
     });
 

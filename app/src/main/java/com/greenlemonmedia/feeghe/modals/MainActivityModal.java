@@ -13,6 +13,7 @@ abstract public class MainActivityModal extends Dialog {
 
   private Object data;
   private OnDataChangedListener listener;
+  private MainActivity modalActivity;
 
   public interface OnDataChangedListener {
     public void onChanged(Object oldData, Object newData);
@@ -20,11 +21,16 @@ abstract public class MainActivityModal extends Dialog {
 
   public MainActivityModal(MainActivity activity) {
     super(activity);
+    modalActivity = activity;
     requestWindowFeature(Window.FEATURE_NO_TITLE);
     getWindow().setLayout(
       ViewGroup.LayoutParams.MATCH_PARENT,
       ViewGroup.LayoutParams.MATCH_PARENT
     );
+  }
+
+  public MainActivity getActivity() {
+    return modalActivity;
   }
 
   public void setOnDataChangedListener(OnDataChangedListener listener) {
