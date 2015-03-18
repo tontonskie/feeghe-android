@@ -5,7 +5,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 
 import com.greenlemonmedia.feeghe.MainActivity;
-import com.greenlemonmedia.feeghe.R;
 
 /**
  * Created by tonton on 2/27/15.
@@ -13,6 +12,11 @@ import com.greenlemonmedia.feeghe.R;
 abstract public class MainActivityModal extends Dialog {
 
   private Object data;
+  private OnDataChangedListener listener;
+
+  public interface OnDataChangedListener {
+    public void onChanged(Object oldData, Object newData);
+  }
 
   public MainActivityModal(MainActivity activity) {
     super(activity);
@@ -23,8 +27,20 @@ abstract public class MainActivityModal extends Dialog {
     );
   }
 
-  public void setData(Object data) {
+  public void setOnDataChangedListener(OnDataChangedListener listener) {
+    this.listener = listener;
+  }
+
+  public void setData(Object data, boolean notify) {
+    Object oldData = this.data;
     this.data = data;
+    if (notify && listener != null) {
+      listener.onChanged(oldData, this.data);
+    }
+  }
+
+  public void setData(Object data) {
+    setData(data, true);
   }
 
   public Object getData() {

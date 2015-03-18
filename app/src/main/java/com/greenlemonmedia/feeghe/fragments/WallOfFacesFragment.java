@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedFaceModal;
 
 import org.json.JSONArray;
@@ -35,6 +37,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private FacesAdapter facesAdapter;
   private GridView gridViewFaces;
   private EditText editTxtSearchFace;
+  private ProgressDialog facesPreloader;
   private CacheCollection faceCacheCollection;
   private Button btnSearchFace;
   private SelectedFaceModal selectedFaceModal;
@@ -60,6 +63,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
     ResponseArray facesFromCache = faceCacheCollection.getData();
     if (facesFromCache.length() != 0) {
       setFaces(facesFromCache);
+    } else {
+      facesPreloader = Util.showPreloader(context);
     }
 
     faceService.query(cacheQuery, new APIService.QueryCallback() {
@@ -69,7 +74,11 @@ public class WallOfFacesFragment extends MainActivityFragment {
         if (facesAdapter == null) {
           setFaces(response);
           faceCacheCollection.save(response.getContent());
+          facesPreloader.dismiss();
         } else {
+          facesAdapter.setNotifyOnChange(false);
+          facesAdapter.clear();
+          facesAdapter.setNotifyOnChange(true);
           JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
           int addedFacesLength = addedFaces.length();
           try {
@@ -111,6 +120,22 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
       }
     });
+
+    selectedFaceModal.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
+
+      @Override
+      public void onChanged(Object oldData, Object newData) {
+        JSONObject oldFaceData = (JSONObject) oldData;
+        JSONObject newFaceData = (JSONObject) newData;
+        int position = facesAdapter.getPosition(oldFaceData);
+        if (position >= 0) {
+          facesAdapter.setNotifyOnChange(false);
+          facesAdapter.remove(oldFaceData);
+          facesAdapter.setNotifyOnChange(true);
+          facesAdapter.insert(newFaceData, position);
+        }
+      }
+    });
   }
 
   @Override
@@ -131,7 +156,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
     @Override
     public void onClick(View v) {
-      selectedFaceModal.setData(((FaceViewHolder) v.getTag()).info);
+      selectedFaceModal.setData(((FaceViewHolder) v.getTag()).info, false);
       selectedFaceModal.show();
     }
 

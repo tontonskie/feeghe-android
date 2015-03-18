@@ -7,10 +7,10 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -34,6 +34,7 @@ public class SelectedFaceModal extends MainActivityModal {
   private TextView txtViewSelectedFaceTags;
   private TextView txtViewSelectedFaceTagsCount;
   private Button btnSendSelectedFace;
+  private Button btnLikeFace;
   private Button btnSaveSelectedFace;
   private FaceService faceService;
 
@@ -54,6 +55,7 @@ public class SelectedFaceModal extends MainActivityModal {
     txtViewSelectedFaceTagsCount = (TextView) findViewById(R.id.txtViewSelectedFaceTagsCount);
     btnSendSelectedFace = (Button) findViewById(R.id.btnSendSelectedFace);
     btnSaveSelectedFace = (Button) findViewById(R.id.btnSaveSelectedFace);
+    btnLikeFace = (Button) findViewById(R.id.btnLikeFace);
 
     setupUIEvents();
   }
@@ -64,18 +66,36 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
+
+      }
+    });
+
+    btnLikeFace.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
         JSONObject face = (JSONObject) getData();
         try {
+          btnLikeFace.setText("Loading...");
+          btnLikeFace.setEnabled(false);
           faceService.like(face.getString("id"), !face.getBoolean("liked"), new APIService.UpdateCallback() {
 
             @Override
             public void onSuccess(ResponseObject response) {
-
+              JSONObject newData = response.getContent();
+              setData(newData);
+              faceService.getCacheCollection().replace(newData.optString("id", ""), newData);
+              btnLikeFace.setEnabled(true);
+              if (newData.optBoolean("liked", false)) {
+                btnLikeFace.setText("Unlike \n" + newData.optInt("likesCount", 0));
+              } else {
+                btnLikeFace.setText("Like \n" + newData.optInt("likesCount", 0));
+              }
             }
 
             @Override
             public void onFail(int statusCode, String error) {
-
+              Toast.makeText(getContext(), statusCode + ": " + error, Toast.LENGTH_SHORT).show();
             }
           });
         } catch (JSONException e) {
@@ -99,6 +119,11 @@ public class SelectedFaceModal extends MainActivityModal {
 
       txtViewSelectedFaceTitle.setText(face.getString("title"));
       txtViewSelectedFaceUsage.setText(face.getInt("usedCount") + "");
+      if (face.getBoolean("liked")) {
+        btnLikeFace.setText("Unlike \n" + face.getInt("likesCount"));
+      } else {
+        btnLikeFace.setText("Like \n" + face.getInt("likesCount"));
+      }
 
       if (!face.isNull("tags")) {
         JSONArray tags = face.getJSONArray("tags");

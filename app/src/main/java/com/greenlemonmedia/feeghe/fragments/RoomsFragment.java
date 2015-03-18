@@ -73,6 +73,9 @@ public class RoomsFragment extends MainActivityFragment {
           roomCacheCollection.save(response.getContent());
           roomsPreloader.dismiss();
         } else {
+          roomsAdapter.setNotifyOnChange(false);
+          roomsAdapter.clear();
+          roomsAdapter.setNotifyOnChange(true);
           JSONArray addedRooms = roomCacheCollection.updateCollection(response).getContent();
           int addedRoomsLength = addedRooms.length();
           try {

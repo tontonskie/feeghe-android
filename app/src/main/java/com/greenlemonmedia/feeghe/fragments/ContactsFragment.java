@@ -93,6 +93,9 @@ public class ContactsFragment extends MainActivityFragment {
           contactCacheCollection.save(response.getContent());
           contactsPreloader.dismiss();
         } else {
+          feegheContactsAdapter.setNotifyOnChange(false);
+          feegheContactsAdapter.clear();
+          feegheContactsAdapter.setNotifyOnChange(true);
           JSONArray addedContacts = contactCacheCollection.updateCollection(response).getContent();
           int addedContactsLength = addedContacts.length();
           try {
