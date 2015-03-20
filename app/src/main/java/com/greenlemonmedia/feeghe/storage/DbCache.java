@@ -226,6 +226,13 @@ public class DbCache implements Serializable {
         "content text not null, " +
         "updated_at datetime current_timestamp);"
       );
+      db.execSQL("create table faceComments(" +
+        "id integer primary key autoincrement, " +
+        "obj_id varchar not null unique, " +
+        "query_id varchar not null, " +
+        "content text not null, " +
+        "updated_at datetime current_timestamp);"
+      );
     }
 
     /**

@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+<ViewAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:id="@+id/switcherSelectedFace">
 
-  <LinearLayout
-    android:orientation="horizontal"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:layout_alignParentTop="true"
-    android:padding="10dp"
-    android:id="@+id/layoutSelectedFaceCounts">
+  <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <TextView
       android:layout_width="wrap_content"
@@ -17,88 +14,184 @@
       android:textAppearance="?android:attr/textAppearanceLarge"
       android:text="0"
       android:id="@+id/txtViewSelectedFaceUsage"
-      android:textStyle="bold"/>
-  </LinearLayout>
-
-  <ImageView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/imgViewSelectedFace"
-    android:layout_below="@+id/layoutSelectedFaceCounts"
-    android:layout_above="@+id/layoutSelectedFaceDetails"
-    android:padding="10dp"/>
-
-  <LinearLayout
-    android:orientation="vertical"
-    android:layout_alignParentBottom="true"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:background="#C3C3C3"
-    android:id="@+id/layoutSelectedFaceDetails">
-
-    <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceLarge"
-      android:id="@+id/txtViewSelectedFaceTitle"
-      android:gravity="center_vertical|center_horizontal"
-      android:padding="20dp"
       android:textStyle="bold"
-      android:background="#3091FC"/>
+      android:layout_alignParentStart="true"
+      android:layout_alignParentLeft="true"
+      android:layout_marginLeft="10dp"
+      android:layout_marginTop="10dp"/>
 
-    <TextView
+    <Button
+      style="?android:attr/buttonStyleSmall"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceSmall"
-      android:text="0"
-      android:id="@+id/txtViewSelectedFaceTagsCount"
-      android:layout_gravity="right"
-      android:textStyle="bold"
+      android:text="Comments"
+      android:id="@+id/btnShowSelectedFaceComments"
+      android:layout_alignParentEnd="true"
+      android:layout_alignParentRight="true"
       android:layout_marginRight="10dp"
-      android:layout_marginTop="3dp"/>
+      android:layout_marginTop="5dp"/>
 
-    <TextView
+    <ImageView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceMedium"
-      android:id="@+id/txtViewSelectedFaceTags"
-      android:gravity="center_vertical|center_horizontal"
-      android:textStyle="bold"
-      android:paddingTop="10dp"
-      android:paddingLeft="20dp"
-      android:paddingRight="20dp"
-      android:paddingBottom="20dp"
-      android:singleLine="false"/>
+      android:id="@+id/imgViewSelectedFace"
+      android:layout_above="@+id/layoutSelectedFaceDetails"
+      android:padding="10dp"
+      android:layout_below="@+id/btnShowSelectedFaceComments"/>
+
+    <LinearLayout
+      android:orientation="vertical"
+      android:layout_alignParentBottom="true"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:background="#C3C3C3"
+      android:id="@+id/layoutSelectedFaceDetails">
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/txtViewSelectedFaceTitle"
+        android:gravity="center_vertical|center_horizontal"
+        android:padding="20dp"
+        android:textStyle="bold"
+        android:background="#3091FC"/>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="0"
+        android:id="@+id/txtViewSelectedFaceTagsCount"
+        android:layout_gravity="right"
+        android:textStyle="bold"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="3dp"/>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/txtViewSelectedFaceTags"
+        android:gravity="center_vertical|center_horizontal"
+        android:textStyle="bold"
+        android:paddingTop="10dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="20dp"
+        android:singleLine="false"/>
+
+      <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="6">
+
+        <Button
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="3"
+          android:text="Save"
+          android:id="@+id/btnSaveSelectedFace"/>
+
+        <Button
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:text="Send"
+          android:layout_weight="3"
+          android:id="@+id/btnSendSelectedFace"/>
+      </LinearLayout>
+    </LinearLayout>
+
+    <Button
+      style="?android:attr/buttonStyleSmall"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Like\n"
+      android:id="@+id/btnLikeFace"
+      android:layout_above="@+id/layoutSelectedFaceDetails"
+      android:layout_alignParentRight="true"
+      android:layout_alignParentEnd="true"/>
+
+  </RelativeLayout>
+
+  <RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
 
     <LinearLayout
       android:orientation="horizontal"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:weightSum="6">
+      android:weightSum="4"
+      android:id="@+id/layoutSelectedFaceCommentsTitle"
+      android:layout_alignParentTop="true">
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="3.5"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text=""
+        android:scrollHorizontally="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:id="@+id/txtViewSelectedFaceCommentTitle"
+        android:gravity="center_vertical"/>
 
       <Button
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="3"
-        android:text="Save"
-        android:id="@+id/btnSaveSelectedFace"/>
+        android:layout_weight=".5"
+        android:layout_height="match_parent"
+        android:text="x"
+        android:id="@+id/btnHideSelectedFaceComments"/>
 
-      <Button
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Send"
-        android:layout_weight="3"
-        android:id="@+id/btnSendSelectedFace"/>
     </LinearLayout>
-  </LinearLayout>
 
-  <Button
-    style="?android:attr/buttonStyleSmall"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Like\n"
-    android:id="@+id/btnLikeFace"
-    android:layout_above="@+id/layoutSelectedFaceDetails"
-    android:layout_alignParentRight="true"
-    android:layout_alignParentEnd="true"/>
-</RelativeLayout>
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="Loading..."
+      android:visibility="visible"
+      android:id="@+id/txtViewSelectedFaceCommentsLoading"
+      android:gravity="center_vertical|center_horizontal"
+      android:layout_below="@+id/layoutSelectedFaceCommentsTitle"
+      android:layout_above="@+id/layoutSelectedFaceCommentsOptions"/>
+
+    <ListView
+      android:visibility="gone"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_below="@+id/layoutSelectedFaceCommentsTitle"
+      android:layout_above="@+id/layoutSelectedFaceCommentsOptions"
+      android:id="@+id/listViewSelectedFaceComments"/>
+
+    <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"
+      android:layout_weight="1"
+      android:id="@+id/layoutSelectedFaceCommentsOptions"
+      android:weightSum="4">
+
+      <EditText
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="#ffffff"
+        android:hint="Type your comment here"
+        android:layout_weight="3.5"
+        android:id="@+id/editTxtSelectedFaceComment"/>
+
+      <Button
+        android:layout_width="0dp"
+        android:layout_weight=".5"
+        android:layout_height="match_parent"
+        android:text=">"
+        android:id="@+id/btnSendSelectedFaceComment"/>
+
+    </LinearLayout>
+  </RelativeLayout>
+
+</ViewAnimator>

@@ -47,6 +47,8 @@ abstract public class APIService implements Serializable {
   protected DbCache dbCache;
   protected Context context;
   protected static HashMap<String, CacheCollection> cacheCollections;
+  protected String basePath;
+  protected String cacheName;
 
   /**
    *
@@ -56,6 +58,8 @@ abstract public class APIService implements Serializable {
   public APIService(String modelName, Context context) {
     this.context = context;
     this.modelName = modelName;
+    basePath = modelName;
+    cacheName = modelName;
     session = Session.getInstance(context);
     dbCache = DbCache.getInstance(context);
     httpClient = new DefaultHttpClient();
@@ -77,10 +81,10 @@ abstract public class APIService implements Serializable {
       cacheCollections = new HashMap<>();
     }
     String queryId = DbCache.createQueryHash(query);
-    if (!cacheCollections.containsKey(modelName + '-' + queryId)) {
-      cacheCollections.put(modelName + '-' + queryId, new CacheCollection(modelName, dbCache, queryId));
+    if (!cacheCollections.containsKey(cacheName + '-' + queryId)) {
+      cacheCollections.put(cacheName + '-' + queryId, new CacheCollection(cacheName, dbCache, queryId));
     }
-    return cacheCollections.get(modelName + '-' + queryId);
+    return cacheCollections.get(cacheName + '-' + queryId);
   }
 
   /**
@@ -106,10 +110,26 @@ abstract public class APIService implements Serializable {
 
   /**
    *
+   * @param base
+   */
+  protected void setBasePath(String base) {
+    basePath = base;
+  }
+
+  /**
+   *
+   * @param name
+   */
+  protected void setCacheName(String name) {
+    cacheName = name;
+  }
+
+  /**
+   *
    * @return
    */
   public String getBaseUrl() {
-    return URL + modelName;
+    return URL + basePath;
   }
 
   /**
@@ -117,7 +137,7 @@ abstract public class APIService implements Serializable {
    * @return
    */
   public String getBaseUri() {
-    return '/' + PATH + '/' + modelName;
+    return '/' + PATH + '/' + basePath;
   }
 
   /**
@@ -144,7 +164,7 @@ abstract public class APIService implements Serializable {
     }
     return uriBuilder
       .appendPath(PATH)
-      .appendPath(modelName);
+      .appendEncodedPath(basePath);
   }
 
   /**
@@ -327,20 +347,22 @@ abstract public class APIService implements Serializable {
    */
   public void query(JSONObject query, QueryCallback callback) {
     Uri.Builder uriBuilder = getBaseUrlBuilder();
-    Iterator<String> keys = query.keys();
-    try {
-      String key;
-      while (keys.hasNext()) {
-        key = (String) keys.next();
-        Object val = query.get(key);
-        if (val instanceof JSONObject || val instanceof JSONArray) {
-          uriBuilder.appendQueryParameter(key, val.toString());
-        } else {
-          uriBuilder.appendQueryParameter(key, String.valueOf(val));
+    if (query != null) {
+      Iterator<String> keys = query.keys();
+      try {
+        String key;
+        while (keys.hasNext()) {
+          key = (String) keys.next();
+          Object val = query.get(key);
+          if (val instanceof JSONObject || val instanceof JSONArray) {
+            uriBuilder.appendQueryParameter(key, val.toString());
+          } else {
+            uriBuilder.appendQueryParameter(key, String.valueOf(val));
+          }
         }
+      } catch (JSONException ex) {
+        ex.printStackTrace();
       }
-    } catch (JSONException ex) {
-      ex.printStackTrace();
     }
     apiAsyncCall(new HttpGet(uriBuilder.toString()), callback, true);
   }
@@ -352,20 +374,22 @@ abstract public class APIService implements Serializable {
    */
   public ResponseArray query(JSONObject query) {
     Uri.Builder uriBuilder = getBaseUrlBuilder();
-    Iterator<String> keys = query.keys();
-    try {
-      String key;
-      while (keys.hasNext()) {
-        key = (String) keys.next();
-        Object val = query.get(key);
-        if (val instanceof JSONObject || val instanceof JSONArray) {
-          uriBuilder.appendQueryParameter(key, val.toString());
-        } else {
-          uriBuilder.appendQueryParameter(key, String.valueOf(val));
+    if (query != null) {
+      Iterator<String> keys = query.keys();
+      try {
+        String key;
+        while (keys.hasNext()) {
+          key = (String) keys.next();
+          Object val = query.get(key);
+          if (val instanceof JSONObject || val instanceof JSONArray) {
+            uriBuilder.appendQueryParameter(key, val.toString());
+          } else {
+            uriBuilder.appendQueryParameter(key, String.valueOf(val));
+          }
         }
+      } catch (JSONException ex) {
+        ex.printStackTrace();
       }
-    } catch (JSONException ex) {
-      ex.printStackTrace();
     }
     return (ResponseArray) apiCall(new HttpGet(uriBuilder.toString()), true);
   }
