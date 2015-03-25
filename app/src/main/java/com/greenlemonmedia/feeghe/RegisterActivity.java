@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class RegisterActivity extends Activity {
 
@@ -89,13 +90,13 @@ public class RegisterActivity extends Activity {
     }
     ArrayAdapter<JSONObject> countryCodes = null;
     TelephonyManager telephony = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-    String countryCode = telephony.getSimCountryIso().trim();
+    String countryCode = telephony.getSimCountryIso().trim().toUpperCase();
     int position = 0;
     try {
       JSONArray countries = new JSONArray(new String(buffer, "UTF-8"));
       int countriesLength = countries.length();
       for (int i = 0; i < countriesLength; i++) {
-        if (countries.getJSONObject(i).getString("dialCode").equals(countryCode)) {
+        if (countries.getJSONObject(i).getString("code").equals(countryCode)) {
           position = i;
           break;
         }
