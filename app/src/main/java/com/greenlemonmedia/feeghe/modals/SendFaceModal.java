@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -50,6 +51,7 @@ public class SendFaceModal extends MainActivityModal {
   private MessageService messageService;
   private Session session;
   private Context context;
+  private TextView txtViewError;
 
   public SendFaceModal(MainActivity activity) {
     super(activity);
@@ -65,6 +67,7 @@ public class SendFaceModal extends MainActivityModal {
     selectContact = (Spinner) findViewById(R.id.spinSendFaceModal);
     layoutContent = (LinearLayout) findViewById(R.id.layoutContentSendFaceModal);
     layoutLoading = (LinearLayout) findViewById(R.id.layoutLoadingSendFaceModal);
+    txtViewError = (TextView) findViewById(R.id.txtViewSendFaceError);
 
     context = getContext();
     session = Session.getInstance(context);
@@ -85,9 +88,7 @@ public class SendFaceModal extends MainActivityModal {
           setContacts(response);
           contactsCache.save(response.getContent());
         } else {
-          contactsAdapter.setNotifyOnChange(false);
           contactsAdapter.clear();
-          contactsAdapter.setNotifyOnChange(true);
           JSONArray contactsFromServer = contactsCache.updateCollection(response).getContent();
           int contactsFromServerLength = contactsFromServer.length();
           try {
@@ -167,6 +168,12 @@ public class SendFaceModal extends MainActivityModal {
       @Override
       public void onClick(View v) {
         JSONObject selectedContact = (JSONObject) selectContact.getSelectedItem();
+        if (selectedContact == null) {
+          txtViewError.setVisibility(View.VISIBLE);
+          txtViewError.setText("No selected contact");
+          return;
+        }
+        txtViewError.setVisibility(View.GONE);
         try {
           GoToRoomTask goToRoomTask = new GoToRoomTask(
             context,

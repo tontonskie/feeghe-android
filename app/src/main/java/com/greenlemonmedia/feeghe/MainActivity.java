@@ -108,9 +108,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     tabContacts.setContent(new TabContent());
     tabContacts.setIndicator("Contacts");
 
-    TabHost.TabSpec tabUpload = tabHost.newTabSpec(TAB_UPLOAD);
-    tabUpload.setContent(new TabContent());
-    tabUpload.setIndicator("Upload");
+//    TabHost.TabSpec tabUpload = tabHost.newTabSpec(TAB_UPLOAD);
+//    tabUpload.setContent(new TabContent());
+//    tabUpload.setIndicator("Upload");
 
     TabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
     tabWallOfFaces.setContent(new TabContent());
@@ -118,7 +118,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 
     tabHost.addTab(tabMessages);
     tabHost.addTab(tabContacts);
-    tabHost.addTab(tabUpload);
+//    tabHost.addTab(tabUpload);
     tabHost.addTab(tabWallOfFaces);
     tabHost.setOnTabChangedListener(this);
     tabs = tabHost.getTabWidget();

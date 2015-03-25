@@ -73,9 +73,7 @@ public class RoomsFragment extends MainActivityFragment {
           roomCacheCollection.save(response.getContent());
           roomsPreloader.dismiss();
         } else {
-          roomsAdapter.setNotifyOnChange(false);
           roomsAdapter.clear();
-          roomsAdapter.setNotifyOnChange(true);
           JSONArray addedRooms = roomCacheCollection.updateCollection(response).getContent();
           int addedRoomsLength = addedRooms.length();
           try {
@@ -125,9 +123,7 @@ public class RoomsFragment extends MainActivityFragment {
                   for (int i = 0; i < roomsCount; i++) {
                     if (roomsAdapter.getItem(i).getString("id").equals(roomId)) {
                       JSONObject roomUpdate = roomsAdapter.getItem(i);
-                      roomsAdapter.setNotifyOnChange(false);
                       roomsAdapter.remove(roomUpdate);
-                      roomsAdapter.setNotifyOnChange(true);
                       JSONObject roomUser = roomUpdate.put("recentChat", recentChat)
                         .getJSONObject("users")
                         .getJSONObject(session.getUserId());

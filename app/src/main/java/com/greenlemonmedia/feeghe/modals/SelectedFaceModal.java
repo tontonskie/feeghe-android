@@ -167,9 +167,7 @@ public class SelectedFaceModal extends MainActivityModal {
               setCommentsReady(true);
               faceCommentService.getCacheCollection().save(response.getContent());
             } else {
-              commentsAdapter.setNotifyOnChange(false);
               commentsAdapter.clear();
-              commentsAdapter.setNotifyOnChange(true);
               JSONArray newComments = faceCommentService.getCacheCollection().updateCollection(response).getContent();
               int newCommentsLength = newComments.length();
               try {

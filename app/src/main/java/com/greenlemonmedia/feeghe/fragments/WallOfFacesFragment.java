@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,6 +42,9 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private CacheCollection faceCacheCollection;
   private Button btnSearchFace;
   private SelectedFaceModal selectedFaceModal;
+  private TextView txtViewLoadingNext;
+  private boolean isLoadingNextFaces = false;
+  private int prevCount = 0;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -55,6 +59,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
     editTxtSearchFace = (EditText) context.findViewById(R.id.editTxtSearchFace);
     btnSearchFace = (Button) context.findViewById(R.id.btnSearchFace);
+    txtViewLoadingNext = (TextView) context.findViewById(R.id.txtViewLoadingNextFaces);
 
     selectedFaceModal = new SelectedFaceModal(context);
 
@@ -76,9 +81,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
           faceCacheCollection.save(response.getContent());
           facesPreloader.dismiss();
         } else {
-          facesAdapter.setNotifyOnChange(false);
           facesAdapter.clear();
-          facesAdapter.setNotifyOnChange(true);
           JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
           int addedFacesLength = addedFaces.length();
           try {
@@ -104,6 +107,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
   public void setFaces(ResponseArray response) {
     facesAdapter = new FacesAdapter(Util.toList(response));
     gridViewFaces.setAdapter(facesAdapter);
+    btnSearchFace.setEnabled(true);
   }
 
   @Override
@@ -113,11 +117,43 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   @Override
   protected void setupUIEvents() {
+    final APIService.QueryCallback searchFaceCallback = new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        facesAdapter.clear();
+        JSONArray searchResults = response.getContent();
+        try {
+          for (int i = 0; i < searchResults.length(); i++) {
+            facesAdapter.add(searchResults.getJSONObject(i));
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        txtViewLoadingNext.setVisibility(View.GONE);
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        txtViewLoadingNext.setVisibility(View.GONE);
+      }
+    };
+
     btnSearchFace.setOnClickListener(new View.OnClickListener() {
 
       @Override
       public void onClick(View v) {
-
+        txtViewLoadingNext.setVisibility(View.VISIBLE);
+        JSONObject searchQuery = null;
+        String searchText = editTxtSearchFace.getText().toString();
+        if (!searchText.isEmpty()) {
+          try {
+            searchQuery = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+        }
+        faceService.query(searchQuery, searchFaceCallback);
       }
     });
 
@@ -129,10 +165,61 @@ public class WallOfFacesFragment extends MainActivityFragment {
         JSONObject newFaceData = (JSONObject) newData;
         int position = facesAdapter.getPosition(oldFaceData);
         if (position >= 0) {
-          facesAdapter.setNotifyOnChange(false);
           facesAdapter.remove(oldFaceData);
-          facesAdapter.setNotifyOnChange(true);
           facesAdapter.insert(newFaceData, position);
+        }
+      }
+    });
+
+    final APIService.QueryCallback nextFacesCallback = new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        JSONArray newFaces = response.getContent();
+        try {
+          for (int i = 0; i < newFaces.length(); i++) {
+            facesAdapter.add(newFaces.getJSONObject(i));
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        txtViewLoadingNext.setVisibility(View.GONE);
+        isLoadingNextFaces = false;
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        txtViewLoadingNext.setVisibility(View.GONE);
+        isLoadingNextFaces = false;
+      }
+    };
+
+    gridViewFaces.setOnScrollListener(new AbsListView.OnScrollListener() {
+
+      @Override
+      public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+      }
+
+      @Override
+      public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if (facesAdapter != null && prevCount != facesAdapter.getCount() && (firstVisibleItem + visibleItemCount) >= totalItemCount  && !isLoadingNextFaces) {
+          prevCount = facesAdapter.getCount();
+          isLoadingNextFaces = true;
+          JSONObject nextFacesParams = null;
+          try {
+            String searchText = editTxtSearchFace.getText().toString();
+            if (searchText.isEmpty()) {
+              nextFacesParams = new JSONObject();
+            } else {
+              nextFacesParams = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
+            }
+            nextFacesParams.put("skip", prevCount);
+          } catch (JSONException ex) {
+            ex.printStackTrace();
+          }
+          txtViewLoadingNext.setVisibility(View.VISIBLE);
+          faceService.query(nextFacesParams, nextFacesCallback);
         }
       }
     });

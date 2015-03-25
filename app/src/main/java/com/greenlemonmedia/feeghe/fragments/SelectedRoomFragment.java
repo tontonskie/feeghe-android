@@ -315,9 +315,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
               @Override
               public void run() {
-                roomMessagesAdapter.setNotifyOnChange(false);
                 roomMessagesAdapter.remove(dataForAppend);
-                roomMessagesAdapter.setNotifyOnChange(true);
                 roomMessagesAdapter.insert(response.getContent(), index);
               }
             });

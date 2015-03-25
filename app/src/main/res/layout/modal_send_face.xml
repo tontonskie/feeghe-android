@@ -4,6 +4,18 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    android:text="Medium Text"
+    android:id="@+id/txtViewSendFaceError"
+    android:gravity="center_vertical|center_horizontal"
+    android:textColor="#ffa94442"
+    android:visibility="gone"
+    android:padding="5dp"/>
+
   <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
@@ -56,7 +68,6 @@
     android:layout_height="fill_parent"
     android:visibility="visible"
     android:id="@+id/layoutLoadingSendFaceModal">
-
 
     <TextView
       android:layout_width="fill_parent"
