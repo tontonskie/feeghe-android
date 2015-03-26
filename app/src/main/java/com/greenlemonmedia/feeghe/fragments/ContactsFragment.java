@@ -322,6 +322,8 @@ public class ContactsFragment extends MainActivityFragment {
         case R.id.btnShowChat:
           showChat((Button) v);
           break;
+        case R.id.btnShowCall:
+          break;
       }
     }
 
@@ -394,6 +396,7 @@ public class ContactsFragment extends MainActivityFragment {
         viewHolder.txtViewListContactNumber.setText(user.getString("phoneNumber"));
         viewHolder.nameContainer.setTag(position);
         viewHolder.btnShowChat.setTag(user.getString("id"));
+        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
       } catch (JSONException e) {
         e.printStackTrace();
       }
@@ -408,9 +411,23 @@ public class ContactsFragment extends MainActivityFragment {
       super(context, R.layout.per_contact, contacts);
     }
 
+    private void showChat(Button v) {
+
+    }
+
+    private void showCall(Button v) {
+
+    }
+
     @Override
     public void onClick(View v) {
-
+      switch (v.getId()) {
+        case R.id.btnShowChat:
+          showChat((Button) v);
+        case R.id.btnShowCall:
+          showCall((Button) v);
+          break;
+      }
     }
 
     private class PhoneContactViewHolder {
@@ -431,6 +448,9 @@ public class ContactsFragment extends MainActivityFragment {
         viewHolder.btnShowChat = (Button) convertView.findViewById(R.id.btnShowChat);
         viewHolder.btnShowCall = (Button) convertView.findViewById(R.id.btnShowCall);
         viewHolder.btnShowChat.setOnClickListener(this);
+        viewHolder.btnShowCall.setOnClickListener(this);
+        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
+        viewHolder.btnShowChat.setVisibility(View.INVISIBLE);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (PhoneContactViewHolder) convertView.getTag();
