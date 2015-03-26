@@ -1,18 +1,23 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -35,8 +40,8 @@ import java.util.HashMap;
 public class ContactsFragment extends MainActivityFragment {
 
   private MainActivity context;
-  private ListView tabContentFeegheContacts;
-  private ListView tabContentPhoneContacts;
+  private ListView listViewFeegheContacts;
+  private ListView listViewPhoneContacts;
   private ContactService contactService;
   private Session session;
   private CacheCollection contactCacheCollection;
@@ -44,6 +49,15 @@ public class ContactsFragment extends MainActivityFragment {
   private PhoneContactsAdapter phoneContactsAdapter;
   private ProgressDialog contactsPreloader;
   private TabHost tabHostContacts;
+  private Button btnFeegheContactsCreate;
+  private Button btnPhoneContactsSave;
+  private EditText editTxtNewFeegheContact;
+  private AlertDialog.Builder dialogNewFeegheContactBuilder;
+  private TextView txtViewNewFeegheContactError;
+  private AlertDialog dialogNewFeegheContact;
+  private AlertDialog.Builder dialogSelFeegheContactBuilder;
+  private AlertDialog dialogSelFeegheContact;
+  private JSONObject selectedFeegheContact;
 
   public static final String TAB_PHONE_CONTACTS = "contacts";
   public static final String TAB_FEEGHE_CONTACTS = "feeghe_contacts";
@@ -59,8 +73,21 @@ public class ContactsFragment extends MainActivityFragment {
     context = getCurrentActivity();
     session = Session.getInstance(context);
     contactService = new ContactService(context);
-    tabContentFeegheContacts = (ListView) context.findViewById(R.id.tabContentFeegheContacts);
-    tabContentPhoneContacts = (ListView) context.findViewById(R.id.tabContentPhoneContacts);
+    listViewFeegheContacts = (ListView) context.findViewById(R.id.listViewFeegheContacts);
+    listViewPhoneContacts = (ListView) context.findViewById(R.id.listViewPhoneContacts);
+    btnFeegheContactsCreate = (Button) context.findViewById(R.id.btnFeegheContactsCreate);
+    btnPhoneContactsSave = (Button) context.findViewById(R.id.btnPhoneContactsSave);
+
+    dialogNewFeegheContactBuilder = new AlertDialog.Builder(context);
+    View dialogContent = context.getLayoutInflater().inflate(R.layout.dialog_create_feeghe_contact, null);
+    dialogNewFeegheContactBuilder.setView(dialogContent);
+    dialogNewFeegheContactBuilder.setPositiveButton("Save", null);
+    editTxtNewFeegheContact = (EditText) dialogContent.findViewById(R.id.editTxtNewFeegheContact);
+    txtViewNewFeegheContactError = (TextView) dialogContent.findViewById(R.id.txtViewNewFeegheContactError);
+
+    dialogSelFeegheContactBuilder = new AlertDialog.Builder(context);
+    dialogSelFeegheContactBuilder.setTitle("Choose Action");
+
     tabHostContacts = (TabHost) context.findViewById(R.id.tabHostContacts);
     tabHostContacts.setup();
 
@@ -132,16 +159,18 @@ public class ContactsFragment extends MainActivityFragment {
     }
     contactsCursor.close();
     showPhoneContacts(phoneContacts);
+
+    setupUIEvents();
   }
 
   public void showFeegheContacts(ResponseArray response) {
     feegheContactsAdapter = new FeegheContactsAdapter(Util.toList(response));
-    tabContentFeegheContacts.setAdapter(feegheContactsAdapter);
+    listViewFeegheContacts.setAdapter(feegheContactsAdapter);
   }
 
   public void showPhoneContacts(ArrayList<HashMap<String, String>> phoneContacts) {
     phoneContactsAdapter = new PhoneContactsAdapter(phoneContacts);
-    tabContentPhoneContacts.setAdapter(phoneContactsAdapter);
+    listViewPhoneContacts.setAdapter(phoneContactsAdapter);
   }
 
   @Override
@@ -151,7 +180,111 @@ public class ContactsFragment extends MainActivityFragment {
 
   @Override
   protected void setupUIEvents() {
+    String[] feegheContactActions = new String[] {
+      "Delete"
+    };
+    dialogSelFeegheContactBuilder.setItems(feegheContactActions, new DialogInterface.OnClickListener() {
 
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        if (which == 0) {
+          feegheContactsAdapter.remove(selectedFeegheContact);
+          try {
+            contactService.delete(selectedFeegheContact.getString("id"), null);
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    });
+
+    dialogNewFeegheContactBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.cancel();
+      }
+    });
+
+    btnFeegheContactsCreate.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        if (dialogNewFeegheContact == null) {
+          dialogNewFeegheContact = dialogNewFeegheContactBuilder.create();
+        }
+        dialogNewFeegheContact.show();
+        dialogNewFeegheContact.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+
+          @Override
+          public void onClick(View v) {
+            String newContactNum = editTxtNewFeegheContact.getText().toString();
+            if (newContactNum.isEmpty()) {
+              txtViewNewFeegheContactError.setVisibility(View.VISIBLE);
+              txtViewNewFeegheContactError.setText("Phone number is required");
+              return;
+            } else if (newContactNum.equals(session.getCurrentUser().getString("phoneNumber"))) {
+              txtViewNewFeegheContactError.setVisibility(View.VISIBLE);
+              txtViewNewFeegheContactError.setText("New Feeghe contact can't be your number");
+              return;
+            }
+            txtViewNewFeegheContactError.setVisibility(View.GONE);
+            JSONObject newFeegheContactParams = new JSONObject();
+            try {
+              newFeegheContactParams.put("owner", session.getUserId());
+              newFeegheContactParams.put("user", newContactNum);
+            } catch (JSONException e) {
+              e.printStackTrace();
+            }
+
+            final Button btnPositive = (Button) v;
+            btnPositive.setText("Saving...");
+            btnPositive.setEnabled(false);
+
+            contactService.save(newFeegheContactParams, new APIService.SaveCallback() {
+
+              @Override
+              public void onSuccess(ResponseObject response) {
+                feegheContactsAdapter.add(response.getContent());
+                contactCacheCollection.save(response.getContent());
+                btnPositive.setText("Save");
+                btnPositive.setEnabled(true);
+              }
+
+              @Override
+              public void onFail(int statusCode, String error) {
+                txtViewNewFeegheContactError.setVisibility(View.VISIBLE);
+                txtViewNewFeegheContactError.setText(error);
+                btnPositive.setText("Save");
+                btnPositive.setEnabled(true);
+              }
+            });
+          }
+        });
+      }
+    });
+
+    btnPhoneContactsSave.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+
+      }
+    });
+
+    listViewFeegheContacts.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+      @Override
+      public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        Toast.makeText(context, "testing", Toast.LENGTH_LONG).show();
+        selectedFeegheContact = feegheContactsAdapter.getItem(position);
+        if (dialogSelFeegheContact == null) {
+          dialogSelFeegheContact = dialogSelFeegheContactBuilder.create();
+        }
+        dialogSelFeegheContact.show();
+        return false;
+      }
+    });
   }
 
   @Override
@@ -172,6 +305,14 @@ public class ContactsFragment extends MainActivityFragment {
 
     @Override
     public void onClick(View v) {
+      switch (v.getId()) {
+        case R.id.btnShowChat:
+          showChat((Button) v);
+          break;
+      }
+    }
+
+    private void showChat(Button v) {
       GoToRoomTask createRoom = new GoToRoomTask(
         context,
         (String) v.getTag(),
@@ -217,17 +358,10 @@ public class ContactsFragment extends MainActivityFragment {
       JSONObject contact = getItem(position);
       try {
         JSONObject user = contact.getJSONObject("user");
-        String userId = user.getString("id");
-        String firstName = user.getString("firstName");
-        String lastName = user.getString("lastName");
-        if (!firstName.isEmpty() && !lastName.isEmpty() && !user.isNull("firstName") && !user.isNull("lastName")) {
-          viewHolder.txtViewListContactName.setText(firstName + " " + lastName);
-        } else {
-          viewHolder.txtViewListContactName.setText(user.getString("phoneNumber"));
-        }
-        viewHolder.txtViewListContactName.setTag(userId);
+        viewHolder.txtViewListContactName.setText(Util.getFullName(user));
+        viewHolder.txtViewListContactName.setTag(user.getString("id"));
         viewHolder.txtViewListContactNumber.setText(user.getString("phoneNumber"));
-        viewHolder.btnShowChat.setTag(userId);
+        viewHolder.btnShowChat.setTag(user.getString("id"));
       } catch (JSONException e) {
         e.printStackTrace();
       }

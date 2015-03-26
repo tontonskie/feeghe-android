@@ -641,7 +641,10 @@ abstract public class APIService implements Serializable {
 
     public void onPostExecute(Response result) {
       if (callback != null) {
-        if (!result.isOk()) {
+        if (result == null) {
+          callback.onFail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Please check your internet connection");
+          return;
+        } else if (!result.isOk()) {
           callback.onFail(result.getStatusCode(), result.getErrorMessage());
           return;
         }

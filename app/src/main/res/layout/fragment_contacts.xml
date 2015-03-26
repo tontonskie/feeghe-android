@@ -26,18 +26,69 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
-        <ListView
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
+        <RelativeLayout
           android:id="@+id/tabContentPhoneContacts"
-          android:choiceMode="multipleChoice"/>
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent">
 
-        <ListView
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
+          <ListView
+            android:layout_above="@+id/layoutPhoneContactsBtns"
+            android:layout_alignParentTop="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/listViewPhoneContacts"
+            android:choiceMode="multipleChoice"/>
+
+          <LinearLayout
+            android:id="@+id/layoutPhoneContactsBtns"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="4">
+
+            <Button
+              style="?android:attr/buttonStyleSmall"
+              android:layout_width="0dp"
+              android:layout_weight="4"
+              android:layout_height="wrap_content"
+              android:text="Add To Feeghe Contacts"
+              android:id="@+id/btnPhoneContactsSave"/>
+
+          </LinearLayout>
+        </RelativeLayout>
+
+        <RelativeLayout
           android:id="@+id/tabContentFeegheContacts"
-          android:choiceMode="multipleChoice"/>
+          android:layout_width="match_parent"
+          android:layout_height="match_parent">
 
+          <ListView
+            android:layout_above="@+id/layoutFeegheContactsBtns"
+            android:layout_alignParentTop="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/listViewFeegheContacts"
+            android:choiceMode="multipleChoice"/>
+
+          <LinearLayout
+            android:id="@+id/layoutFeegheContactsBtns"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="4">
+
+            <Button
+              style="?android:attr/buttonStyleSmall"
+              android:layout_width="0dp"
+              android:layout_weight="4"
+              android:layout_height="wrap_content"
+              android:text="Add New Contact"
+              android:id="@+id/btnFeegheContactsCreate"/>
+
+          </LinearLayout>
+        </RelativeLayout>
       </FrameLayout>
     </LinearLayout>
   </TabHost>
