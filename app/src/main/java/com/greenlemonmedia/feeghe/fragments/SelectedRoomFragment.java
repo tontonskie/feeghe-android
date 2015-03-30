@@ -40,6 +40,7 @@ import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.modals.SelectedRoomEditUsers;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 import com.squareup.picasso.Picasso;
@@ -87,6 +88,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private UsableFacesAdapter facesAdapter;
   private GridView gridUsableFaces;
   private Button btnCloseOptionDisplay;
+  private TextView txtViewRoomTitle;
+  private Button btnEditMembers;
+  private SelectedRoomEditUsers dialogEditUsers;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -132,6 +136,17 @@ public class SelectedRoomFragment extends MainActivityFragment {
     newMessageOptionDisplay = (LinearLayout) context.findViewById(R.id.newMessageOptionDisplay);
     gridUsableFaces = (GridView) context.findViewById(R.id.gridUsableFaces);
     btnCloseOptionDisplay = (Button) context.findViewById(R.id.btnCloseOptionDisplay);
+    txtViewRoomTitle = (TextView) context.findViewById(R.id.txtViewSelectedRoomTitle);
+    btnEditMembers = (Button) context.findViewById(R.id.btnEditSelectedRoomMembers);
+
+    String roomName = currentRoom.optString("name");
+    if (currentRoom.isNull("name") || roomName.isEmpty()) {
+      roomName = Util.getRoomName(currentRoomUsers, session.getUserId());
+    }
+    txtViewRoomTitle.setText(roomName);
+
+    dialogEditUsers = new SelectedRoomEditUsers(context);
+    dialogEditUsers.setData(currentRoom);
 
     JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
     messageCacheCollection = messageService.getCacheCollection(messageQuery);
@@ -179,6 +194,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           faceCacheCollection.save(response.getContent());
         } else {
           JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
+          facesAdapter.clear();
           int addedFacesLength = addedFaces.length();
           try {
             for (int i = 0; i < addedFacesLength; i++) {
@@ -202,6 +218,14 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
   @Override
   protected void setupUIEvents() {
+    btnEditMembers.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        dialogEditUsers.show();
+      }
+    });
+
     typingHandler = new Handler();
     cancelTypingTask = new Runnable() {
 
@@ -315,7 +339,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
               @Override
               public void run() {
+                roomMessagesAdapter.setNotifyOnChange(false);
                 roomMessagesAdapter.remove(dataForAppend);
+                roomMessagesAdapter.setNotifyOnChange(true);
                 roomMessagesAdapter.insert(response.getContent(), index);
               }
             });

@@ -8,13 +8,44 @@
 
   <!-- TODO: Update blank fragment layout -->
 
+  <LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/containerSelectedRoomOptions"
+    android:layout_alignParentTop="true"
+    android:weightSum="10">
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_weight="8"
+      android:layout_height="match_parent"
+      android:textAppearance="?android:attr/textAppearanceMedium"
+      android:text="Room Name"
+      android:scrollHorizontally="true"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:id="@+id/txtViewSelectedRoomTitle"
+      android:gravity="center_vertical"
+      android:paddingLeft="5dp"/>
+
+    <Button
+      android:layout_width="0dp"
+      android:layout_weight="2"
+      android:layout_height="wrap_content"
+      android:text="Edit"
+      android:id="@+id/btnEditSelectedRoomMembers"/>
+
+  </LinearLayout>
+
   <ListView
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
     android:layout_above="@+id/newMessageBoxContainer"
+    android:layout_below="@+id/containerSelectedRoomOptions"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>

@@ -424,6 +424,7 @@ public class ContactsFragment extends MainActivityFragment {
       switch (v.getId()) {
         case R.id.btnShowChat:
           showChat((Button) v);
+          break;
         case R.id.btnShowCall:
           showCall((Button) v);
           break;
