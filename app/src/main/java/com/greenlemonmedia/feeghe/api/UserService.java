@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
+import android.app.Activity;
 import android.content.Context;
 import android.telephony.TelephonyManager;
 
@@ -20,7 +21,7 @@ public class UserService extends APIService {
    *
    * @param context
    */
-  public UserService(Context context) {
+  public UserService(Activity context) {
     super("user", context);
   }
 

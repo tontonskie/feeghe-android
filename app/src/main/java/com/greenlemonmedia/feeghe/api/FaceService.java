@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import org.apache.http.client.methods.HttpPut;
 import org.json.JSONException;
@@ -11,7 +11,7 @@ import org.json.JSONObject;
  */
 public class FaceService extends APIService {
 
-  public FaceService(Context context) {
+  public FaceService(Activity context) {
     super("face", context);
   }
 

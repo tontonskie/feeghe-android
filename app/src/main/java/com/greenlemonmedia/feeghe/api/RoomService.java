@@ -1,8 +1,9 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import org.apache.http.client.methods.HttpPut;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,7 +16,7 @@ public class RoomService extends APIService {
    *
    * @param context
    */
-  public RoomService(Context context) {
+  public RoomService(Activity context) {
     super("room", context);
   }
 
@@ -34,6 +35,32 @@ public class RoomService extends APIService {
     }
     setBodyParams(putRequest, params);
     apiAsyncCall(putRequest, callback);
+  }
+
+  /**
+   *
+   * @param roomId
+   * @param newUsers
+   * @param callback
+   */
+  public void addUsers(String roomId, JSONArray newUsers, SocketCallback callback) {
+    JSONObject params = new JSONObject();
+    try {
+      params.put("users", newUsers);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    apiSocketCall("put", getBaseUri(roomId + "/user"), params, callback);
+  }
+
+  /**
+   *
+   * @param roomId
+   * @param userId
+   * @param callback
+   */
+  public void removeUser(String roomId, String userId, SocketCallback callback) {
+    apiSocketCall("delete", getBaseUri(roomId + "/user/" + userId), new JSONObject(), callback);
   }
 
   @Override

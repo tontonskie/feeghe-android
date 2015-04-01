@@ -16,7 +16,10 @@ import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
+import com.greenlemonmedia.feeghe.api.ResponseObject;
+import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +41,9 @@ public class SelectedRoomEditUsers extends MainActivityModal {
   private CacheCollection contactsCache;
   private RoomUsersAdapter roomUsersAdapter;
   private Button btnAdd;
+  private RoomService roomService;
+  private Session session;
+  private CacheCollection roomsCache;
 
   public SelectedRoomEditUsers(MainActivity activity) {
     super(activity);
@@ -53,7 +59,11 @@ public class SelectedRoomEditUsers extends MainActivityModal {
     listViewRoomUsers = (ListView) findViewById(R.id.listViewSelectedRoomUsers);
     btnAdd = (Button) findViewById(R.id.btnAddSelectedRoomUser);
 
+    session = Session.getInstance(context);
     contactService = new ContactService(context);
+    roomService = new RoomService(context);
+
+    roomsCache = roomService.getCacheCollection();
     JSONObject cacheQuery = contactService.getCacheQuery();
     contactsCache = contactService.getCacheCollection(cacheQuery);
     ResponseArray contactsFromCache = contactsCache.getData();
@@ -86,6 +96,8 @@ public class SelectedRoomEditUsers extends MainActivityModal {
 
       }
     });
+
+    setupUIEvents();
   }
 
   private void setContacts(ResponseArray contacts) {
@@ -104,7 +116,66 @@ public class SelectedRoomEditUsers extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
-        
+        final JSONObject currentRoom = (JSONObject) getData();
+        JSONArray newRoomUsers = new JSONArray();
+        try {
+
+          newRoomUsers.put(((JSONObject) spinUsers.getSelectedItem()).getJSONObject("user").getString("id"));
+          int roomUsersCount = roomUsersAdapter.getCount();
+          for (int i = 0; i < roomUsersCount; i++) {
+            newRoomUsers.put(roomUsersAdapter.getItem(i).getString("id"));
+          }
+
+          if (!currentRoom.getBoolean("isGroup")) {
+            JSONObject updateRoomParams = new JSONObject();
+            updateRoomParams.put("isGroup", true);
+            updateRoomParams.put("creator", session.getUserId());
+            updateRoomParams.put("users", newRoomUsers);
+            roomService.socketSave(updateRoomParams, new APIService.SocketCallback() {
+
+              @Override
+              public void onSuccess(ResponseObject response) {
+                JSONObject newGroupRoom = response.getContent();
+                roomsCache.save(newGroupRoom);
+                setData(newGroupRoom);
+              }
+
+              @Override
+              public void onFail(int statusCode, String error) {
+
+              }
+            });
+            return;
+          }
+
+          roomService.addUsers(currentRoom.getString("id"), newRoomUsers, new APIService.SocketCallback() {
+
+            @Override
+            public void onSuccess(ResponseObject response) {
+              JSONObject updatedRoom = response.getContent();
+              roomUsersAdapter.clear();
+              try {
+                roomsCache.replace(currentRoom.optString("id"), updatedRoom);
+                JSONObject users = updatedRoom.getJSONObject("users");
+                Iterator<?> i = users.keys();
+                while (i.hasNext()) {
+                  roomUsersAdapter.add(users.getJSONObject((String) i.next()));
+                }
+              } catch (JSONException e) {
+                e.printStackTrace();
+              }
+              setData(updatedRoom);
+            }
+
+            @Override
+            public void onFail(int statusCode, String error) {
+
+            }
+          });
+
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
       }
     });
   }
@@ -113,6 +184,13 @@ public class SelectedRoomEditUsers extends MainActivityModal {
   protected void onStart() {
     JSONObject room = (JSONObject) getData();
     try {
+
+      if (room.getBoolean("isGroup") && !room.getJSONObject("creator").getString("id").equals(session.getUserId())) {
+        btnAdd.setVisibility(View.INVISIBLE);
+      } else {
+        btnAdd.setVisibility(View.VISIBLE);
+      }
+
       ArrayList<JSONObject> userList = new ArrayList<>();
       JSONObject users = room.getJSONObject("users");
       Iterator<?> i = users.keys();
@@ -133,7 +211,28 @@ public class SelectedRoomEditUsers extends MainActivityModal {
 
     @Override
     public void onClick(View v) {
-      remove(getItem((int) v.getTag()));
+      int pos = (int) v.getTag();
+      JSONObject user = getItem(pos);
+      remove(user);
+      try {
+        final String currentRoomId = ((JSONObject) getData()).getString("id");
+        roomService.removeUser(currentRoomId, user.getString("id"), new APIService.SocketCallback() {
+
+          @Override
+          public void onSuccess(ResponseObject response) {
+            JSONObject roomData = response.getContent();
+            roomsCache.replace(currentRoomId, roomData);
+            setData(roomData);
+          }
+
+          @Override
+          public void onFail(int statusCode, String error) {
+
+          }
+        });
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
     }
 
     private class RoomUserViewHolder {
@@ -155,6 +254,15 @@ public class SelectedRoomEditUsers extends MainActivityModal {
       }
 
       JSONObject roomUser = getItem(position);
+      JSONObject currentRoom = (JSONObject) getData();
+      try {
+        if (currentRoom.getBoolean("isGroup") && !currentRoom.getJSONObject("creator").getString("id").equals(session.getUserId())) {
+          viewHolder.btnRemoveUser.setVisibility(View.INVISIBLE);
+        }
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+
       viewHolder.txtViewRoomUser.setText(Util.getFullName(roomUser));
       viewHolder.btnRemoveUser.setTag(position);
 

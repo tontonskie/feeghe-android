@@ -1,7 +1,7 @@
 package com.greenlemonmedia.feeghe.tasks;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
 
 import com.greenlemonmedia.feeghe.api.APIService;
@@ -29,7 +29,7 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
     public void onSuccess(ResponseObject response);
   }
 
-  public GoToRoomTask(Context context, String chatMateId, Listener listener) {
+  public GoToRoomTask(Activity context, String chatMateId, Listener listener) {
     this.listener = listener;
     preloader = new ProgressDialog(context);
     session = Session.getInstance(context);

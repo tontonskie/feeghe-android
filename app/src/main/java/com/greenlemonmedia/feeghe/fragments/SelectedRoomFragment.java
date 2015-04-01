@@ -40,6 +40,7 @@ import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedRoomEditUsers;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
@@ -91,6 +92,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private TextView txtViewRoomTitle;
   private Button btnEditMembers;
   private SelectedRoomEditUsers dialogEditUsers;
+  private ProgressDialog preloader;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -108,16 +110,36 @@ public class SelectedRoomFragment extends MainActivityFragment {
     clearSeenBy();
   }
 
-  public void onActivityCreated(Bundle savedInstance) {
-    super.onActivityCreated(savedInstance);
-    context = getCurrentActivity();
+  private void setRoomTitle() {
+    String roomName = currentRoom.optString("name");
+    if (currentRoom.isNull("name") || roomName.isEmpty()) {
+      roomName = Util.getRoomName(currentRoomUsers, session.getUserId());
+    }
+    txtViewRoomTitle.setText(roomName);
+  }
+
+  private void setRoomVars(JSONObject room) {
     try {
-      currentRoom = new JSONObject(getArguments().getString("roomInfo"));
+      currentRoom = room;
       currentRoomId = currentRoom.getString("id");
       currentRoomUsers = currentRoom.getJSONObject("users");
     } catch (JSONException e) {
       e.printStackTrace();
     }
+  }
+
+  private void setRoomVars() {
+    try {
+      setRoomVars(new JSONObject(getArguments().getString("roomInfo")));
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void onActivityCreated(Bundle savedInstance) {
+    super.onActivityCreated(savedInstance);
+    context = getCurrentActivity();
+    setRoomVars();
 
     session = Session.getInstance(context);
     faceService = new FaceService(context);
@@ -139,38 +161,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
     txtViewRoomTitle = (TextView) context.findViewById(R.id.txtViewSelectedRoomTitle);
     btnEditMembers = (Button) context.findViewById(R.id.btnEditSelectedRoomMembers);
 
-    String roomName = currentRoom.optString("name");
-    if (currentRoom.isNull("name") || roomName.isEmpty()) {
-      roomName = Util.getRoomName(currentRoomUsers, session.getUserId());
-    }
-    txtViewRoomTitle.setText(roomName);
-
     dialogEditUsers = new SelectedRoomEditUsers(context);
-    dialogEditUsers.setData(currentRoom);
+    dialogEditUsers.setData(currentRoom, false);
 
-    JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
-    messageCacheCollection = messageService.getCacheCollection(messageQuery);
-    ResponseArray response = messageCacheCollection.getData();
-    if (response.length() == 0) {
-      final ProgressDialog messagesPreloader = Util.showPreloader(context);
-      messageService.query(messageQuery, new APIService.QueryCallback() {
+    setRoomTitle();
+    loadMessages();
+    loadUsableFaces();
 
-        @Override
-        public void onSuccess(ResponseArray response) {
-          setMessages(response);
-          messageCacheCollection.save(response.getContent());
-          messagesPreloader.dismiss();
-        }
+    setupUIEvents();
+    setupSocketEvents();
+  }
 
-        @Override
-        public void onFail(int statusCode, String error) {
-          Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
-        }
-      });
-    } else {
-      setMessages(response);
-    }
-
+  private void loadUsableFaces() {
     JSONObject faceQuery = null;
     String jsonParamString = "{\"or\":[{\"favoritedBy." + session.getUserId();
     jsonParamString += "\":{\"!\":null}},{\"user\":\"" + session.getUserId() + "\"}]}";
@@ -211,13 +213,65 @@ public class SelectedRoomFragment extends MainActivityFragment {
         Toast.makeText(context, "Usable faces error: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
       }
     });
+  }
 
-    setupUIEvents();
-    setupSocketEvents();
+  private void loadMessages() {
+    JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
+    messageCacheCollection = messageService.getCacheCollection(messageQuery);
+    ResponseArray response = messageCacheCollection.getData();
+    if (response.length() > 0) {
+      setMessages(response);
+    } else {
+      preloader = Util.showPreloader(context);
+    }
+
+    messageService.query(messageQuery, new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        if (roomMessagesAdapter == null) {
+          setMessages(response);
+          messageCacheCollection.save(response.getContent());
+          preloader.dismiss();
+        } else {
+          JSONArray newMessages = response.getContent();
+          try {
+            for (int i = 0; i < newMessages.length(); i++) {
+              roomMessagesAdapter.add(newMessages.getJSONObject(i));
+            }
+          } catch (JSONException ex) {
+            ex.printStackTrace();
+          }
+        }
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+        Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
+      }
+    });
   }
 
   @Override
   protected void setupUIEvents() {
+    dialogEditUsers.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
+
+      @Override
+      public void onChanged(Object oldRoomData, Object newRoomData) {
+        JSONObject newRoom = (JSONObject) newRoomData;
+        setRoomVars(newRoom);
+        setRoomTitle();
+        try {
+          if (((JSONObject) oldRoomData).getBoolean("isGroup") != newRoom.getBoolean("isGroup")) {
+            loadMessages();
+          }
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+        loadUsableFaces();
+      }
+    });
+
     btnEditMembers.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -322,8 +376,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
         messageService.socketSave(newMessage, new APIService.SocketCallback() {
 
           @Override
-          public void onSuccess(final ResponseObject response) {
-            final int index = roomMessagesAdapter.getPosition(dataForAppend);
+          public void onSuccess(ResponseObject response) {
+            int index = roomMessagesAdapter.getPosition(dataForAppend);
             if (index < 0) {
               return;
             }
@@ -335,16 +389,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
               ex.printStackTrace();
             }
             roomCacheCollection.update(currentRoomId, roomUpdate);
-            context.runOnUiThread(new Runnable() {
-
-              @Override
-              public void run() {
-                roomMessagesAdapter.setNotifyOnChange(false);
-                roomMessagesAdapter.remove(dataForAppend);
-                roomMessagesAdapter.setNotifyOnChange(true);
-                roomMessagesAdapter.insert(response.getContent(), index);
-              }
-            });
+            roomMessagesAdapter.remove(dataForAppend);
+            roomMessagesAdapter.insert(response.getContent(), index);
           }
 
           @Override
@@ -385,31 +431,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
       public void onEvent(JSONObject evt) {
         try {
           String verb = evt.getString("verb");
-          final JSONObject data = evt.getJSONObject("data");
+          JSONObject data = evt.getJSONObject("data");
           if (!data.getString("room").equals(currentRoomId)) {
             return;
           }
           if (verb.equals("created")) {
-            context.runOnUiThread(new Runnable() {
-
-              @Override
-              public void run() {
-                hasNewMessage = true;
-                addToListViewMesages(data);
-              }
-            });
+            hasNewMessage = true;
+            addToListViewMesages(data);
           } else if (verb.equals("typing")) {
-            context.runOnUiThread(new Runnable() {
-
-              @Override
-              public void run() {
-                try {
-                  updateTypers(data.getJSONObject("user"), data.getBoolean("typing"));
-                } catch (JSONException e) {
-                  e.printStackTrace();
-                }
-              }
-            });
+            updateTypers(data.getJSONObject("user"), data.getBoolean("typing"));
           }
         } catch (JSONException e) {
           e.printStackTrace();
@@ -423,17 +453,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
       public void onEvent(JSONObject evt) {
         try {
           String verb = evt.getString("verb");
-          final JSONObject data = evt.getJSONObject("data");
+          JSONObject data = evt.getJSONObject("data");
           if (verb.equals("seen")) {
-            final JSONObject user = data.getJSONObject("user");
+            JSONObject user = data.getJSONObject("user");
             if (data.getString("room").equals(currentRoomId) && !user.getString("id").equals(session.getUserId())) {
-              context.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                  updateSeenBy(user);
-                }
-              });
+              updateSeenBy(user);
             }
           }
         } catch (JSONException e) {

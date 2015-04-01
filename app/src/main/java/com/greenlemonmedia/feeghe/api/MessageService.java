@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +14,7 @@ public class MessageService extends APIService {
    *
    * @param context
    */
-  public MessageService(Context context) {
+  public MessageService(Activity context) {
     super("message", context);
   }
 

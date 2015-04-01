@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -45,7 +45,7 @@ abstract public class APIService implements Serializable {
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected Context context;
+  protected Activity context;
   protected static HashMap<String, CacheCollection> cacheCollections;
   protected String basePath;
   protected String cacheName;
@@ -55,7 +55,7 @@ abstract public class APIService implements Serializable {
    * @param modelName
    * @param context
    */
-  public APIService(String modelName, Context context) {
+  public APIService(String modelName, Activity context) {
     this.context = context;
     this.modelName = modelName;
     basePath = modelName;
@@ -518,20 +518,26 @@ abstract public class APIService implements Serializable {
     Socket.getClient().emit(method, args, new Acknowledge() {
 
       @Override
-      public void acknowledge(JSONArray arguments) {
-        if (callback != null) {
-          try {
-            JSONObject result = arguments.getJSONObject(0);
-            int statusCode = result.getInt("statusCode");
-            if (statusCode == HttpStatus.SC_OK) {
-              callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
-            } else {
-              callback.onFail(statusCode, result.getString("body"));
+      public void acknowledge(final JSONArray arguments) {
+        context.runOnUiThread(new Runnable() {
+
+          @Override
+          public void run() {
+            if (callback != null) {
+              try {
+                JSONObject result = arguments.getJSONObject(0);
+                int statusCode = result.getInt("statusCode");
+                if (statusCode == HttpStatus.SC_OK) {
+                  callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
+                } else {
+                  callback.onFail(statusCode, result.getString("body"));
+                }
+              } catch (JSONException e) {
+                e.printStackTrace();
+              }
             }
-          } catch (JSONException e) {
-            e.printStackTrace();
           }
-        }
+        });
       }
     });
   }

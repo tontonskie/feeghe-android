@@ -111,32 +111,21 @@ public class RoomsFragment extends MainActivityFragment {
           String verb = evt.getString("verb");
           final JSONObject data = evt.getJSONObject("data");
           if (verb.equals("created")) {
-
-            context.runOnUiThread(new Runnable() {
-
-              @Override
-              public void run() {
-                int roomsCount = roomsAdapter.getCount();
-                try {
-                  String roomId = data.getString("room");
-                  String recentChat = data.getString("content");
-                  for (int i = 0; i < roomsCount; i++) {
-                    if (roomsAdapter.getItem(i).getString("id").equals(roomId)) {
-                      JSONObject roomUpdate = roomsAdapter.getItem(i);
-                      roomsAdapter.remove(roomUpdate);
-                      JSONObject roomUser = roomUpdate.put("recentChat", recentChat)
-                        .getJSONObject("users")
-                        .getJSONObject(session.getUserId());
-                      roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
-                      roomsAdapter.insert(roomUpdate, i);
-                      return;
-                    }
-                  }
-                } catch (JSONException ex) {
-                  ex.printStackTrace();
-                }
+            int roomsCount = roomsAdapter.getCount();
+            String roomId = data.getString("room");
+            String recentChat = data.getString("content");
+            for (int i = 0; i < roomsCount; i++) {
+              if (roomsAdapter.getItem(i).getString("id").equals(roomId)) {
+                JSONObject roomUpdate = roomsAdapter.getItem(i);
+                roomsAdapter.remove(roomUpdate);
+                JSONObject roomUser = roomUpdate.put("recentChat", recentChat)
+                  .getJSONObject("users")
+                  .getJSONObject(session.getUserId());
+                roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
+                roomsAdapter.insert(roomUpdate, i);
+                return;
               }
-            });
+            }
           }
         } catch (JSONException ex) {
           ex.printStackTrace();

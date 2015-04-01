@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,7 +17,7 @@ public class FaceCommentService extends APIService {
    * @param context
    * @param faceId
    */
-  public FaceCommentService(Context context, String faceId) {
+  public FaceCommentService(Activity context, String faceId) {
     super("faceComments", context);
     setBasePath("face/" + faceId + "/comments");
     this.faceId = faceId;

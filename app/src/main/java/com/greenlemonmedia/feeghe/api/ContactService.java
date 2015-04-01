@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.content.Context;
+import android.app.Activity;
 
 import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
@@ -16,7 +16,7 @@ public class ContactService extends APIService {
    *
    * @param context
    */
-  public ContactService(Context context) {
+  public ContactService(Activity context) {
     super("contact", context);
   }
 

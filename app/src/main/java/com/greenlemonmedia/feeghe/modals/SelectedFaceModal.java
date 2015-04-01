@@ -1,5 +1,6 @@
 package com.greenlemonmedia.feeghe.modals;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
@@ -55,7 +56,7 @@ public class SelectedFaceModal extends MainActivityModal {
   private CommentsAdapter commentsAdapter;
   private Button btnHideComments;
   private ListView listViewComments;
-  private Context context;
+  private Activity context;
   private TextView txtViewCommentsTitle;
   private TextView txtViewCommentsLoading;
   private Button btnSendComment;
@@ -70,7 +71,7 @@ public class SelectedFaceModal extends MainActivityModal {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.modal_selected_face);
 
-    context = getContext();
+    context = getActivity();
     session = Session.getInstance(context);
     faceService = new FaceService(context);
 

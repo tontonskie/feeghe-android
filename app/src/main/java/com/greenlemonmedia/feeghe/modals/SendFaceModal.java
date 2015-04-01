@@ -1,6 +1,6 @@
 package com.greenlemonmedia.feeghe.modals;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -50,7 +50,7 @@ public class SendFaceModal extends MainActivityModal {
   private LinearLayout layoutLoading;
   private MessageService messageService;
   private Session session;
-  private Context context;
+  private Activity context;
   private TextView txtViewError;
 
   public SendFaceModal(MainActivity activity) {
@@ -69,7 +69,7 @@ public class SendFaceModal extends MainActivityModal {
     layoutLoading = (LinearLayout) findViewById(R.id.layoutLoadingSendFaceModal);
     txtViewError = (TextView) findViewById(R.id.txtViewSendFaceError);
 
-    context = getContext();
+    context = getActivity();
     session = Session.getInstance(context);
     messageService = new MessageService(context);
     contactService = new ContactService(context);
