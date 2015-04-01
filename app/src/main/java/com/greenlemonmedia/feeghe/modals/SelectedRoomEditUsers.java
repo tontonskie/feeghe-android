@@ -135,9 +135,7 @@ public class SelectedRoomEditUsers extends MainActivityModal {
 
               @Override
               public void onSuccess(ResponseObject response) {
-                JSONObject newGroupRoom = response.getContent();
-                roomsCache.save(newGroupRoom);
-                setData(newGroupRoom);
+                updateRoomUsersList(null, response.getContent());
               }
 
               @Override
@@ -152,19 +150,7 @@ public class SelectedRoomEditUsers extends MainActivityModal {
 
             @Override
             public void onSuccess(ResponseObject response) {
-              JSONObject updatedRoom = response.getContent();
-              roomUsersAdapter.clear();
-              try {
-                roomsCache.replace(currentRoom.optString("id"), updatedRoom);
-                JSONObject users = updatedRoom.getJSONObject("users");
-                Iterator<?> i = users.keys();
-                while (i.hasNext()) {
-                  roomUsersAdapter.add(users.getJSONObject((String) i.next()));
-                }
-              } catch (JSONException e) {
-                e.printStackTrace();
-              }
-              setData(updatedRoom);
+              updateRoomUsersList(currentRoom, response.getContent());
             }
 
             @Override
@@ -178,6 +164,25 @@ public class SelectedRoomEditUsers extends MainActivityModal {
         }
       }
     });
+  }
+
+  private void updateRoomUsersList(JSONObject currentRoom, JSONObject updatedRoom) {
+    roomUsersAdapter.clear();
+    try {
+      if (currentRoom == null) {
+        roomsCache.save(updatedRoom);
+      } else {
+        roomsCache.replace(currentRoom.getString("id"), updatedRoom);
+      }
+      JSONObject users = updatedRoom.getJSONObject("users");
+      Iterator<?> i = users.keys();
+      while (i.hasNext()) {
+        roomUsersAdapter.add(users.getJSONObject((String) i.next()));
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    setData(updatedRoom);
   }
 
   @Override

@@ -182,7 +182,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       e.printStackTrace();
     }
     faceCacheCollection = faceService.getCacheCollection(faceQuery);
-    ResponseArray facesFromCache = faceCacheCollection.getData();
+    final ResponseArray facesFromCache = faceCacheCollection.getData();
     if (facesFromCache.length() != 0) {
       setUsableFaces(facesFromCache);
     }
@@ -191,7 +191,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (facesAdapter == null) {
+        if (facesFromCache.length() == 0) {
           setUsableFaces(response);
           faceCacheCollection.save(response.getContent());
         } else {
@@ -218,9 +218,9 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private void loadMessages() {
     JSONObject messageQuery = messageService.getCacheQuery(currentRoomId);
     messageCacheCollection = messageService.getCacheCollection(messageQuery);
-    ResponseArray response = messageCacheCollection.getData();
-    if (response.length() > 0) {
-      setMessages(response);
+    final ResponseArray responseFromCache = messageCacheCollection.getData();
+    if (responseFromCache.length() > 0) {
+      setMessages(responseFromCache);
     } else {
       preloader = Util.showPreloader(context);
     }
@@ -229,7 +229,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (roomMessagesAdapter == null) {
+        if (responseFromCache.length() == 0) {
           setMessages(response);
           messageCacheCollection.save(response.getContent());
           preloader.dismiss();
