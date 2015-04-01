@@ -31,7 +31,7 @@ import java.util.Iterator;
 /**
  * Created by tontonskie on 3/31/15.
  */
-public class SelectedRoomEditUsers extends MainActivityModal {
+public class SelectedRoomUsersModal extends MainActivityModal {
 
   private Spinner spinUsers;
   private ListView listViewRoomUsers;
@@ -45,7 +45,7 @@ public class SelectedRoomEditUsers extends MainActivityModal {
   private Session session;
   private CacheCollection roomsCache;
 
-  public SelectedRoomEditUsers(MainActivity activity) {
+  public SelectedRoomUsersModal(MainActivity activity) {
     super(activity);
   }
 
@@ -183,6 +183,10 @@ public class SelectedRoomEditUsers extends MainActivityModal {
       e.printStackTrace();
     }
     setData(updatedRoom);
+  }
+
+  private void showGallery() {
+
   }
 
   @Override

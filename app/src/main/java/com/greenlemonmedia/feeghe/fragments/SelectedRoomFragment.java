@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -40,8 +41,9 @@ import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.modals.GalleryPickerModal;
 import com.greenlemonmedia.feeghe.modals.MainActivityModal;
-import com.greenlemonmedia.feeghe.modals.SelectedRoomEditUsers;
+import com.greenlemonmedia.feeghe.modals.SelectedRoomUsersModal;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 import com.squareup.picasso.Picasso;
@@ -56,6 +58,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class SelectedRoomFragment extends MainActivityFragment {
+
+  private static final int UPLOAD_FILE = 1;
 
   private MainActivity context;
   private String currentRoomId;
@@ -91,8 +95,16 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Button btnCloseOptionDisplay;
   private TextView txtViewRoomTitle;
   private Button btnEditMembers;
-  private SelectedRoomEditUsers dialogEditUsers;
+  private SelectedRoomUsersModal dialogEditUsers;
   private ProgressDialog preloader;
+  private Button btnSendAttachment;
+  private GalleryPickerModal dialogGallery;
+  private Button btnShowSearch;
+  private LinearLayout containerSearchOptions;
+  private LinearLayout containerRoomEdit;
+  private Button btnCloseSearch;
+  private Button btnSearchMsg;
+  private EditText editTxtSearchMsg;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -160,9 +172,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
     btnCloseOptionDisplay = (Button) context.findViewById(R.id.btnCloseOptionDisplay);
     txtViewRoomTitle = (TextView) context.findViewById(R.id.txtViewSelectedRoomTitle);
     btnEditMembers = (Button) context.findViewById(R.id.btnEditSelectedRoomMembers);
+    btnSendAttachment = (Button) context.findViewById(R.id.btnSendAttachment);
+    btnShowSearch = (Button) context.findViewById(R.id.btnSelectedRoomShowSearch);
+    containerSearchOptions = (LinearLayout) context.findViewById(R.id.containerSelectedRoomSearch);
+    containerRoomEdit = (LinearLayout) context.findViewById(R.id.containerSelectedRoomEdit);
+    btnCloseSearch = (Button) context.findViewById(R.id.btnSelectedRoomCloseSearch);
+    btnSearchMsg = (Button) context.findViewById(R.id.btnSelectedRoomSearch);
+    editTxtSearchMsg = (EditText) context.findViewById(R.id.editTxtSelectedRoomSearch);
 
-    dialogEditUsers = new SelectedRoomEditUsers(context);
+    dialogEditUsers = new SelectedRoomUsersModal(context);
     dialogEditUsers.setData(currentRoom, false);
+
+    dialogGallery = new GalleryPickerModal(context);
 
     setRoomTitle();
     loadMessages();
@@ -252,8 +273,82 @@ public class SelectedRoomFragment extends MainActivityFragment {
     });
   }
 
+  private void searchMessage(String q) {
+    JSONObject query = new JSONObject();
+    try {
+      query.put("room", currentRoomId);
+      query.put("content", new JSONObject("{\"contains\":\"" + q + "\"}"));
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        JSONArray msgs = response.getContent();
+        roomMessagesAdapter.clear();
+        try {
+          for (int i = 0; i < msgs.length(); i++) {
+            roomMessagesAdapter.add(msgs.getJSONObject(i));
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+
+      }
+    });
+  }
+
+  @Override
+  public void onActivityResult(int reqCode, int resCode, Intent data) {
+    super.onActivityResult(reqCode, resCode, data);
+    if (reqCode == UPLOAD_FILE) {
+      data.getData();
+    }
+  }
+
   @Override
   protected void setupUIEvents() {
+    btnSearchMsg.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        searchMessage(editTxtSearchMsg.getText().toString());
+      }
+    });
+
+    btnShowSearch.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        containerSearchOptions.setVisibility(View.VISIBLE);
+        containerRoomEdit.setVisibility(View.GONE);
+      }
+    });
+
+    btnCloseSearch.setOnClickListener(new View.OnClickListener() {
+
+
+      @Override
+      public void onClick(View v) {
+        containerSearchOptions.setVisibility(View.GONE);
+        containerRoomEdit.setVisibility(View.VISIBLE);
+        loadMessages();
+      }
+    });
+
+    btnSendAttachment.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        dialogGallery.show();
+      }
+    });
+
     dialogEditUsers.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
 
       @Override
