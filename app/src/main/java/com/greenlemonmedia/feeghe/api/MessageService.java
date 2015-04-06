@@ -1,9 +1,17 @@
 package com.greenlemonmedia.feeghe.api;
 
 import android.app.Activity;
+import android.util.Log;
 
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Created by tonton on 1/14/15.
@@ -33,6 +41,28 @@ public class MessageService extends APIService {
       e.printStackTrace();
     }
     apiSocketCall("post", getBaseUri("typing"), data);
+  }
+
+  /**
+   *
+   * @param messageId
+   * @param path
+   * @param callback
+   */
+  public void upload(String messageId, String filename, String path, SaveCallback callback) {
+    HttpPut httpPut = new HttpPut(getBaseUrl(messageId + "/upload"));
+    File fileForUpload = new File(path);
+    MultipartEntity entity = new MultipartEntity();
+    entity.addPart("file", new FileBody(fileForUpload));
+    try {
+      entity.addPart("filename", new StringBody(filename));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    httpPut.setEntity(entity);
+    enableAutoHeaders = false;
+    apiAsyncCall(httpPut, callback);
+    enableAutoHeaders = true;
   }
 
   @Override

@@ -49,6 +49,7 @@ abstract public class APIService implements Serializable {
   protected static HashMap<String, CacheCollection> cacheCollections;
   protected String basePath;
   protected String cacheName;
+  protected boolean enableAutoHeaders = true;
 
   /**
    *
@@ -181,7 +182,9 @@ abstract public class APIService implements Serializable {
    * @param request
    */
   protected void setDefaultHeaders(HttpUriRequest request) {
-    request.addHeader("Content-Type", "application/json");
+    if (enableAutoHeaders) {
+      request.addHeader("Content-Type", "application/json");
+    }
   }
 
   /**

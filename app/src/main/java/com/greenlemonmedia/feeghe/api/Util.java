@@ -3,6 +3,7 @@ package com.greenlemonmedia.feeghe.api;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
+import android.webkit.MimeTypeMap;
 
 import com.squareup.picasso.Picasso;
 
@@ -172,5 +173,30 @@ public class Util {
     Picasso instance = Picasso.with(context);
     instance.setLoggingEnabled(true);
     return instance;
+  }
+
+  /**
+   *
+   * @param path
+   * @return
+   */
+  public static String generateFilename(String path) {
+    String[] splitted = path.split("\\.");
+    return createUniqueCode() + "." + splitted[splitted.length - 1];
+  }
+
+  /**
+   *
+   * @param path
+   * @return
+   */
+  public static String getMimeType(String path) {
+    String type = null;
+    String extension = MimeTypeMap.getFileExtensionFromUrl(path);
+    if (extension != null) {
+      MimeTypeMap mime = MimeTypeMap.getSingleton();
+      type = mime.getMimeTypeFromExtension(extension);
+    }
+    return type;
   }
 }

@@ -3,11 +3,13 @@ package com.greenlemonmedia.feeghe.fragments;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -281,6 +283,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
+    preloader = Util.showPreloader(context);
     messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
 
       @Override
@@ -294,6 +297,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
+        preloader.dismiss();
       }
 
       @Override
@@ -307,8 +311,15 @@ public class SelectedRoomFragment extends MainActivityFragment {
   public void onActivityResult(int reqCode, int resCode, Intent data) {
     super.onActivityResult(reqCode, resCode, data);
     if (reqCode == UPLOAD_FILE) {
-      data.getData();
+      uploadFile(data.getData());
     }
+  }
+
+  private void uploadFile(Uri uri) {
+    String[] fields= { MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID };
+    Cursor cursor = context.getContentResolver().query(uri, fields, null, null, null);
+    cursor.moveToFirst();
+    sendNewMessage(new String[] { cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)) });
   }
 
   @Override
@@ -332,7 +343,6 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
     btnCloseSearch.setOnClickListener(new View.OnClickListener() {
 
-
       @Override
       public void onClick(View v) {
         containerSearchOptions.setVisibility(View.GONE);
@@ -345,7 +355,11 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onClick(View v) {
-        dialogGallery.show();
+//        dialogGallery.show();
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), UPLOAD_FILE);
       }
     });
 
@@ -439,64 +453,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       @Override
       public void onClick(View v) {
-        String content = txtNewMessage.getText().toString();
-        if (content.isEmpty()) {
-          return;
-        }
-
-        btnSendNewMessage.setEnabled(false);
-        processingNewMessage = true;
-        txtNewMessage.setText("");
-        processingNewMessage = false;
-        JSONObject newMessage = new JSONObject();
-
-        final String tmpMessageId = "tmp-" + Util.createUniqueCode();
-        final JSONObject dataForAppend = new JSONObject();
-        try {
-
-          newMessage.put("content", content);
-          newMessage.put("user", session.getUserId());
-          newMessage.put("room", currentRoomId);
-
-          dataForAppend.put("content", content);
-          dataForAppend.put("user", session.getCurrentUser().toJSON());
-          dataForAppend.put("room", currentRoomId);
-          dataForAppend.put("timestamp", "Sending...");
-          dataForAppend.put("id", tmpMessageId);
-
-        } catch (JSONException ex) {
-          ex.printStackTrace();
-        }
-
-        messageService.socketSave(newMessage, new APIService.SocketCallback() {
-
-          @Override
-          public void onSuccess(ResponseObject response) {
-            int index = roomMessagesAdapter.getPosition(dataForAppend);
-            if (index < 0) {
-              return;
-            }
-            messageCacheCollection.save(response.getContent());
-            JSONObject roomUpdate = new JSONObject();
-            try {
-              roomUpdate.put("recentChat", response.getContent().getString("content"));
-            } catch (JSONException ex) {
-              ex.printStackTrace();
-            }
-            roomCacheCollection.update(currentRoomId, roomUpdate);
-            roomMessagesAdapter.remove(dataForAppend);
-            roomMessagesAdapter.insert(response.getContent(), index);
-          }
-
-          @Override
-          public void onFail(int statusCode, String error) {
-
-          }
-        });
-
-        addToListViewMesages(dataForAppend);
-        scrollToEnd();
-        btnSendNewMessage.setEnabled(true);
+        sendNewMessage(null);
       }
     });
 
@@ -565,6 +522,99 @@ public class SelectedRoomFragment extends MainActivityFragment {
   @Override
   public String getFragmentId() {
     return MainActivity.FRAG_SELECTED_ROOM;
+  }
+
+  private void sendNewMessage(final String[] attachments) {
+    String content = txtNewMessage.getText().toString();
+    if (content.isEmpty() && (attachments == null || attachments.length == 0)) {
+      return;
+    }
+
+    btnSendNewMessage.setEnabled(false);
+    processingNewMessage = true;
+    txtNewMessage.setText("");
+    processingNewMessage = false;
+    JSONObject newMessage = new JSONObject();
+
+    final JSONArray newMsgAttachments = new JSONArray();
+    final String tmpMessageId = "tmp-" + Util.createUniqueCode();
+    final JSONObject dataForAppend = new JSONObject();
+    try {
+
+      newMessage.put("user", session.getUserId());
+      newMessage.put("room", currentRoomId);
+
+      dataForAppend.put("user", session.getCurrentUser().toJSON());
+      dataForAppend.put("room", currentRoomId);
+      dataForAppend.put("timestamp", "Sending...");
+      dataForAppend.put("id", tmpMessageId);
+
+      if (attachments != null && attachments.length > 0) {
+        for (int i = 0; i < attachments.length; i++) {
+          newMsgAttachments.put(Util.generateFilename(attachments[i]));
+        }
+        newMessage.put("files", newMsgAttachments);
+        dataForAppend.put("files", attachments);
+        newMessage.put("content", null);
+        dataForAppend.put("content", null);
+      } else {
+        newMessage.put("content", content);
+        dataForAppend.put("content", content);
+      }
+
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+
+    messageService.socketSave(newMessage, new APIService.SocketCallback() {
+
+      @Override
+      public void onSuccess(ResponseObject response) {
+        int index = roomMessagesAdapter.getPosition(dataForAppend);
+        if (index < 0) {
+          return;
+        }
+        JSONObject sentMessage = response.getContent();
+        messageCacheCollection.save(sentMessage);
+        JSONObject roomUpdate = new JSONObject();
+        try {
+          roomUpdate.put("recentChat", sentMessage.getString("content"));
+          if (!sentMessage.isNull("files") && sentMessage.getJSONArray("files").length() > 0) {
+
+            APIService.SaveCallback onUploadComplete = new APIService.SaveCallback() {
+
+              @Override
+              public void onSuccess(ResponseObject response) {
+
+              }
+
+              @Override
+              public void onFail(int statusCode, String error) {
+                Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+              }
+            };
+            JSONArray sentMsgAttachments = sentMessage.getJSONArray("files");
+            for (int i = 0; i < sentMsgAttachments.length(); i++) {
+              messageService.upload(sentMessage.getString("id"), newMsgAttachments.getString(i), attachments[i], onUploadComplete);
+            }
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        roomCacheCollection.update(currentRoomId, roomUpdate);
+        roomMessagesAdapter.remove(dataForAppend);
+        roomMessagesAdapter.insert(sentMessage, index);
+      }
+
+      @Override
+      public void onFail(int statusCode, String error) {
+
+      }
+    });
+
+    addToListViewMesages(dataForAppend);
+    scrollToEnd();
+    btnSendNewMessage.setEnabled(true);
   }
 
   public void setMessages(ResponseArray response) {
@@ -767,6 +817,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       TextView txtViewPerChatContent;
       TextView txtViewChatMateName;
       TextView txtViewMessageTimestamp;
+      ImageView imgViewAttachment;
     }
 
     public View getView(final int position, View convertView, ViewGroup parent) {
@@ -778,6 +829,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         viewHolder.txtViewChatMateName = (TextView) convertView.findViewById(R.id.txtViewChatMateName);
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
         viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
+        viewHolder.imgViewAttachment = (ImageView) convertView.findViewById(R.id.imgViewPerChatAttachment);
         convertView.setOnLongClickListener(this);
         convertView.setTag(viewHolder);
       } else {
@@ -822,7 +874,22 @@ public class SelectedRoomFragment extends MainActivityFragment {
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
         }
 
-        if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
+        viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
+        viewHolder.imgViewAttachment.setVisibility(View.GONE);
+
+        if (!message.isNull("files") && message.getJSONArray("files").length() > 0) {
+
+          viewHolder.txtViewPerChatContent.setVisibility(View.GONE);
+          viewHolder.imgViewAttachment.setVisibility(View.VISIBLE);
+
+          JSONArray attached = message.getJSONArray("files");
+          for (int i = 0; i < attached.length(); i++) {
+            Util.getPicasso(context)
+              .load(Uri.parse(Util.getStaticUrl(attached.getJSONObject(i).getString("small"))))
+              .into(viewHolder.imgViewAttachment);
+          }
+
+        } else if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
           if (!contentWithFaces.containsKey(message.getString("id"))) {
             viewHolder.txtViewPerChatContent.setText("Loading...");
             LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
@@ -848,8 +915,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
           } else {
             viewHolder.txtViewPerChatContent.setText(contentWithFaces.get(message.getString("id")));
           }
-        } else {
+        } else if (!message.isNull("content")) {
           viewHolder.txtViewPerChatContent.setText(message.getString("content"));
+        } else {
+          viewHolder.txtViewPerChatContent.setText("");
         }
 
         if (position == (getCount() - 1)) {
