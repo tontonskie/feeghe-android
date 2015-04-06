@@ -621,6 +621,10 @@ abstract public class APIService implements Serializable {
     public void onEvent(JSONObject evt);
   }
 
+  public interface UploadProgressListener {
+    public void onProgress(int completed);
+  }
+
   private class AsyncCall extends AsyncTask<Void, Void, Response> {
 
     private HttpUriRequest request;

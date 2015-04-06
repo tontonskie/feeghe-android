@@ -16,6 +16,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -593,9 +594,17 @@ public class SelectedRoomFragment extends MainActivityFragment {
                 Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
               }
             };
+
+            APIService.UploadProgressListener onProgress = new APIService.UploadProgressListener() {
+
+              @Override
+              public void onProgress(int completed) {
+                Log.d("progress", completed + "");
+              }
+            };
             JSONArray sentMsgAttachments = sentMessage.getJSONArray("files");
             for (int i = 0; i < sentMsgAttachments.length(); i++) {
-              messageService.upload(sentMessage.getString("id"), newMsgAttachments.getString(i), attachments[i], onUploadComplete);
+              messageService.upload(sentMessage.getString("id"), newMsgAttachments.getString(i), attachments[i], onProgress, onUploadComplete);
             }
           }
         } catch (JSONException ex) {
