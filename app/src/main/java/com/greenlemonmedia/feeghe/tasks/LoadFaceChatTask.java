@@ -9,7 +9,7 @@ import android.os.AsyncTask;
 import android.text.Html;
 import android.text.Spanned;
 
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 
 import java.io.IOException;
 
@@ -42,8 +42,8 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, Spanned> {
         public Drawable getDrawable(String source) {
           Drawable bmpDrawable;
           try {
-            Bitmap bmp = Util.getPicasso(context)
-              .load(Uri.parse(Util.getStaticUrl(source)))
+            Bitmap bmp = APIUtils.getPicasso(context)
+              .load(Uri.parse(APIUtils.getStaticUrl(source)))
               .get();
             bmpDrawable = new BitmapDrawable(context.getResources(), bmp);
             bmpDrawable.setBounds(0, 0, bmpDrawable.getIntrinsicWidth(), bmpDrawable.getIntrinsicHeight());

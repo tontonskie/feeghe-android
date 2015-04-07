@@ -18,7 +18,7 @@ import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
@@ -101,7 +101,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
   }
 
   private void setContacts(ResponseArray contacts) {
-    contactsAdapter = new ContactsSpinnerAdapter(context, Util.toList(contacts));
+    contactsAdapter = new ContactsSpinnerAdapter(context, APIUtils.toList(contacts));
     spinUsers.setAdapter(contactsAdapter);
   }
 
@@ -272,7 +272,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
         e.printStackTrace();
       }
 
-      viewHolder.txtViewRoomUser.setText(Util.getFullName(roomUser));
+      viewHolder.txtViewRoomUser.setText(APIUtils.getFullName(roomUser));
       viewHolder.btnRemoveUser.setTag(position);
 
       return convertView;

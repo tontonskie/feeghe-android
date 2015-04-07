@@ -24,7 +24,7 @@ import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GoToRoomTask;
 import com.squareup.picasso.Picasso;
@@ -109,8 +109,8 @@ public class SendFaceModal extends MainActivityModal {
 
     JSONObject data = (JSONObject) getData();
     try {
-      Util.getPicasso(context)
-        .load(Uri.parse(Util.getStaticUrl(data.getJSONObject("photo").getString("small"))))
+      APIUtils.getPicasso(context)
+        .load(Uri.parse(APIUtils.getStaticUrl(data.getJSONObject("photo").getString("small"))))
         .into(new FaceImageTarget());
     } catch (JSONException e) {
       e.printStackTrace();
@@ -120,7 +120,7 @@ public class SendFaceModal extends MainActivityModal {
   }
 
   private void setContacts(ResponseArray contacts) {
-    contactsAdapter = new ContactsSpinnerAdapter(context, Util.toList(contacts));
+    contactsAdapter = new ContactsSpinnerAdapter(context, APIUtils.toList(contacts));
     selectContact.setAdapter(contactsAdapter);
   }
 
@@ -133,7 +133,7 @@ public class SendFaceModal extends MainActivityModal {
       JSONObject data = (JSONObject) getData();
 
       try {
-        String faceImgTag = Util.getImageTag(data.getString("id"), data.getJSONObject("photo").getString("small"));
+        String faceImgTag = APIUtils.getImageTag(data.getString("id"), data.getJSONObject("photo").getString("small"));
         message.insert(cursorPos, faceImgTag);
         message.setSpan(
           new ImageSpan(context, bitmap),

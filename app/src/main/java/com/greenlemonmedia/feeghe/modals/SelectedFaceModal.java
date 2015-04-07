@@ -27,7 +27,7 @@ import com.greenlemonmedia.feeghe.api.FaceCommentService;
 import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
@@ -113,7 +113,7 @@ public class SelectedFaceModal extends MainActivityModal {
           newComment.put("content", newCommentContent);
           newComment.put("user", session.getUserId());
 
-          newCommentForAppend.put("id", "tmp-" + Util.createUniqueCode());
+          newCommentForAppend.put("id", "tmp-" + APIUtils.createUniqueCode());
           newCommentForAppend.put("content", newCommentContent);
           newCommentForAppend.put("user", session.getCurrentUser().toJSON());
 
@@ -283,7 +283,7 @@ public class SelectedFaceModal extends MainActivityModal {
   }
 
   private void setComments(ResponseArray comments) {
-    commentsAdapter = new CommentsAdapter(Util.toList(comments));
+    commentsAdapter = new CommentsAdapter(APIUtils.toList(comments));
     listViewComments.setAdapter(commentsAdapter);
   }
 
@@ -325,7 +325,7 @@ public class SelectedFaceModal extends MainActivityModal {
 
       JSONObject comment = getItem(position);
       try {
-        viewHolder.txtViewUser.setText(Util.getFullName(comment.getJSONObject("user")));
+        viewHolder.txtViewUser.setText(APIUtils.getFullName(comment.getJSONObject("user")));
         viewHolder.txtViewContent.setText(comment.getString("content"));
       } catch (JSONException e) {
         e.printStackTrace();
@@ -387,8 +387,8 @@ public class SelectedFaceModal extends MainActivityModal {
         txtViewSelectedFaceTagsCount.setText("0");
       }
 
-      Util.getPicasso(context)
-        .load(Uri.parse(Util.getStaticUrl(face.getJSONObject("photo").getString("medium"))))
+      APIUtils.getPicasso(context)
+        .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("medium"))))
         .into(imgViewSelectedFace);
 
     } catch (JSONException e) {

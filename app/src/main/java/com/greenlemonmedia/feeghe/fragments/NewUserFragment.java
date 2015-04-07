@@ -26,7 +26,7 @@ import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.UserService;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
@@ -243,7 +243,7 @@ public class NewUserFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        listViewContacts.setAdapter(new ContactsAdapter(Util.toList(response)));
+        listViewContacts.setAdapter(new ContactsAdapter(APIUtils.toList(response)));
         btnAddContacts.setEnabled(true);
         chkSyncContacts.setEnabled(true);
         chkSyncContacts.setText("Sync Contacts");
@@ -295,7 +295,7 @@ public class NewUserFragment extends MainActivityFragment {
       }
       JSONObject contact = getItem(position);
       try {
-        viewHolder.checkBox.setText(Util.getFullName(contact));
+        viewHolder.checkBox.setText(APIUtils.getFullName(contact));
         viewHolder.checkBox.setTag(contact.getString("id"));
       } catch (JSONException e) {
         e.printStackTrace();

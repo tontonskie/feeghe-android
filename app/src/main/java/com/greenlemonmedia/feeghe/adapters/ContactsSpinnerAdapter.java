@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.R;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,7 +48,7 @@ public class ContactsSpinnerAdapter extends ArrayAdapter<JSONObject> {
     }
     JSONObject contact = getItem(position);
     try {
-      contactViewHolder.txtContactName.setText(Util.getFullName(contact.getJSONObject("user")));
+      contactViewHolder.txtContactName.setText(APIUtils.getFullName(contact.getJSONObject("user")));
     } catch (JSONException e) {
       e.printStackTrace();
     }

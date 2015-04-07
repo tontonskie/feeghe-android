@@ -20,7 +20,7 @@ import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 
@@ -61,7 +61,7 @@ public class RoomsFragment extends MainActivityFragment {
     if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
     } else {
-      roomsPreloader = Util.showPreloader(context);
+      roomsPreloader = APIUtils.showPreloader(context);
     }
 
     roomService.query(request, new APIService.QueryCallback() {
@@ -140,7 +140,7 @@ public class RoomsFragment extends MainActivityFragment {
   }
 
   public void showRooms(ResponseArray response) {
-    roomsAdapter = new RoomsAdapter(Util.toList(response));
+    roomsAdapter = new RoomsAdapter(APIUtils.toList(response));
     listViewRooms.setAdapter(roomsAdapter);
   }
 
@@ -193,7 +193,7 @@ public class RoomsFragment extends MainActivityFragment {
         viewHolder.id = room.getString("id");
         viewHolder.info = room;
         JSONObject usersInRoom = room.getJSONObject("users");
-        viewHolder.txtViewRoomName.setText(Util.getRoomName(usersInRoom, session.getUserId()));
+        viewHolder.txtViewRoomName.setText(APIUtils.getRoomName(usersInRoom, session.getUserId()));
 
         int unreadCount = usersInRoom.getJSONObject(session.getUserId()).getInt("unreadCount");
         if (unreadCount > 0) {

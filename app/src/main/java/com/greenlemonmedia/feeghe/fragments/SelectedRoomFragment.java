@@ -1,15 +1,14 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -35,6 +34,7 @@ import android.widget.Toast;
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
 import com.greenlemonmedia.feeghe.api.APIService;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.MessageService;
@@ -42,7 +42,6 @@ import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
-import com.greenlemonmedia.feeghe.api.Util;
 import com.greenlemonmedia.feeghe.modals.GalleryPickerModal;
 import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedRoomUsersModal;
@@ -127,7 +126,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private void setRoomTitle() {
     String roomName = currentRoom.optString("name");
     if (currentRoom.isNull("name") || roomName.isEmpty()) {
-      roomName = Util.getRoomName(currentRoomUsers, session.getUserId());
+      roomName = APIUtils.getRoomName(currentRoomUsers, session.getUserId());
     }
     txtViewRoomTitle.setText(roomName);
   }
@@ -245,7 +244,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     if (responseFromCache.length() > 0) {
       setMessages(responseFromCache);
     } else {
-      preloader = Util.showPreloader(context);
+      preloader = APIUtils.showPreloader(context);
     }
 
     messageService.query(messageQuery, new APIService.QueryCallback() {
@@ -258,6 +257,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
           preloader.dismiss();
         } else {
           JSONArray newMessages = response.getContent();
+          messageCacheCollection.updateCollection(newMessages);
+          roomMessagesAdapter.clear();
           try {
             for (int i = 0; i < newMessages.length(); i++) {
               roomMessagesAdapter.add(newMessages.getJSONObject(i));
@@ -283,7 +284,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    preloader = Util.showPreloader(context);
+    preloader = APIUtils.showPreloader(context);
     messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
 
       @Override
@@ -310,17 +311,18 @@ public class SelectedRoomFragment extends MainActivityFragment {
   @Override
   public void onActivityResult(int reqCode, int resCode, Intent data) {
     super.onActivityResult(reqCode, resCode, data);
-    if (data != null && reqCode == UPLOAD_FILE) {
+    if (resCode == Activity.RESULT_OK && reqCode == UPLOAD_FILE) {
       uploadFile(data.getData());
     }
     btnSendAttachment.setEnabled(true);
   }
 
   private void uploadFile(Uri uri) {
-    String[] fields= { MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID };
-    Cursor cursor = context.getContentResolver().query(uri, fields, null, null, null);
-    cursor.moveToFirst();
-    sendNewMessage(new String[] { cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)) });
+//    String[] fields= { MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID };
+//    Cursor cursor = context.getContentResolver().query(uri, fields, null, null, null);
+//    cursor.moveToFirst();
+//    cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+    sendNewMessage(new String[] { APIUtils.getPath(context, uri) });
   }
 
   @Override
@@ -539,7 +541,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     JSONObject newMessage = new JSONObject();
 
     final JSONArray newMsgAttachments = new JSONArray();
-    final String tmpMessageId = "tmp-" + Util.createUniqueCode();
+    final String tmpMessageId = "tmp-" + APIUtils.createUniqueCode();
     final JSONObject dataForAppend = new JSONObject();
     try {
 
@@ -553,7 +555,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
       if (attachments != null && attachments.length > 0) {
         for (int i = 0; i < attachments.length; i++) {
-          newMsgAttachments.put(Util.generateFilename(attachments[i]));
+          newMsgAttachments.put(APIUtils.generateFilename(attachments[i]));
         }
         newMessage.put("files", newMsgAttachments);
         dataForAppend.put("files", newMsgAttachments);
@@ -655,13 +657,13 @@ public class SelectedRoomFragment extends MainActivityFragment {
   }
 
   public void setMessages(ResponseArray response) {
-    roomMessagesAdapter = new RoomMessagesAdapter(Util.toList(response));
+    roomMessagesAdapter = new RoomMessagesAdapter(APIUtils.toList(response));
     listViewMessages.setAdapter(roomMessagesAdapter);
     txtNewMessage.setEnabled(true);
   }
 
   public void setUsableFaces(ResponseArray response) {
-    facesAdapter = new UsableFacesAdapter(Util.toList(response));
+    facesAdapter = new UsableFacesAdapter(APIUtils.toList(response));
     gridUsableFaces.setAdapter(facesAdapter);
   }
 
@@ -669,7 +671,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
     txtViewSeenBy.setLayoutParams(layoutParams);
-    txtViewSeenBy.setText("Seen by " + Util.getRoomName(users, session.getUserId()));
+    txtViewSeenBy.setText("Seen by " + APIUtils.getRoomName(users, session.getUserId()));
   }
 
   public void updateSeenBy(JSONObject user) {
@@ -684,7 +686,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) txtViewSeenBy.getLayoutParams();
     layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
     txtViewSeenBy.setLayoutParams(layoutParams);
-    txtViewSeenBy.setText("Seen by " + Util.getRoomName(seenBy, session.getUserId()));
+    txtViewSeenBy.setText("Seen by " + APIUtils.getRoomName(seenBy, session.getUserId()));
     if (onEndOfList) {
       scrollToEnd();
     }
@@ -727,7 +729,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       if (typersCount > 1) {
         suffix = " are typing...";
       }
-      txtViewTyping.setText(Util.getRoomName(typers, session.getUserId()) + suffix);
+      txtViewTyping.setText(APIUtils.getRoomName(typers, session.getUserId()) + suffix);
       layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
     } else {
       txtViewTyping.setText("");
@@ -756,7 +758,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       int cursorPos = txtNewMessage.getSelectionStart();
       SpannableStringBuilder message = new SpannableStringBuilder(txtNewMessage.getText());
 
-      String faceImgTag = Util.getImageTag(face.id, face.src);
+      String faceImgTag = APIUtils.getImageTag(face.id, face.src);
       message.insert(cursorPos, faceImgTag);
       message.setSpan(
         new ImageSpan(context, face.img),
@@ -828,8 +830,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
         e.printStackTrace();
       }
 
-      Util.getPicasso(context)
-        .load(Uri.parse(Util.getStaticUrl(faceImgTag.src)))
+      APIUtils.getPicasso(context)
+        .load(Uri.parse(APIUtils.getStaticUrl(faceImgTag.src)))
         .into(new FaceImageTarget(viewHolder.imgViewUsableFace, faceImgTag));
 
       return convertView;
@@ -894,7 +896,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         String userId = user.getString("id");
         if (previousUser == null || !previousUser.getString("id").equals(userId)) {
           viewHolder.txtViewChatMateName.setVisibility(View.VISIBLE);
-          viewHolder.txtViewChatMateName.setText(Util.getFullName(user));
+          viewHolder.txtViewChatMateName.setText(APIUtils.getFullName(user));
         } else {
           viewHolder.txtViewChatMateName.setVisibility(View.GONE);
         }
@@ -931,8 +933,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
           if (!isTmpMsg) {
             JSONArray attached = message.getJSONArray("files");
             for (int i = 0; i < attached.length(); i++) {
-              Util.getPicasso(context)
-                .load(Uri.parse(Util.getStaticUrl(attached.getJSONObject(i).getString("small"))))
+              APIUtils.getPicasso(context)
+                .load(Uri.parse(APIUtils.getStaticUrl(attached.getJSONObject(i).getString("small"))))
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .into(viewHolder.imgViewAttachment);

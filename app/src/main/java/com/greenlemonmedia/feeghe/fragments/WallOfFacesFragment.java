@@ -21,7 +21,7 @@ import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.FaceService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedFaceModal;
 
@@ -69,7 +69,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
     if (facesFromCache.length() != 0) {
       setFaces(facesFromCache);
     } else {
-      facesPreloader = Util.showPreloader(context);
+      facesPreloader = APIUtils.showPreloader(context);
     }
 
     faceService.query(cacheQuery, new APIService.QueryCallback() {
@@ -105,7 +105,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
   }
 
   public void setFaces(ResponseArray response) {
-    facesAdapter = new FacesAdapter(Util.toList(response));
+    facesAdapter = new FacesAdapter(APIUtils.toList(response));
     gridViewFaces.setAdapter(facesAdapter);
     btnSearchFace.setEnabled(true);
   }
@@ -270,8 +270,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
       JSONObject face = getItem(position);
       viewHolder.info = face;
       try {
-        Util.getPicasso(context)
-          .load(Uri.parse(Util.getStaticUrl(face.getJSONObject("photo").getString("small"))))
+        APIUtils.getPicasso(context)
+          .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("small"))))
           .into(viewHolder.imgViewFace);
         viewHolder.txtViewFaceTitle.setText(face.getString("title"));
         viewHolder.imgViewFace.setTag(face.getString("id"));

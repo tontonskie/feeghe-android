@@ -26,7 +26,7 @@ import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
 import com.greenlemonmedia.feeghe.fragments.UploadFragment;
 import com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment;
@@ -135,7 +135,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   private void setupSocketConnection() {
-    final ProgressDialog preloader = Util.showPreloader(this);
+    final ProgressDialog preloader = APIUtils.showPreloader(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
       @Override

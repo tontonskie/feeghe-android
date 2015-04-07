@@ -19,7 +19,7 @@ import android.widget.ViewFlipper;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.UserService;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 
 import org.json.JSONArray;
@@ -100,7 +100,7 @@ public class RegisterActivity extends Activity {
           break;
         }
       }
-      countryCodes = new CountryCodesAdapter(Util.toList(countries));
+      countryCodes = new CountryCodesAdapter(APIUtils.toList(countries));
     } catch (JSONException | UnsupportedEncodingException e) {
       e.printStackTrace();
     }
@@ -123,7 +123,7 @@ public class RegisterActivity extends Activity {
         }
         txtRegisterError.setVisibility(View.GONE);
         phoneNumber = countryCode + phoneNumber;
-        final ProgressDialog preloader = Util.showPreloader(context);
+        final ProgressDialog preloader = APIUtils.showPreloader(context);
         userService.register(phoneNumber, new APIService.SaveCallback() {
 
           @Override
@@ -159,7 +159,7 @@ public class RegisterActivity extends Activity {
           return;
         }
         txtVerificationError.setVisibility(View.GONE);
-        final ProgressDialog preloader = Util.showPreloader(context);
+        final ProgressDialog preloader = APIUtils.showPreloader(context);
         userService.verify(verificationId, verificationCode, new APIService.UpdateCallback() {
 
           @Override

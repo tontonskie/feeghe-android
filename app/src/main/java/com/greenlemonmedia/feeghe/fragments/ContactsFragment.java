@@ -25,7 +25,7 @@ import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.UserService;
-import com.greenlemonmedia.feeghe.api.Util;
+import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GoToRoomTask;
 
@@ -109,7 +109,7 @@ public class ContactsFragment extends MainActivityFragment {
     if (responseFromCache.getContent().length() != 0) {
       showFeegheContacts(responseFromCache);
     } else {
-      contactsPreloader = Util.showPreloader(context);
+      contactsPreloader = APIUtils.showPreloader(context);
     }
 
     contactService.query(query, new APIService.QueryCallback() {
@@ -165,7 +165,7 @@ public class ContactsFragment extends MainActivityFragment {
   }
 
   public void showFeegheContacts(ResponseArray response) {
-    feegheContactsAdapter = new FeegheContactsAdapter(Util.toList(response));
+    feegheContactsAdapter = new FeegheContactsAdapter(APIUtils.toList(response));
     listViewFeegheContacts.setAdapter(feegheContactsAdapter);
   }
 
@@ -354,7 +354,7 @@ public class ContactsFragment extends MainActivityFragment {
         dialogSelFeegheContact = dialogSelFeegheContactBuilder.create();
       }
       try {
-        dialogSelFeegheContact.setTitle(Util.getFullName(selectedFeegheContact.getJSONObject("user")));
+        dialogSelFeegheContact.setTitle(APIUtils.getFullName(selectedFeegheContact.getJSONObject("user")));
       } catch (JSONException e) {
         e.printStackTrace();
       }
@@ -391,7 +391,7 @@ public class ContactsFragment extends MainActivityFragment {
       JSONObject contact = getItem(position);
       try {
         JSONObject user = contact.getJSONObject("user");
-        viewHolder.txtViewListContactName.setText(Util.getFullName(user));
+        viewHolder.txtViewListContactName.setText(APIUtils.getFullName(user));
         viewHolder.txtViewListContactName.setTag(user.getString("id"));
         viewHolder.txtViewListContactNumber.setText(user.getString("phoneNumber"));
         viewHolder.nameContainer.setTag(position);
