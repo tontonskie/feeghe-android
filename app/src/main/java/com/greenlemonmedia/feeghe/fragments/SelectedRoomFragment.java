@@ -16,7 +16,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -311,9 +310,10 @@ public class SelectedRoomFragment extends MainActivityFragment {
   @Override
   public void onActivityResult(int reqCode, int resCode, Intent data) {
     super.onActivityResult(reqCode, resCode, data);
-    if (reqCode == UPLOAD_FILE) {
+    if (data != null && reqCode == UPLOAD_FILE) {
       uploadFile(data.getData());
     }
+    btnSendAttachment.setEnabled(true);
   }
 
   private void uploadFile(Uri uri) {
@@ -357,6 +357,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
       @Override
       public void onClick(View v) {
 //        dialogGallery.show();
+        btnSendAttachment.setEnabled(false);
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -555,7 +556,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
           newMsgAttachments.put(Util.generateFilename(attachments[i]));
         }
         newMessage.put("files", newMsgAttachments);
-        dataForAppend.put("files", attachments);
+        dataForAppend.put("files", newMsgAttachments);
         newMessage.put("content", null);
         dataForAppend.put("content", null);
       } else {
@@ -575,23 +576,38 @@ public class SelectedRoomFragment extends MainActivityFragment {
         if (index < 0) {
           return;
         }
-        JSONObject sentMessage = response.getContent();
-        messageCacheCollection.save(sentMessage);
+        final JSONObject sentMessage = response.getContent();
         JSONObject roomUpdate = new JSONObject();
         try {
+
+          final String sentMsgTimestamp = sentMessage.getString("timestamp");
+          sentMessage.put("user", currentRoomUsers.getJSONObject(sentMessage.getString("user")));
+          messageCacheCollection.save(sentMessage);
           roomUpdate.put("recentChat", sentMessage.getString("content"));
+
           if (!sentMessage.isNull("files") && sentMessage.getJSONArray("files").length() > 0) {
 
+            sentMessage.put("timestamp", "Uploading...");
             APIService.SaveCallback onUploadComplete = new APIService.SaveCallback() {
 
               @Override
               public void onSuccess(ResponseObject response) {
-
+                int pos = roomMessagesAdapter.getPosition(sentMessage);
+                if (pos < 0) {
+                  return;
+                }
+                roomMessagesAdapter.remove(sentMessage);
+                try {
+                  sentMessage.put("timestamp", sentMsgTimestamp);
+                } catch (JSONException e) {
+                  e.printStackTrace();
+                }
+                roomMessagesAdapter.insert(sentMessage, pos);
               }
 
               @Override
               public void onFail(int statusCode, String error) {
-                Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_LONG).show();
               }
             };
 
@@ -599,9 +615,20 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
               @Override
               public void onProgress(int completed) {
-                Log.d("progress", completed + "");
+//                int pos = roomMessagesAdapter.getPosition(sentMessage);
+//                if (pos < 0) {
+//                  return;
+//                }
+//                roomMessagesAdapter.remove(sentMessage);
+//                try {
+//                  sentMessage.put("progress", completed);
+//                } catch (JSONException e) {
+//                  e.printStackTrace();
+//                }
+//                roomMessagesAdapter.insert(sentMessage, pos);
               }
             };
+
             JSONArray sentMsgAttachments = sentMessage.getJSONArray("files");
             for (int i = 0; i < sentMsgAttachments.length(); i++) {
               messageService.upload(sentMessage.getString("id"), newMsgAttachments.getString(i), attachments[i], onProgress, onUploadComplete);
@@ -610,6 +637,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
+
         roomCacheCollection.update(currentRoomId, roomUpdate);
         roomMessagesAdapter.remove(dataForAppend);
         roomMessagesAdapter.insert(sentMessage, index);
@@ -846,7 +874,12 @@ public class SelectedRoomFragment extends MainActivityFragment {
       }
 
       final JSONObject message = getItem(position);
+      boolean isTmpMsg = false;
       try {
+
+        if (message.getString("id").indexOf("tmp-") == 0) {
+          isTmpMsg = true;
+        }
 
         JSONObject previousUser = null;
         JSONObject nextUser = null;
@@ -873,29 +906,37 @@ public class SelectedRoomFragment extends MainActivityFragment {
           viewHolder.txtViewMessageTimestamp.setVisibility(View.GONE);
         }
 
+        LinearLayout.LayoutParams imgLayoutParams = (LinearLayout.LayoutParams) viewHolder.imgViewAttachment.getLayoutParams();
         if (userId.equals(session.getUserId())) {
           viewHolder.txtViewChatMateName.setGravity(Gravity.RIGHT);
           viewHolder.txtViewPerChatContent.setGravity(Gravity.RIGHT);
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.RIGHT);
+          imgLayoutParams.gravity = Gravity.RIGHT;
         } else {
           viewHolder.txtViewChatMateName.setGravity(Gravity.LEFT);
           viewHolder.txtViewPerChatContent.setGravity(Gravity.LEFT);
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
+          imgLayoutParams.gravity = Gravity.LEFT;
         }
 
         viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
         viewHolder.imgViewAttachment.setVisibility(View.GONE);
+        viewHolder.imgViewAttachment.setLayoutParams(imgLayoutParams);
 
         if (!message.isNull("files") && message.getJSONArray("files").length() > 0) {
 
           viewHolder.txtViewPerChatContent.setVisibility(View.GONE);
           viewHolder.imgViewAttachment.setVisibility(View.VISIBLE);
 
-          JSONArray attached = message.getJSONArray("files");
-          for (int i = 0; i < attached.length(); i++) {
-            Util.getPicasso(context)
-              .load(Uri.parse(Util.getStaticUrl(attached.getJSONObject(i).getString("small"))))
-              .into(viewHolder.imgViewAttachment);
+          if (!isTmpMsg) {
+            JSONArray attached = message.getJSONArray("files");
+            for (int i = 0; i < attached.length(); i++) {
+              Util.getPicasso(context)
+                .load(Uri.parse(Util.getStaticUrl(attached.getJSONObject(i).getString("small"))))
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .into(viewHolder.imgViewAttachment);
+            }
           }
 
         } else if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
