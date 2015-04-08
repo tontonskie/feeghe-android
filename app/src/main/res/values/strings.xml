@@ -11,6 +11,13 @@
     <item>Female</item>
   </string-array>
 
+  <string-array name="settings_list">
+    <item>Profile</item>
+    <item>Edit Profile</item>
+  </string-array>
+
+  <string name="settings_drawer_open_desc">Settings open</string>
+  <string name="settings_drawer_close_desc">Settings close</string>
   <string name="title_activity_new_user">new_user</string>
   <string name="hello_world">Hello world!</string>
   <string name="title_activity_messages">MessagesActivity</string>

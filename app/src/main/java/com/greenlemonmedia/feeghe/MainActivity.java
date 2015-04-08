@@ -9,14 +9,19 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 
@@ -60,6 +65,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private TabWidget tabs;
   private MessageService messageService;
   private String currentFragmentId;
+  private ListView listViewSettings;
+  private ActionBarDrawerToggle toggleSettings;
+  private DrawerLayout drawerSettings;
 
   public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
@@ -91,9 +99,36 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     }
 
     setupTabs();
+    setupNavDrawer();
     setupSounds();
     setupSocketConnection();
     setupKeyboardDetection();
+  }
+
+  private void setupNavDrawer() {
+    String[] settingsList = getResources().getStringArray(R.array.settings_list);
+    drawerSettings = (DrawerLayout) findViewById(R.id.drawerLayoutSettings);
+    listViewSettings = (ListView) findViewById(R.id.drawerListSettings);
+    listViewSettings.setAdapter(new ArrayAdapter(this, R.layout.per_settings_item, settingsList));
+
+    final ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+    actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer);
+
+    toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc){
+      public void onDrawerClosed(View view) {
+        actionBar.setTitle("Feeghe");
+        invalidateOptionsMenu();
+      }
+
+      public void onDrawerOpened(View drawerView) {
+        actionBar.setTitle("Settings");
+        invalidateOptionsMenu();
+      }
+    };
+
+    drawerSettings.setDrawerListener(toggleSettings);
   }
 
   private void setupTabs() {
@@ -327,6 +362,9 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
+    if (toggleSettings.onOptionsItemSelected(item)) {
+      return true;
+    }
     return super.onOptionsItemSelected(item);
   }
 
