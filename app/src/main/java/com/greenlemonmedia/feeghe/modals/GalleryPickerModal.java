@@ -2,7 +2,6 @@ package com.greenlemonmedia.feeghe.modals;
 
 import android.app.Activity;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -37,7 +36,7 @@ public class GalleryPickerModal extends MainActivityModal {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.dialog_gallery_picker);
+    setContentView(R.layout.modal_gallery_picker);
     context = getActivity();
 
     gridGallery = (GridView) findViewById(R.id.gridViewGallery);

@@ -42,6 +42,7 @@ import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
+import com.greenlemonmedia.feeghe.modals.AttachedPreviewModal;
 import com.greenlemonmedia.feeghe.modals.GalleryPickerModal;
 import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedRoomUsersModal;
@@ -58,7 +59,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class SelectedRoomFragment extends MainActivityFragment {
+public class SelectedRoomFragment extends MainActivityFragment implements MainActivityFragment.AttachmentListing {
 
   private static final int UPLOAD_FILE = 1;
 
@@ -106,6 +107,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
   private Button btnCloseSearch;
   private Button btnSearchMsg;
   private EditText editTxtSearchMsg;
+  private AttachedPreviewModal modalAttachedPreview;
+  private HashMap<Integer, JSONObject> roomAttachments = new HashMap<>();
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -183,6 +186,8 @@ public class SelectedRoomFragment extends MainActivityFragment {
 
     dialogEditUsers = new SelectedRoomUsersModal(context);
     dialogEditUsers.setData(currentRoom, false);
+
+    modalAttachedPreview = new AttachedPreviewModal(this);
 
     dialogGallery = new GalleryPickerModal(context);
 
@@ -746,6 +751,16 @@ public class SelectedRoomFragment extends MainActivityFragment {
     return MainActivity.TAB_MESSAGES;
   }
 
+  @Override
+  public JSONObject getAttachedItem(int position) {
+    return roomAttachments.get(position);
+  }
+
+  @Override
+  public int getAttachmentsCount() {
+    return roomAttachments.size();
+  }
+
   private class UsableFacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     public UsableFacesAdapter(ArrayList<JSONObject> faces) {
@@ -838,7 +853,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
   }
 
-  private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnLongClickListener {
+  private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
     private HashMap<String, Spanned> contentWithFaces;
 
@@ -848,8 +863,17 @@ public class SelectedRoomFragment extends MainActivityFragment {
     }
 
     @Override
-    public boolean onLongClick(View v) {
-      return false;
+    public void onClick(View v) {
+      switch (v.getId()) {
+        case R.id.imgViewPerChatAttachment:
+          showAttachment((ImageView) v);
+          break;
+      }
+    }
+
+    public void showAttachment(ImageView v) {
+      modalAttachedPreview.setData(v.getTag());
+      modalAttachedPreview.show();
     }
 
     private class MessageViewHolder {
@@ -869,7 +893,7 @@ public class SelectedRoomFragment extends MainActivityFragment {
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
         viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
         viewHolder.imgViewAttachment = (ImageView) convertView.findViewById(R.id.imgViewPerChatAttachment);
-        convertView.setOnLongClickListener(this);
+        viewHolder.imgViewAttachment.setOnClickListener(this);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (MessageViewHolder) convertView.getTag();
@@ -933,11 +957,14 @@ public class SelectedRoomFragment extends MainActivityFragment {
           if (!isTmpMsg) {
             JSONArray attached = message.getJSONArray("files");
             for (int i = 0; i < attached.length(); i++) {
+              JSONObject sizes = attached.getJSONObject(i);
+              viewHolder.imgViewAttachment.setTag(position + i);
               APIUtils.getPicasso(context)
-                .load(Uri.parse(APIUtils.getStaticUrl(attached.getJSONObject(i).getString("small"))))
+                .load(Uri.parse(APIUtils.getStaticUrl(sizes.getString("small"))))
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .into(viewHolder.imgViewAttachment);
+              roomAttachments.put(position + i, sizes);
             }
           }
 

@@ -5,12 +5,14 @@ import android.app.Fragment;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 
+import org.json.JSONObject;
+
 /**
  * Created by tonton on 1/14/15.
  */
 abstract public class MainActivityFragment extends Fragment {
 
-  protected MainActivity getCurrentActivity() {
+  public MainActivity getCurrentActivity() {
     return (MainActivity) getActivity();
   }
 
@@ -26,5 +28,10 @@ abstract public class MainActivityFragment extends Fragment {
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     ((MainActivity) activity).setCurrentFragmentId(getFragmentId());
+  }
+
+  public interface AttachmentListing {
+    public JSONObject getAttachedItem(int position);
+    public int getAttachmentsCount();
   }
 }
