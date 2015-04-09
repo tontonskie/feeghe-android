@@ -5,10 +5,12 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -19,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -33,6 +36,7 @@ import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
 import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.fragments.ContactsFragment;
+import com.greenlemonmedia.feeghe.fragments.EditProfileFragment;
 import com.greenlemonmedia.feeghe.fragments.UploadFragment;
 import com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment;
 import com.greenlemonmedia.feeghe.fragments.MainActivityFragment;
@@ -80,6 +84,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   public static final String FRAG_UPLOAD = "upload_fragment";
   public static final String FRAG_NEW_USER = "new_user_fragment";
   public static final String FRAG_WALL_OF_FACES = "wall_of_faces_fragment";
+  public static final String FRAG_EDIT_PROFILE = "edit_profile_fragment";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -110,13 +115,28 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     drawerSettings = (DrawerLayout) findViewById(R.id.drawerLayoutSettings);
     listViewSettings = (ListView) findViewById(R.id.drawerListSettings);
     listViewSettings.setAdapter(new ArrayAdapter(this, R.layout.per_settings_item, settingsList));
+    listViewSettings.setOnItemClickListener(new ListView.OnItemClickListener() {
+
+      @Override
+      public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        switch (position) {
+          case 0:
+            break;
+          case 1:
+            showEditProfileFragment();
+            break;
+        }
+        drawerSettings.closeDrawer(GravityCompat.END);
+      }
+    });
 
     final ActionBar actionBar = getSupportActionBar();
-    actionBar.setDisplayHomeAsUpEnabled(true);
-    actionBar.setHomeButtonEnabled(true);
-    actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer);
+//    actionBar.setDisplayHomeAsUpEnabled(true);
+//    actionBar.setHomeButtonEnabled(true);
+//    actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer);
 
-    toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc){
+    toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc) {
+
       public void onDrawerClosed(View view) {
         actionBar.setTitle("Feeghe");
         invalidateOptionsMenu();
@@ -125,10 +145,23 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       public void onDrawerOpened(View drawerView) {
         actionBar.setTitle("Settings");
         invalidateOptionsMenu();
+        listViewSettings.bringToFront();
       }
     };
 
     drawerSettings.setDrawerListener(toggleSettings);
+  }
+
+  @Override
+  protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    toggleSettings.syncState();
+  }
+
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    toggleSettings.onConfigurationChanged(newConfig);
   }
 
   private void setupTabs() {
@@ -325,6 +358,10 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     showFragment(new UploadFragment());
   }
 
+  public void showEditProfileFragment() {
+    showFragment(new EditProfileFragment());
+  }
+
   public void showRoomFragment(JSONObject roomInfo) {
     Bundle args = new Bundle();
     args.putString("roomInfo", roomInfo.toString());
@@ -364,6 +401,11 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   public boolean onOptionsItemSelected(MenuItem item) {
     if (toggleSettings.onOptionsItemSelected(item)) {
       return true;
+    }
+    switch (item.getItemId()) {
+      case R.id.actionSettingsBtn:
+        drawerSettings.openDrawer(GravityCompat.END);
+        break;
     }
     return super.onOptionsItemSelected(item);
   }
