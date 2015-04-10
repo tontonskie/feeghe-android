@@ -3,7 +3,6 @@ package com.greenlemonmedia.feeghe.api;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.greenlemonmedia.feeghe.storage.DbCache;
 import com.greenlemonmedia.feeghe.storage.Session;
@@ -22,7 +21,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -537,17 +535,25 @@ abstract public class APIService implements Serializable {
           @Override
           public void run() {
             if (callback != null) {
+              JSONObject result = arguments.optJSONObject(0);
+              int statusCode = result.optInt("statusCode");
               try {
-                JSONObject result = arguments.getJSONObject(0);
-                int statusCode = result.getInt("statusCode");
                 if (statusCode == HttpStatus.SC_OK) {
                   callback.onSuccess(new ResponseObject(statusCode, result.getJSONObject("body")));
-                } else {
-                  callback.onFail(statusCode, result.getString("body"));
+                  return;
                 }
               } catch (JSONException e) {
                 e.printStackTrace();
+                return;
               }
+              String errMessage = result.optString("body");
+              JSONObject validationError = null;
+              try {
+                validationError = new JSONObject(errMessage);
+              } catch (JSONException e) {
+                e.printStackTrace();
+              }
+              callback.onFail(statusCode, errMessage, validationError);
             }
           }
         });
@@ -624,7 +630,7 @@ abstract public class APIService implements Serializable {
 
   public interface SocketCallback {
     public void onSuccess(ResponseObject response);
-    public void onFail(int statusCode, String error);
+    public void onFail(int statusCode, String error, JSONObject validationError);
   }
 
   public interface EventCallback {

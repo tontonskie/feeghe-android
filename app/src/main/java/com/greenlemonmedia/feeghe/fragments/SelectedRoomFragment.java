@@ -661,7 +661,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });
