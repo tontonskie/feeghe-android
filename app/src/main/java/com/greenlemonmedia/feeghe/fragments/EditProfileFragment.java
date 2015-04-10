@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -42,7 +41,7 @@ public class EditProfileFragment extends MainActivityFragment {
   private ImageView imgViewProfile;
   private Button btnSave;
   private AlertDialog diagEditPic;
-  private TextView txtViewUploading;
+  private Uri forUploadFromGallery;
 
   private static final int UPLOAD_FILE = 1;
 
@@ -66,16 +65,13 @@ public class EditProfileFragment extends MainActivityFragment {
     editTxtPhone = (EditText) context.findViewById(R.id.editTxtEditProfilePhoneNumber);
     imgViewProfile = (ImageView) context.findViewById(R.id.imgViewEditProfilePic);
     btnSave = (Button) context.findViewById(R.id.btnEditProfileSave);
-    txtViewUploading = (TextView) context.findViewById(R.id.txtViewEditProfileUploading);
 
     setUserInfo(session.getCurrentUser().toJSON());
     userService.get(session.getUserId(), new APIService.GetCallback() {
 
       @Override
       public void onSuccess(ResponseObject response) {
-        JSONObject newUserInfo = response.getContent();
-        session.setCurrentUser(newUserInfo);
-        setUserInfo(newUserInfo);
+        setUserInfo(response.getContent());
       }
 
       @Override
@@ -88,6 +84,7 @@ public class EditProfileFragment extends MainActivityFragment {
   }
 
   private void setUserInfo(JSONObject userInfo) {
+    session.setCurrentUser(userInfo);
     try {
       if (!userInfo.isNull("email")) {
         editTxtEmail.setText(userInfo.getString("email"));
@@ -148,6 +145,7 @@ public class EditProfileFragment extends MainActivityFragment {
         btnSave.setEnabled(false);
         btnSave.setText("Saving...");
 
+        final Uri forUpload = forUploadFromGallery;
         JSONObject updates = new JSONObject();
         try {
           updates.put("firstName", firstName);
@@ -160,6 +158,10 @@ public class EditProfileFragment extends MainActivityFragment {
 
           @Override
           public void onSuccess(ResponseObject response) {
+            if (forUpload != null) {
+              uploadFile(forUpload);
+              return;
+            }
             session.setCurrentUser(response);
             btnSave.setEnabled(true);
             btnSave.setText("Save Changes");
@@ -214,12 +216,16 @@ public class EditProfileFragment extends MainActivityFragment {
   public void onActivityResult(int reqCode, int resCode, Intent data) {
     super.onActivityResult(reqCode, resCode, data);
     if (resCode == Activity.RESULT_OK && reqCode == UPLOAD_FILE) {
-      uploadFile(data.getData());
+      forUploadFromGallery = data.getData();
+      APIUtils.getPicasso(context)
+        .load(forUploadFromGallery)
+        .placeholder(R.drawable.placeholder)
+        .error(R.drawable.placeholder)
+        .into(imgViewProfile);
     }
   }
 
   private void uploadFile(Uri uri) {
-    txtViewUploading.setVisibility(View.VISIBLE);
     APIService.UploadProgressListener progressCb = new APIService.UploadProgressListener() {
 
       @Override
@@ -232,16 +238,16 @@ public class EditProfileFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseObject response) {
-        JSONObject updatedInfo = response.getContent();
-        session.setCurrentUser(updatedInfo);
-        setUserInfo(updatedInfo);
-        txtViewUploading.setVisibility(View.GONE);
+        session.setCurrentUser(response);
+        btnSave.setEnabled(true);
+        btnSave.setText("Save Changes");
       }
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
         Toast.makeText(context, error, Toast.LENGTH_LONG).show();
-        txtViewUploading.setVisibility(View.GONE);
+        btnSave.setEnabled(true);
+        btnSave.setText("Save Changes");
       }
     };
 
