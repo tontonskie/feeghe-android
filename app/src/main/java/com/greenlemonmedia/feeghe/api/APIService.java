@@ -3,6 +3,7 @@ package com.greenlemonmedia.feeghe.api;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.greenlemonmedia.feeghe.storage.DbCache;
 import com.greenlemonmedia.feeghe.storage.Session;
@@ -21,6 +22,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -304,16 +306,24 @@ abstract public class APIService implements Serializable {
     String result = output.toString();
     int statusCode = response.getStatusLine().getStatusCode();
     try {
-      if (isArray) {
-        if (result.isEmpty()) {
-          result = "[]";
+      if (statusCode == HttpStatus.SC_OK) {
+        if (isArray) {
+          if (result.isEmpty()) {
+            result = "[]";
+          }
+          returnResponse = new ResponseArray(statusCode, new JSONArray(result));
+        } else {
+          if (result.isEmpty()) {
+            result = "{}";
+          }
+          returnResponse = new ResponseObject(statusCode, new JSONObject(result));
         }
-        returnResponse = new ResponseArray(statusCode, new JSONArray(result));
       } else {
-        if (result.isEmpty()) {
-          result = "{}";
+        if (isArray) {
+          returnResponse = new ResponseArray(statusCode, result);
+        } else {
+          returnResponse = new ResponseObject(statusCode, result);
         }
-        returnResponse = new ResponseObject(statusCode, new JSONObject(result));
       }
     } catch (JSONException e) {
       if (isArray) {
@@ -585,7 +595,7 @@ abstract public class APIService implements Serializable {
   }
 
   public interface Callback {
-    public void onFail(int statusCode, String error);
+    public void onFail(int statusCode, String error, JSONObject validationError);
   }
 
   public interface APICallback extends Callback {
@@ -655,10 +665,17 @@ abstract public class APIService implements Serializable {
     public void onPostExecute(Response result) {
       if (callback != null) {
         if (result == null) {
-          callback.onFail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Please check your internet connection");
+          callback.onFail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Please check your internet connection", null);
           return;
         } else if (!result.isOk()) {
-          callback.onFail(result.getStatusCode(), result.getErrorMessage());
+          String errMessage = result.getErrorMessage();
+          JSONObject validationError = null;
+          try {
+            validationError = new JSONObject(errMessage);
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+          callback.onFail(result.getStatusCode(), errMessage, validationError);
           return;
         }
         if (callback instanceof GetCallback) {

@@ -70,7 +70,7 @@ public class EditProfileFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });
@@ -117,13 +117,33 @@ public class EditProfileFragment extends MainActivityFragment {
 
       @Override
       public void onClick(View v) {
+        String email = editTxtEmail.getText().toString();
+        String firstName = editTxtFirstName.getText().toString();
+        String lastName = editTxtLastName.getText().toString();
+
+        if (firstName.isEmpty()) {
+          Toast.makeText(context, "Invalid first name", Toast.LENGTH_LONG).show();
+          return;
+        }
+
+        if (lastName.isEmpty()) {
+          Toast.makeText(context, "Invalid last name", Toast.LENGTH_LONG).show();
+          return;
+        }
+
+        if (!APIUtils.isValidEmail(email)) {
+          Toast.makeText(context, "Invalid email address", Toast.LENGTH_LONG).show();
+          return;
+        }
+
         btnSave.setEnabled(false);
         btnSave.setText("Saving...");
+
         JSONObject updates = new JSONObject();
         try {
-          updates.put("firstName", editTxtFirstName.getText().toString());
-          updates.put("lastName", editTxtLastName.getText().toString());
-          updates.put("email", editTxtEmail.getText().toString());
+          updates.put("firstName", firstName);
+          updates.put("lastName", lastName);
+          updates.put("email", email);
         } catch (JSONException e) {
           e.printStackTrace();
         }
@@ -137,8 +157,8 @@ public class EditProfileFragment extends MainActivityFragment {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
-            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+          public void onFail(int statusCode, String error, JSONObject validationError) {
+            Toast.makeText(context, APIUtils.toValidationErrString(validationError), Toast.LENGTH_LONG).show();
             btnSave.setEnabled(true);
             btnSave.setText("Save Changes");
           }

@@ -182,7 +182,7 @@ public class SelectedFaceModal extends MainActivityModal {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
+          public void onFail(int statusCode, String error, JSONObject validationError) {
             Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
           }
         });
@@ -237,7 +237,7 @@ public class SelectedFaceModal extends MainActivityModal {
             }
 
             @Override
-            public void onFail(int statusCode, String error) {
+            public void onFail(int statusCode, String error, JSONObject validationError) {
               Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
             }
           });
@@ -271,7 +271,7 @@ public class SelectedFaceModal extends MainActivityModal {
             }
 
             @Override
-            public void onFail(int statusCode, String error) {
+            public void onFail(int statusCode, String error, JSONObject validationError) {
               Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
             }
           });

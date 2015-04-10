@@ -139,7 +139,7 @@ public class RegisterActivity extends Activity {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
+          public void onFail(int statusCode, String error, JSONObject validationError) {
             txtRegisterError.setText(error);
             txtRegisterError.setVisibility(View.VISIBLE);
             preloader.dismiss();
@@ -175,7 +175,7 @@ public class RegisterActivity extends Activity {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
+          public void onFail(int statusCode, String error, JSONObject validationError) {
             txtVerificationError.setText(error);
             txtVerificationError.setVisibility(View.VISIBLE);
             preloader.dismiss();

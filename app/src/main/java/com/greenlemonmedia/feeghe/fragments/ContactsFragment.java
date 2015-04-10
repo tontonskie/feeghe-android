@@ -135,7 +135,7 @@ public class ContactsFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         contactsPreloader.dismiss();
       }
     });
@@ -268,7 +268,7 @@ public class ContactsFragment extends MainActivityFragment {
                     }
 
                     @Override
-                    public void onFail(int statusCode, String error) {
+                    public void onFail(int statusCode, String error, JSONObject validationError) {
 
                     }
                   });
@@ -278,7 +278,7 @@ public class ContactsFragment extends MainActivityFragment {
               }
 
               @Override
-              public void onFail(int statusCode, String error) {
+              public void onFail(int statusCode, String error, JSONObject validationError) {
                 editTxtNewFeegheContact.setEnabled(true);
                 txtViewNewFeegheContactError.setVisibility(View.VISIBLE);
                 txtViewNewFeegheContactError.setText(error);

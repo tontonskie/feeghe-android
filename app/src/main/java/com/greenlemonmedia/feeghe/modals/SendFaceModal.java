@@ -102,7 +102,7 @@ public class SendFaceModal extends MainActivityModal {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });

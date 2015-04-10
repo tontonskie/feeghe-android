@@ -236,7 +236,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         Toast.makeText(context, "Usable faces error: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
       }
     });
@@ -275,7 +275,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
       }
     });
@@ -307,7 +307,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });
@@ -623,7 +623,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
               }
 
               @Override
-              public void onFail(int statusCode, String error) {
+              public void onFail(int statusCode, String error, JSONObject validationError) {
                 Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_LONG).show();
               }
             };

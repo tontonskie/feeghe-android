@@ -95,7 +95,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });
@@ -134,7 +134,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         txtViewLoadingNext.setVisibility(View.GONE);
       }
     };
@@ -188,7 +188,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         txtViewLoadingNext.setVisibility(View.GONE);
         isLoadingNextFaces = false;
       }

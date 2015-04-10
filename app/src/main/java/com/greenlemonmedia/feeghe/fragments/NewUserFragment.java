@@ -127,7 +127,7 @@ public class NewUserFragment extends MainActivityFragment {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
+          public void onFail(int statusCode, String error, JSONObject validationError) {
             txtViewNewUserError.setText(error);
             txtViewNewUserError.setVisibility(View.VISIBLE);
             preloader.dismiss();
@@ -189,7 +189,7 @@ public class NewUserFragment extends MainActivityFragment {
           }
 
           @Override
-          public void onFail(int statusCode, String error) {
+          public void onFail(int statusCode, String error, JSONObject validationError) {
             preloader.dismiss();
           }
         });
@@ -261,7 +261,7 @@ public class NewUserFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
         preloader.dismiss();
       }
     });

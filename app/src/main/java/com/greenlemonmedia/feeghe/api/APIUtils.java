@@ -10,6 +10,9 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.util.Log;
+import android.util.Patterns;
 
 import com.squareup.picasso.Picasso;
 
@@ -51,6 +54,45 @@ public class APIUtils {
       e.printStackTrace();
     }
     return contentList;
+  }
+
+  /**
+   *
+   * @param error
+   * @return
+   */
+  public static String toValidationErrString(JSONObject error) {
+    String errString = "";
+    try {
+      if (error != null && error.getString("error").equals("E_VALIDATION")) {
+        JSONObject invalidAttributes = error.getJSONObject("invalidAttributes");
+        Iterator<String> i = invalidAttributes.keys();
+        while (i.hasNext()) {
+          JSONArray attrErrors = invalidAttributes.getJSONArray((String) i.next());
+          for (int k = 0; k < attrErrors.length(); k++) {
+            errString += attrErrors.getJSONObject(k).getString("message");
+          }
+          if (!errString.isEmpty()) {
+            errString += "\n";
+          }
+        }
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return errString;
+  }
+
+  /**
+   *
+   * @param email
+   * @return
+   */
+  public static boolean isValidEmail(String email) {
+    if (TextUtils.isEmpty(email)) {
+      return false;
+    }
+    return Patterns.EMAIL_ADDRESS.matcher(email).matches();
   }
 
   /**

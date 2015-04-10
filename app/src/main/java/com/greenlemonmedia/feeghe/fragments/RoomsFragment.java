@@ -87,7 +87,7 @@ public class RoomsFragment extends MainActivityFragment {
       }
 
       @Override
-      public void onFail(int statusCode, String error) {
+      public void onFail(int statusCode, String error, JSONObject validationError) {
 
       }
     });
