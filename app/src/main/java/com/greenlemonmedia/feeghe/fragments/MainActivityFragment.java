@@ -22,6 +22,10 @@ abstract public class MainActivityFragment extends Fragment {
 
   abstract protected void setupSocketEvents();
 
+  abstract public void onKeyboardShow();
+
+  abstract public void onKeyboardHide();
+
   abstract public String getFragmentId();
 
   @Override

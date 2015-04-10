@@ -72,6 +72,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   private ListView listViewSettings;
   private ActionBarDrawerToggle toggleSettings;
   private DrawerLayout drawerSettings;
+  private MainActivityFragment currentFragment;
 
   public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
@@ -233,9 +234,16 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
       public void onGlobalLayout() {
         if ((container.getRootView().getHeight() - container.getHeight()) > container.getRootView().getHeight() / 3) {
           tabs.setVisibility(View.GONE);
+          if (currentFragment != null) {
+            currentFragment.onKeyboardShow();
+          }
         } else {
           tabs.setVisibility(View.VISIBLE);
+          if (currentFragment != null) {
+            currentFragment.onKeyboardHide();
+          }
         }
+
       }
     });
   }
@@ -344,6 +352,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   private void showFragment(MainActivityFragment fragment, boolean withBackStack) {
+    currentFragment = fragment;
     FragmentManager fm = getFragmentManager();
     FragmentTransaction ft = fm.beginTransaction();
     ft.replace(android.R.id.tabcontent, fragment);
@@ -404,7 +413,11 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     }
     switch (item.getItemId()) {
       case R.id.actionSettingsBtn:
-        drawerSettings.openDrawer(GravityCompat.END);
+        if (!drawerSettings.isDrawerOpen(listViewSettings)) {
+          drawerSettings.openDrawer(GravityCompat.END);
+        } else {
+          drawerSettings.closeDrawer(GravityCompat.END);
+        }
         break;
     }
     return super.onOptionsItemSelected(item);

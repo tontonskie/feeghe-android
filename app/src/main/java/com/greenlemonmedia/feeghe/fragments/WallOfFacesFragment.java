@@ -231,6 +231,16 @@ public class WallOfFacesFragment extends MainActivityFragment {
   }
 
   @Override
+  public void onKeyboardShow() {
+
+  }
+
+  @Override
+  public void onKeyboardHide() {
+
+  }
+
+  @Override
   public String getFragmentId() {
     return MainActivity.FRAG_WALL_OF_FACES;
   }

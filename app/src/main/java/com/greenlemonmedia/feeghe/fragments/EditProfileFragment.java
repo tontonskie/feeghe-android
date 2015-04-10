@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -33,6 +35,7 @@ public class EditProfileFragment extends MainActivityFragment {
   private UserService userService;
   private EditText editTxtPhone;
   private ImageView imgViewProfile;
+  private Button btnSave;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,23 +50,23 @@ public class EditProfileFragment extends MainActivityFragment {
     context = getCurrentActivity();
     session = Session.getInstance(context);
     userService = new UserService(context);
-    currentUser = session.getCurrentUser().toJSON();
 
-    editTxtEmail = (EditText) context.findViewById(R.id.editTxtEditProfileFirstName);
+    editTxtEmail = (EditText) context.findViewById(R.id.editTxtEditProfileEmail);
     editTxtFirstName = (EditText) context.findViewById(R.id.editTxtEditProfileFirstName);
     editTxtLastName = (EditText) context.findViewById(R.id.editTxtEditProfileLastName);
     editTxtPhone = (EditText) context.findViewById(R.id.editTxtEditProfilePhoneNumber);
     imgViewProfile = (ImageView) context.findViewById(R.id.imgViewEditProfilePic);
+    btnSave = (Button) context.findViewById(R.id.btnEditProfileSave);
 
-    setUserInfo();
-
+    setUserInfo(session.getCurrentUser().toJSON());
     userService.get(session.getUserId(), new APIService.GetCallback() {
 
       @Override
       public void onSuccess(ResponseObject response) {
-        currentUser = response.getContent();
-        session.setCurrentUser(currentUser);
-        setUserInfo();
+        JSONObject newUserInfo = response.getContent();
+        session.setCurrentUser(newUserInfo);
+        setUserInfo(newUserInfo);
+
       }
 
       @Override
@@ -71,25 +74,28 @@ public class EditProfileFragment extends MainActivityFragment {
 
       }
     });
+
+    setupUIEvents();
   }
 
-  private void setUserInfo() {
+  private void setUserInfo(JSONObject userInfo) {
     try {
-      if (!currentUser.isNull("email")) {
-        editTxtEmail.setText(currentUser.getString("email"));
+      if (!userInfo.isNull("email")) {
+        editTxtEmail.setText(userInfo.getString("email"));
       }
-      if (!currentUser.isNull("lastName")) {
-        editTxtLastName.setText(currentUser.getString("lastName"));
+      if (!userInfo.isNull("lastName")) {
+        editTxtLastName.setText(userInfo.getString("lastName"));
       }
-      if (!currentUser.isNull("firstName")) {
-        editTxtFirstName.setText(currentUser.getString("firstName"));
+      if (!userInfo.isNull("firstName")) {
+        editTxtFirstName.setText(userInfo.getString("firstName"));
       }
-      if (!currentUser.isNull("phoneNumber")) {
-        editTxtPhone.setText(currentUser.getString("phoneNumber"));
+      if (!userInfo.isNull("phoneNumber")) {
+        editTxtPhone.setText(userInfo.getString("phoneNumber"));
       }
-      if (!currentUser.isNull("profilePic")) {
+      String profilePic = userInfo.getJSONObject("profilePic").getString("original");
+      if (currentUser == null || !profilePic.equals(currentUser.getJSONObject("profilePic").getString("original"))) {
         APIUtils.getPicasso(context)
-          .load(Uri.parse(APIUtils.getStaticUrl(currentUser.getJSONObject("profilePic").getString("original"))))
+          .load(Uri.parse(APIUtils.getStaticUrl(profilePic)))
           .error(R.drawable.placeholder)
           .placeholder(R.drawable.placeholder)
           .into(imgViewProfile);
@@ -97,6 +103,7 @@ public class EditProfileFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
+    currentUser = userInfo;
   }
 
   @Override
@@ -106,12 +113,53 @@ public class EditProfileFragment extends MainActivityFragment {
 
   @Override
   protected void setupUIEvents() {
+    btnSave.setOnClickListener(new View.OnClickListener() {
 
+      @Override
+      public void onClick(View v) {
+        btnSave.setEnabled(false);
+        btnSave.setText("Saving...");
+        JSONObject updates = new JSONObject();
+        try {
+          updates.put("firstName", editTxtFirstName.getText().toString());
+          updates.put("lastName", editTxtLastName.getText().toString());
+          updates.put("email", editTxtEmail.getText().toString());
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+        userService.update(session.getUserId(), updates, new APIService.UpdateCallback() {
+
+          @Override
+          public void onSuccess(ResponseObject response) {
+            session.setCurrentUser(response);
+            btnSave.setEnabled(true);
+            btnSave.setText("Save Changes");
+          }
+
+          @Override
+          public void onFail(int statusCode, String error) {
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+            btnSave.setEnabled(true);
+            btnSave.setText("Save Changes");
+          }
+        });
+      }
+    });
   }
 
   @Override
   protected void setupSocketEvents() {
 
+  }
+
+  @Override
+  public void onKeyboardShow() {
+    btnSave.setVisibility(View.GONE);
+  }
+
+  @Override
+  public void onKeyboardHide() {
+    btnSave.setVisibility(View.VISIBLE);
   }
 
   @Override

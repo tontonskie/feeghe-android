@@ -135,6 +135,16 @@ public class RoomsFragment extends MainActivityFragment {
   }
 
   @Override
+  public void onKeyboardShow() {
+
+  }
+
+  @Override
+  public void onKeyboardHide() {
+
+  }
+
+  @Override
   public String getFragmentId() {
     return MainActivity.FRAG_ROOMS;
   }

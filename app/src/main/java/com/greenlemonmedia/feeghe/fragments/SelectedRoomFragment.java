@@ -529,6 +529,16 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   }
 
   @Override
+  public void onKeyboardShow() {
+
+  }
+
+  @Override
+  public void onKeyboardHide() {
+
+  }
+
+  @Override
   public String getFragmentId() {
     return MainActivity.FRAG_SELECTED_ROOM;
   }
