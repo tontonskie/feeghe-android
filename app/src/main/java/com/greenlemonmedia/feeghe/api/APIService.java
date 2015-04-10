@@ -17,13 +17,17 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -698,6 +702,55 @@ abstract public class APIService implements Serializable {
           ((APICallback) callback).onSuccess(result);
         }
       }
+    }
+  }
+
+  public class UploadEntity extends MultipartEntity {
+
+    private UploadProgressListener listener;
+    private long size;
+
+    public UploadEntity(long totalSize, UploadProgressListener listener) {
+      super(HttpMultipartMode.BROWSER_COMPATIBLE);
+      this.listener = listener;
+      size = totalSize;
+    }
+
+    @Override
+    public void writeTo(final OutputStream outstream) throws IOException {
+      super.writeTo(new CountingOutputStream(outstream, size, listener));
+    }
+  }
+
+  public class CountingOutputStream extends FilterOutputStream {
+
+    private UploadProgressListener listener;
+    private long transferred;
+    private long totalSize;
+
+    public CountingOutputStream(OutputStream out, long size, UploadProgressListener listener) {
+      super(out);
+      this.listener = listener;
+      transferred = 0;
+      totalSize = size;
+    }
+
+    private int computeProgress(long transferred) {
+      return (int) ((transferred / (float) totalSize) * 100);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      out.write(b, off, len);
+      transferred += len;
+      listener.onProgress(computeProgress(transferred));
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      out.write(b);
+      transferred++;
+      listener.onProgress(computeProgress(transferred));
     }
   }
 }

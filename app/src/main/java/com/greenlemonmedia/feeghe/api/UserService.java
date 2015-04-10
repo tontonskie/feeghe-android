@@ -9,8 +9,13 @@ import com.greenlemonmedia.feeghe.storage.Session;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Created by tonton on 1/5/15.
@@ -110,5 +115,22 @@ public class UserService extends APIService {
   @Override
   public JSONObject getCacheQuery() {
     return null;
+  }
+
+  /**
+   *
+   * @param path
+   * @param progressListener
+   * @param callback
+   */
+  public void upload(String path, UploadProgressListener progressListener, UpdateCallback callback) {
+    HttpPut httpPut = new HttpPut(getBaseUrl("picture"));
+    FileBody fileUploadBody = new FileBody(new File(path));
+    UploadEntity entity = new UploadEntity(fileUploadBody.getContentLength(), progressListener);
+    entity.addPart("file", fileUploadBody);
+    httpPut.setEntity(entity);
+    enableAutoHeaders = false;
+    apiAsyncCall(httpPut, callback);
+    enableAutoHeaders = true;
   }
 }

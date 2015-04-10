@@ -1,5 +1,9 @@
 package com.greenlemonmedia.feeghe.fragments;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -36,6 +41,10 @@ public class EditProfileFragment extends MainActivityFragment {
   private EditText editTxtPhone;
   private ImageView imgViewProfile;
   private Button btnSave;
+  private AlertDialog diagEditPic;
+  private TextView txtViewUploading;
+
+  private static final int UPLOAD_FILE = 1;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -57,6 +66,7 @@ public class EditProfileFragment extends MainActivityFragment {
     editTxtPhone = (EditText) context.findViewById(R.id.editTxtEditProfilePhoneNumber);
     imgViewProfile = (ImageView) context.findViewById(R.id.imgViewEditProfilePic);
     btnSave = (Button) context.findViewById(R.id.btnEditProfileSave);
+    txtViewUploading = (TextView) context.findViewById(R.id.txtViewEditProfileUploading);
 
     setUserInfo(session.getCurrentUser().toJSON());
     userService.get(session.getUserId(), new APIService.GetCallback() {
@@ -66,7 +76,6 @@ public class EditProfileFragment extends MainActivityFragment {
         JSONObject newUserInfo = response.getContent();
         session.setCurrentUser(newUserInfo);
         setUserInfo(newUserInfo);
-
       }
 
       @Override
@@ -165,6 +174,78 @@ public class EditProfileFragment extends MainActivityFragment {
         });
       }
     });
+
+    AlertDialog.Builder diagEditPicBuilder = new AlertDialog.Builder(context);
+    String[] actions = {
+        "Take a Photo",
+        "Select from Gallery"
+    };
+    diagEditPicBuilder.setItems(actions, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        switch (which) {
+          case 0:
+            break;
+          case 1:
+            selectPicture();
+            break;
+        }
+      }
+    });
+    diagEditPic = diagEditPicBuilder.create();
+
+    imgViewProfile.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        diagEditPic.show();
+      }
+    });
+  }
+
+  private void selectPicture() {
+    Intent intent = new Intent();
+    intent.setType("image/*");
+    intent.setAction(Intent.ACTION_GET_CONTENT);
+    startActivityForResult(Intent.createChooser(intent, "Select Picture"), UPLOAD_FILE);
+  }
+
+  @Override
+  public void onActivityResult(int reqCode, int resCode, Intent data) {
+    super.onActivityResult(reqCode, resCode, data);
+    if (resCode == Activity.RESULT_OK && reqCode == UPLOAD_FILE) {
+      uploadFile(data.getData());
+    }
+  }
+
+  private void uploadFile(Uri uri) {
+    txtViewUploading.setVisibility(View.VISIBLE);
+    APIService.UploadProgressListener progressCb = new APIService.UploadProgressListener() {
+
+      @Override
+      public void onProgress(int completed) {
+
+      }
+    };
+
+    APIService.UpdateCallback doneCb = new APIService.UpdateCallback() {
+
+      @Override
+      public void onSuccess(ResponseObject response) {
+        JSONObject updatedInfo = response.getContent();
+        session.setCurrentUser(updatedInfo);
+        setUserInfo(updatedInfo);
+        txtViewUploading.setVisibility(View.GONE);
+      }
+
+      @Override
+      public void onFail(int statusCode, String error, JSONObject validationError) {
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+        txtViewUploading.setVisibility(View.GONE);
+      }
+    };
+
+    userService.upload(APIUtils.getPath(context, uri), progressCb, doneCb);
   }
 
   @Override
