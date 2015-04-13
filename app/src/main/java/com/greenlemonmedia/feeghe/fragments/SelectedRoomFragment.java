@@ -14,6 +14,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ImageSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -45,6 +46,7 @@ import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.modals.AttachedPreviewModal;
 import com.greenlemonmedia.feeghe.modals.GalleryPickerModal;
 import com.greenlemonmedia.feeghe.modals.MainActivityModal;
+import com.greenlemonmedia.feeghe.modals.SelectedFaceModal;
 import com.greenlemonmedia.feeghe.modals.SelectedRoomUsersModal;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
@@ -97,10 +99,10 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private Button btnCloseOptionDisplay;
   private TextView txtViewRoomTitle;
   private Button btnEditMembers;
-  private SelectedRoomUsersModal dialogEditUsers;
+  private SelectedRoomUsersModal modalEditUsers;
   private ProgressDialog preloader;
   private Button btnSendAttachment;
-  private GalleryPickerModal dialogGallery;
+  private GalleryPickerModal modalGallery;
   private Button btnShowSearch;
   private LinearLayout containerSearchOptions;
   private LinearLayout containerRoomEdit;
@@ -108,6 +110,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private Button btnSearchMsg;
   private EditText editTxtSearchMsg;
   private AttachedPreviewModal modalAttachedPreview;
+  private SelectedFaceModal modalSelectedFace;
   private HashMap<Integer, JSONObject> roomAttachments = new HashMap<>();
 
   @Override
@@ -184,12 +187,11 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     btnSearchMsg = (Button) context.findViewById(R.id.btnSelectedRoomSearch);
     editTxtSearchMsg = (EditText) context.findViewById(R.id.editTxtSelectedRoomSearch);
 
-    dialogEditUsers = new SelectedRoomUsersModal(context);
-    dialogEditUsers.setData(currentRoom, false);
-
+    modalGallery = new GalleryPickerModal(context);
     modalAttachedPreview = new AttachedPreviewModal(this);
-
-    dialogGallery = new GalleryPickerModal(context);
+    modalSelectedFace = new SelectedFaceModal(context);
+    modalEditUsers = new SelectedRoomUsersModal(context);
+    modalEditUsers.setData(currentRoom, false);
 
     setRoomTitle();
     loadMessages();
@@ -363,7 +365,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void onClick(View v) {
-//        dialogGallery.show();
+//        modalGallery.show();
         btnSendAttachment.setEnabled(false);
         Intent intent = new Intent();
         intent.setType("image/*");
@@ -372,7 +374,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
     });
 
-    dialogEditUsers.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
+    modalEditUsers.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
 
       @Override
       public void onChanged(Object oldRoomData, Object newRoomData) {
@@ -394,7 +396,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void onClick(View v) {
-        dialogEditUsers.show();
+        modalEditUsers.show();
       }
     });
 
@@ -893,6 +895,25 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       ImageView imgViewAttachment;
     }
 
+    private void showFaceModal(String faceId) {
+      final ProgressDialog faceLoading = APIUtils.showPreloader(context);
+      faceService.get(faceId, new APIService.GetCallback() {
+
+        @Override
+        public void onSuccess(ResponseObject response) {
+          faceLoading.dismiss();
+          modalSelectedFace.setData(response.getContent());
+          modalSelectedFace.show();
+        }
+
+        @Override
+        public void onFail(int statusCode, String error, JSONObject validationError) {
+          Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+          faceLoading.dismiss();
+        }
+      });
+    }
+
     public View getView(final int position, View convertView, ViewGroup parent) {
       final MessageViewHolder viewHolder;
       if (convertView == null) {
@@ -904,6 +925,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
         viewHolder.imgViewAttachment = (ImageView) convertView.findViewById(R.id.imgViewPerChatAttachment);
         viewHolder.imgViewAttachment.setOnClickListener(this);
+        viewHolder.txtViewPerChatContent.setMovementMethod(LinkMovementMethod.getInstance());
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (MessageViewHolder) convertView.getTag();
@@ -987,7 +1009,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
               new LoadFaceChatTask.Listener() {
 
                 @Override
-                public void onSuccess(Spanned text) {
+                public void onSuccess(SpannableStringBuilder text) {
                   if (position >= listViewMessages.getFirstVisiblePosition() && position <= listViewMessages.getLastVisiblePosition()) {
                     viewHolder.txtViewPerChatContent.setText(text);
                   }
@@ -997,6 +1019,13 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
                 @Override
                 public void onFail(int statusCode, String error) {
                   Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+                }
+              },
+              new LoadFaceChatTask.OnFaceClickListener() {
+
+                @Override
+                public void onClick(View widget, String faceId) {
+                  showFaceModal(faceId);
                 }
               }
             );

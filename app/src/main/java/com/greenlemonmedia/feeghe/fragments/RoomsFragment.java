@@ -3,6 +3,7 @@ package com.greenlemonmedia.feeghe.fragments;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -220,7 +221,7 @@ public class RoomsFragment extends MainActivityFragment {
             new LoadFaceChatTask.Listener() {
 
               @Override
-              public void onSuccess(Spanned text) {
+              public void onSuccess(SpannableStringBuilder text) {
                 if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
                   viewHolder.txtViewRoomRecentChat.setText(text);
                 }
@@ -230,6 +231,13 @@ public class RoomsFragment extends MainActivityFragment {
               @Override
               public void onFail(int statusCode, String error) {
                 Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+              }
+            },
+            new LoadFaceChatTask.OnFaceClickListener() {
+
+              @Override
+              public void onClick(View widget, String faceId) {
+
               }
             }
           );
