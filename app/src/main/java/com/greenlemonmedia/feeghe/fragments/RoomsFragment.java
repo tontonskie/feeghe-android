@@ -31,6 +31,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class RoomsFragment extends MainActivityFragment {
 
@@ -206,11 +207,29 @@ public class RoomsFragment extends MainActivityFragment {
         JSONObject usersInRoom = room.getJSONObject("users");
         viewHolder.txtViewRoomName.setText(APIUtils.getRoomName(usersInRoom, session.getUserId()));
 
-        int unreadCount = usersInRoom.getJSONObject(session.getUserId()).getInt("unreadCount");
+        String currentUserId = session.getUserId();
+        int unreadCount = usersInRoom.getJSONObject(currentUserId).getInt("unreadCount");
         if (unreadCount > 0) {
           viewHolder.txtViewRoomUnread.setText(unreadCount + "");
         } else {
           viewHolder.txtViewRoomUnread.setText("");
+        }
+
+        Iterator<String> iUsers = usersInRoom.keys();
+        while (iUsers.hasNext()) {
+          String iUserKey = (String) iUsers.next();
+          if (!iUserKey.equals(currentUserId)) {
+            JSONObject roomUser = usersInRoom.getJSONObject(iUserKey);
+            if (roomUser.isNull("profilePic")) {
+              APIUtils.getPicasso(context)
+                .load(R.drawable.placeholder)
+                .into(viewHolder.imgViewRoomImg);
+            } else {
+              APIUtils.getPicasso(context)
+                .load(roomUser.getJSONObject("profilePic").getString("small"))
+                .into(viewHolder.imgViewRoomImg);
+            }
+          }
         }
 
         if (!recentChatWithFaces.containsKey(room.getString("id"))) {

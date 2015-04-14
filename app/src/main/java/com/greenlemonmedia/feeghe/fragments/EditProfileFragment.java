@@ -98,18 +98,24 @@ public class EditProfileFragment extends MainActivityFragment {
       if (!userInfo.isNull("phoneNumber")) {
         editTxtPhone.setText(userInfo.getString("phoneNumber"));
       }
-      String profilePic = userInfo.getJSONObject("profilePic").getString("original");
-      if (currentUser == null || !profilePic.equals(currentUser.getJSONObject("profilePic").getString("original"))) {
+      if (userInfo.isNull("profilePic")) {
         APIUtils.getPicasso(context)
-          .load(Uri.parse(APIUtils.getStaticUrl(profilePic)))
-          .error(R.drawable.placeholder)
-          .placeholder(R.drawable.placeholder)
+          .load(R.drawable.placeholder)
           .into(imgViewProfile);
+      } else {
+        String profilePic = userInfo.getJSONObject("profilePic").getString("original");
+        if (currentUser == null || !profilePic.equals(currentUser.getJSONObject("profilePic").getString("original"))) {
+          APIUtils.getPicasso(context)
+            .load(Uri.parse(APIUtils.getStaticUrl(profilePic)))
+            .error(R.drawable.placeholder)
+            .placeholder(R.drawable.placeholder)
+            .into(imgViewProfile);
+        }
       }
+      currentUser = userInfo;
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    currentUser = userInfo;
   }
 
   @Override

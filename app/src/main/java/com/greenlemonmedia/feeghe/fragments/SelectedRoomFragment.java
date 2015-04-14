@@ -111,6 +111,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private EditText editTxtSearchMsg;
   private AttachedPreviewModal modalAttachedPreview;
   private SelectedFaceModal modalSelectedFace;
+  private ImageView imgViewUsers;
   private HashMap<Integer, JSONObject> roomAttachments = new HashMap<>();
 
   @Override
@@ -135,6 +136,23 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       roomName = APIUtils.getRoomName(currentRoomUsers, session.getUserId());
     }
     txtViewRoomTitle.setText(roomName);
+    try {
+      Iterator<String> i = currentRoomUsers.keys();
+      while (i.hasNext()) {
+        String userId = (String) i.next();
+        if (!userId.equals(session.getUserId())) {
+          APIUtils.getPicasso(context)
+            .load(Uri.parse(APIUtils.getStaticUrl(currentRoomUsers.getJSONObject(userId).getJSONObject("profilePic").getString("small"))))
+            .placeholder(R.drawable.placeholder)
+            .into(imgViewUsers);
+        }
+      }
+    } catch (JSONException e) {
+      APIUtils.getPicasso(context)
+        .load(R.drawable.placeholder)
+        .into(imgViewUsers);
+      e.printStackTrace();
+    }
   }
 
   private void setRoomVars(JSONObject room) {
@@ -186,6 +204,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     btnCloseSearch = (Button) context.findViewById(R.id.btnSelectedRoomCloseSearch);
     btnSearchMsg = (Button) context.findViewById(R.id.btnSelectedRoomSearch);
     editTxtSearchMsg = (EditText) context.findViewById(R.id.editTxtSelectedRoomSearch);
+    imgViewUsers = (ImageView) context.findViewById(R.id.imgViewSelectedRoomProfilePic);
 
     modalGallery = new GalleryPickerModal(context);
     modalAttachedPreview = new AttachedPreviewModal(this);
