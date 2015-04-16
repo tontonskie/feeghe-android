@@ -22,7 +22,7 @@
     android:overScrollFooter="@android:color/transparent"
     android:layout_marginLeft="-64dp"/>
 
-  <TabHost
+  <com.greenlemonmedia.feeghe.ui.UITabHost
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/tabHost"
@@ -39,17 +39,15 @@
         android:layout_height="fill_parent"
         android:id="@android:id/tabcontent"
         android:padding="0dp"
-        android:layout_weight="1"
-        >
+        android:layout_weight="1">
       </FrameLayout>
 
       <TabWidget
         android:id="@android:id/tabs"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        >
+        android:layout_height="wrap_content">
       </TabWidget>
     </LinearLayout>
-  </TabHost>
+  </com.greenlemonmedia.feeghe.ui.UITabHost>
 
 </android.support.v4.widget.DrawerLayout>

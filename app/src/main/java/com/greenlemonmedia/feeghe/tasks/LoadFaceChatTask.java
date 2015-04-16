@@ -1,6 +1,5 @@
 package com.greenlemonmedia.feeghe.tasks;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
@@ -12,6 +11,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.view.View;
 
+import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.api.APIUtils;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class LoadFaceChatTask extends AsyncTask<Void, Void, SpannableStringBuilder> {
 
   private String messageContent;
-  private Context context;
+  private MainActivity context;
   private Listener listener;
   private OnFaceClickListener clickListener;
 
@@ -36,7 +36,7 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, SpannableStringBuild
     public void onClick(View widget, String faceId);
   }
 
-  public LoadFaceChatTask(Context uiContext, String content, Listener faceChatListener, OnFaceClickListener onClickListener) {
+  public LoadFaceChatTask(MainActivity uiContext, String content, Listener faceChatListener, OnFaceClickListener onClickListener) {
     messageContent = content;
     context = uiContext;
     listener = faceChatListener;

@@ -6,13 +6,13 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.greenlemonmedia.feeghe.api.APIUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
@@ -53,19 +53,7 @@ public class DbCache implements Serializable {
    * @return
    */
   public static String createQueryHash(JSONObject query) {
-    StringBuffer sb = new StringBuffer();
-    try {
-      MessageDigest md = MessageDigest.getInstance("SHA-1");
-      md.reset();
-      md.update(query.toString().getBytes());
-      byte[] result = md.digest();
-      for (int i = 0; i < result.length; i++) {
-        sb.append(String.format("%02x", result[i]));
-      }
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    }
-    return sb.toString();
+    return APIUtils.hash(query.toString());
   }
 
   /**

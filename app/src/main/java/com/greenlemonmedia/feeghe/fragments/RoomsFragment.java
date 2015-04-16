@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -24,6 +25,7 @@ import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,7 +61,7 @@ public class RoomsFragment extends MainActivityFragment {
     JSONObject request = roomService.getCacheQuery();
     roomCacheCollection = roomService.getCacheCollection(request);
 
-    ResponseArray responseFromCache = roomCacheCollection.getData();
+    final ResponseArray responseFromCache = roomCacheCollection.getData();
     if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
     } else {
@@ -70,7 +72,7 @@ public class RoomsFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (roomsAdapter == null) {
+        if (responseFromCache.length() == 0) {
           showRooms(response);
           roomCacheCollection.save(response.getContent());
           roomsPreloader.dismiss();
@@ -226,43 +228,46 @@ public class RoomsFragment extends MainActivityFragment {
                 .into(viewHolder.imgViewRoomImg);
             } else {
               APIUtils.getPicasso(context)
-                .load(roomUser.getJSONObject("profilePic").getString("small"))
+                .load(Uri.parse(APIUtils.getStaticUrl(roomUser.getJSONObject("profilePic").getString("small"))))
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
                 .into(viewHolder.imgViewRoomImg);
             }
           }
         }
 
-        if (!recentChatWithFaces.containsKey(room.getString("id"))) {
-          viewHolder.txtViewRoomRecentChat.setText("Loading...");
-          LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
-            context,
-            room.getString("recentChat"),
-            new LoadFaceChatTask.Listener() {
+        if (!room.isNull("recentChat")) {
+          if (APIUtils.messageHasFace(room.getString("recentChat"))) {
+            LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
+              context,
+              room.getString("recentChat"),
+              new LoadFaceChatTask.Listener() {
 
-              @Override
-              public void onSuccess(SpannableStringBuilder text) {
-                if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
-                  viewHolder.txtViewRoomRecentChat.setText(text);
+                @Override
+                public void onSuccess(SpannableStringBuilder text) {
+                  if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
+                    viewHolder.txtViewRoomRecentChat.setText(text);
+                  }
+                  recentChatWithFaces.put(room.optString("id"), text);
                 }
-                recentChatWithFaces.put(room.optString("id"), text);
-              }
 
-              @Override
-              public void onFail(int statusCode, String error) {
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
-              }
-            },
-            new LoadFaceChatTask.OnFaceClickListener() {
+                @Override
+                public void onFail(int statusCode, String error) {
+                  Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+                }
+              },
+              new LoadFaceChatTask.OnFaceClickListener() {
 
-              @Override
-              public void onClick(View widget, String faceId) {
+                @Override
+                public void onClick(View widget, String faceId) {
 
+                }
               }
-            }
-          );
-          loadFaceChatTask.execute();
-        } else {
-          viewHolder.txtViewRoomRecentChat.setText(recentChatWithFaces.get(room.getString("id")));
+            );
+            loadFaceChatTask.execute();
+          } else {
+            viewHolder.txtViewRoomRecentChat.setText(room.getString("recentChat"));
+          }
         }
       } catch (JSONException e) {
         e.printStackTrace();

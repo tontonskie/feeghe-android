@@ -25,7 +25,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TabHost;
 import android.widget.TabWidget;
 
 import com.greenlemonmedia.feeghe.api.APIService;
@@ -44,6 +43,7 @@ import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.greenlemonmedia.feeghe.ui.UITabHost;
 import com.koushikdutta.async.http.socketio.DisconnectCallback;
 import com.koushikdutta.async.http.socketio.ErrorCallback;
 import com.koushikdutta.async.http.socketio.ReconnectCallback;
@@ -53,13 +53,13 @@ import com.koushikdutta.async.http.socketio.SocketIORequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends ActionBarActivity implements TabHost.OnTabChangeListener {
+public class MainActivity extends ActionBarActivity implements UITabHost.OnTabChangeListener {
 
   private Activity context;
   private UserService userService;
   private Session session;
   private Session.User currentUser;
-  private TabHost tabHost;
+  private UITabHost tabHost;
   private boolean isManualTabChange = false;
   private String currentFragmentTabId;
   private SoundPool soundPool;
@@ -166,14 +166,14 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
   }
 
   private void setupTabs() {
-    tabHost = (TabHost) findViewById(R.id.tabHost);
+    tabHost = (UITabHost) findViewById(R.id.tabHost);
     tabHost.setup();
 
-    TabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
+    UITabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
     tabMessages.setContent(new TabContent());
     tabMessages.setIndicator("Messages");
 
-    TabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
+    UITabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
     tabContacts.setContent(new TabContent());
     tabContacts.setIndicator("Contacts");
 
@@ -181,7 +181,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 //    tabUpload.setContent(new TabContent());
 //    tabUpload.setIndicator("Upload");
 
-    TabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
+    UITabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
     tabWallOfFaces.setContent(new TabContent());
     tabWallOfFaces.setIndicator("Faces");
 
@@ -190,6 +190,13 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
 //    tabHost.addTab(tabUpload);
     tabHost.addTab(tabWallOfFaces);
     tabHost.setOnTabChangedListener(this);
+    tabHost.setOnClickCurrentTab(new UITabHost.OnCLickCurrentTab() {
+
+      @Override
+      public void onClick(String tag) {
+        onTabChanged(tag);
+      }
+    });
     tabs = tabHost.getTabWidget();
   }
 
@@ -439,7 +446,7 @@ public class MainActivity extends ActionBarActivity implements TabHost.OnTabChan
     startActivity(new Intent(this, RegisterActivity.class));
   }
 
-  private class TabContent implements TabHost.TabContentFactory {
+  private class TabContent implements UITabHost.TabContentFactory {
 
     @Override
     public View createTabContent(String tag) {

@@ -5,21 +5,26 @@ import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Patterns;
 
+import com.squareup.picasso.LruCache;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Request;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
@@ -28,6 +33,12 @@ import java.util.UUID;
  * Created by tonton on 1/14/15.
  */
 public class APIUtils {
+
+  private static Picasso iPicasso;
+  private static Picasso.RequestTransformer iPicassoTransformer;
+  private static LruCache lruImageCache;
+  private static final int PICASSO_KEY_PADDING = 50; // Determined by exact science.
+  private static final char PICASSO_KEY_SEPARATOR = '\n';
 
   /**
    *
@@ -215,12 +226,95 @@ public class APIUtils {
   /**
    *
    * @param context
+   */
+  private static void setPicasso(Context context) {
+    Picasso.Builder builder = new Picasso.Builder(context);
+    iPicassoTransformer = new Picasso.RequestTransformer() {
+
+      @Override
+      public Request transformRequest(Request request) {
+        return request;
+      }
+    };
+    builder.requestTransformer(iPicassoTransformer);
+    lruImageCache = new LruCache(context);
+    builder.memoryCache(lruImageCache);
+    iPicasso = builder.build();
+    iPicasso.setLoggingEnabled(true);
+  }
+
+  /**
+   *
+   * @param context
    * @return
    */
   public static Picasso getPicasso(Context context) {
-    Picasso instance = Picasso.with(context);
-    instance.setLoggingEnabled(true);
-    return instance;
+    if (iPicasso == null) {
+      setPicasso(context);
+    }
+    return iPicasso;
+  }
+
+  /**
+   *
+   * @param data
+   * @param builder
+   * @return
+   */
+  private static String createImageCacheKey(Request data, StringBuilder builder) {
+    if (data.stableKey != null) {
+      builder.ensureCapacity(data.stableKey.length() + PICASSO_KEY_PADDING);
+      builder.append(data.stableKey);
+    } else if (data.uri != null) {
+      String path = data.uri.toString();
+      builder.ensureCapacity(path.length() + PICASSO_KEY_PADDING);
+      builder.append(path);
+    } else {
+      builder.ensureCapacity(PICASSO_KEY_PADDING);
+      builder.append(data.resourceId);
+    }
+    builder.append(PICASSO_KEY_SEPARATOR);
+
+    if (data.rotationDegrees != 0) {
+      builder.append("rotation:").append(data.rotationDegrees);
+      if (data.hasRotationPivot) {
+        builder.append('@').append(data.rotationPivotX).append('x').append(data.rotationPivotY);
+      }
+      builder.append(PICASSO_KEY_SEPARATOR);
+    }
+    if (data.hasSize()) {
+      builder.append("resize:").append(data.targetWidth).append('x').append(data.targetHeight);
+      builder.append(PICASSO_KEY_SEPARATOR);
+    }
+    if (data.centerCrop) {
+      builder.append("centerCrop").append(PICASSO_KEY_SEPARATOR);
+    } else if (data.centerInside) {
+      builder.append("centerInside").append(PICASSO_KEY_SEPARATOR);
+    }
+
+    if (data.transformations != null) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, count = data.transformations.size(); i < count; i++) {
+        builder.append(data.transformations.get(i).key());
+        builder.append(PICASSO_KEY_SEPARATOR);
+      }
+    }
+
+    return builder.toString();
+  }
+
+  /**
+   *
+   * @param imageUrl
+   * @return
+   */
+  public static Bitmap getCachedBitmap(Context context, String imageUrl) {
+    if (iPicasso == null) {
+      setPicasso(context);
+    }
+    Request.Builder data = new Request.Builder(Uri.parse(imageUrl));
+    Request request = iPicassoTransformer.transformRequest(data.build());
+    return lruImageCache.get(createImageCacheKey(request, new StringBuilder()));
   }
 
   /**
@@ -355,5 +449,35 @@ public class APIUtils {
    */
   public static boolean isMediaDocument(Uri uri) {
     return "com.android.providers.media.documents".equals(uri.getAuthority());
+  }
+
+  /**
+   *
+   * @param text
+   * @return
+   */
+  public static String hash(String text) {
+    StringBuffer sb = new StringBuffer();
+    try {
+      MessageDigest md = MessageDigest.getInstance("SHA-1");
+      md.reset();
+      md.update(text.getBytes());
+      byte[] result = md.digest();
+      for (int i = 0; i < result.length; i++) {
+        sb.append(String.format("%02x", result[i]));
+      }
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
+    return sb.toString();
+  }
+
+  /**
+   *
+   * @param text
+   * @return
+   */
+  public static boolean messageHasFace(String text) {
+    return text.indexOf("<img face=") >= 0;
   }
 }
