@@ -26,17 +26,13 @@ public class LoadFaceChatTask extends AsyncTask<Void, Void, SpannableStringBuild
   private String messageContent;
   private MainActivity context;
   private Listener listener;
-  private OnFaceClickListener clickListener;
+  private APIUtils.OnFaceClickListener clickListener;
 
   public interface Listener extends TaskListener {
     public void onSuccess(SpannableStringBuilder text);
   }
 
-  public interface OnFaceClickListener {
-    public void onClick(View widget, String faceId);
-  }
-
-  public LoadFaceChatTask(MainActivity uiContext, String content, Listener faceChatListener, OnFaceClickListener onClickListener) {
+  public LoadFaceChatTask(MainActivity uiContext, String content, Listener faceChatListener, APIUtils.OnFaceClickListener onClickListener) {
     messageContent = content;
     context = uiContext;
     listener = faceChatListener;

@@ -4,8 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +11,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -24,15 +21,12 @@ import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.storage.Session;
-import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 
 public class RoomsFragment extends MainActivityFragment {
@@ -165,11 +159,8 @@ public class RoomsFragment extends MainActivityFragment {
 
   private class RoomsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
-    private HashMap<String, Spanned> recentChatWithFaces;
-
     public RoomsAdapter(ArrayList<JSONObject> rooms) {
       super(context, R.layout.per_room, rooms);
-      recentChatWithFaces = new HashMap<>();
     }
 
     @Override
@@ -237,37 +228,14 @@ public class RoomsFragment extends MainActivityFragment {
         }
 
         if (!room.isNull("recentChat")) {
-          if (APIUtils.messageHasFace(room.getString("recentChat"))) {
-            LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
-              context,
-              room.getString("recentChat"),
-              new LoadFaceChatTask.Listener() {
-
-                @Override
-                public void onSuccess(SpannableStringBuilder text) {
-                  if (position >= listViewRooms.getFirstVisiblePosition() && position <= listViewRooms.getLastVisiblePosition()) {
-                    viewHolder.txtViewRoomRecentChat.setText(text);
-                  }
-                  recentChatWithFaces.put(room.optString("id"), text);
-                }
-
-                @Override
-                public void onFail(int statusCode, String error) {
-                  Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
-                }
-              },
-              new LoadFaceChatTask.OnFaceClickListener() {
-
-                @Override
-                public void onClick(View widget, String faceId) {
-
-                }
-              }
-            );
-            loadFaceChatTask.execute();
+          String recentChat = room.getString("recentChat");
+          if (!recentChat.isEmpty() && APIUtils.messageHasFace(recentChat)) {
+            APIUtils.loadFacesFromMessage(context, recentChat, viewHolder.txtViewRoomRecentChat, null);
           } else {
-            viewHolder.txtViewRoomRecentChat.setText(room.getString("recentChat"));
+            viewHolder.txtViewRoomRecentChat.setText(recentChat);
           }
+        } else {
+          viewHolder.txtViewRoomRecentChat.setText("");
         }
       } catch (JSONException e) {
         e.printStackTrace();

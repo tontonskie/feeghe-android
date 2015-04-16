@@ -6,28 +6,41 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.style.ClickableSpan;
+import android.text.style.ImageSpan;
 import android.util.Patterns;
+import android.view.View;
+import android.widget.TextView;
 
+import com.greenlemonmedia.feeghe.R;
 import com.squareup.picasso.LruCache;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Request;
+import com.squareup.picasso.Target;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by tonton on 1/14/15.
@@ -37,6 +50,7 @@ public class APIUtils {
   private static Picasso iPicasso;
   private static Picasso.RequestTransformer iPicassoTransformer;
   private static LruCache lruImageCache;
+
   private static final int PICASSO_KEY_PADDING = 50; // Determined by exact science.
   private static final char PICASSO_KEY_SEPARATOR = '\n';
 
@@ -305,6 +319,7 @@ public class APIUtils {
 
   /**
    *
+   * @param context
    * @param imageUrl
    * @return
    */
@@ -315,6 +330,51 @@ public class APIUtils {
     Request.Builder data = new Request.Builder(Uri.parse(imageUrl));
     Request request = iPicassoTransformer.transformRequest(data.build());
     return lruImageCache.get(createImageCacheKey(request, new StringBuilder()));
+  }
+
+  /**
+   *
+   * @param message
+   * @return
+   */
+  public static Matcher parseMessage(String message) {
+    Pattern pattern = Pattern.compile("<img.*?face=\"([^\"][a-zA-Z0-9]*?)\".*?src=\"([^\">]*\\/([^\">]*?))\".*?>", Pattern.CASE_INSENSITIVE);
+    return pattern.matcher(message);
+  }
+
+  /**
+   *
+   * @param context
+   * @param sb
+   * @param face
+   * @param faceId
+   * @param start
+   * @param end
+   * @param faceClickListener
+   */
+  public static void addFaceToMessage(Context context, SpannableStringBuilder sb, Bitmap face, final String faceId, int start, int end,
+                                      final OnFaceClickListener faceClickListener) {
+    if (sb == null || face == null) {
+      return;
+    }
+    sb.setSpan(new ImageSpan(context, face), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    if (faceClickListener != null) {
+      ClickableSpan clickableSpan = new ClickableSpan() {
+
+        @Override
+        public void onClick(View widget) {
+          faceClickListener.onClick(widget, faceId);
+        }
+
+        @Override
+        public void updateDrawState(TextPaint tp) {
+          tp.bgColor = Color.TRANSPARENT;
+          tp.setColor(Color.TRANSPARENT);
+          tp.setUnderlineText(false);
+        }
+      };
+      sb.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
   }
 
   /**
@@ -404,13 +464,11 @@ public class APIUtils {
    * @return
    */
   public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-
     Cursor cursor = null;
     final String column = "_data";
     final String[] projection = {
       column
     };
-
     try {
       cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
       if (cursor != null && cursor.moveToFirst()) {
@@ -479,5 +537,67 @@ public class APIUtils {
    */
   public static boolean messageHasFace(String text) {
     return text.indexOf("<img face=") >= 0;
+  }
+
+  /**
+   *
+   * @param context
+   * @param message
+   * @param txtView
+   * @param faceClickListener
+   */
+  public static void loadFacesFromMessage(final Context context, String message, final TextView txtView,
+                                          final OnFaceClickListener faceClickListener) {
+    final SpannableStringBuilder sb = new SpannableStringBuilder(message);
+    Matcher parser = APIUtils.parseMessage(message);
+    int addedFaceToMessage = 0;
+    txtView.setText("Loading...");
+
+    while (parser.find()) {
+
+      String faceImageUrl = APIUtils.getStaticUrl(parser.group(2));
+      Bitmap faceBmp = APIUtils.getCachedBitmap(context, faceImageUrl);
+
+      if (faceBmp != null) {
+
+        APIUtils.addFaceToMessage(context, sb, faceBmp, parser.group(1), parser.start(), parser.end(), faceClickListener);
+        addedFaceToMessage++;
+
+      } else {
+
+        final int start = parser.start();
+        final int end = parser.end();
+        final String faceId = parser.group(1);
+
+        APIUtils.getPicasso(context)
+          .load(faceImageUrl)
+          .into(new Target() {
+
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+              APIUtils.addFaceToMessage(context, sb, bitmap, faceId, start, end, faceClickListener);
+              txtView.setText(sb);
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+              Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+              APIUtils.addFaceToMessage(context, sb, bitmap, faceId, start, end, faceClickListener);
+            }
+          });
+      }
+    }
+    if (addedFaceToMessage > 0) {
+      txtView.setText(sb);
+    }
+  }
+
+  public interface OnFaceClickListener {
+    public void onClick(View widget, String faceId);
   }
 }

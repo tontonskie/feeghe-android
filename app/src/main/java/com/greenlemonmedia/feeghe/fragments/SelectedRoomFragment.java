@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ImageSpan;
@@ -49,7 +48,6 @@ import com.greenlemonmedia.feeghe.modals.MainActivityModal;
 import com.greenlemonmedia.feeghe.modals.SelectedFaceModal;
 import com.greenlemonmedia.feeghe.modals.SelectedRoomUsersModal;
 import com.greenlemonmedia.feeghe.storage.Session;
-import com.greenlemonmedia.feeghe.tasks.LoadFaceChatTask;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -886,11 +884,8 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
   private class RoomMessagesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
 
-    private HashMap<String, Spanned> contentWithFaces;
-
     public RoomMessagesAdapter(ArrayList<JSONObject> messages) {
       super(context, R.layout.per_chat, messages);
-      contentWithFaces = new HashMap<>();
     }
 
     @Override
@@ -996,6 +991,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           imgLayoutParams.gravity = Gravity.LEFT;
         }
 
+        viewHolder.txtViewPerChatContent.setText("Loading...");
         viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
         viewHolder.imgViewAttachment.setVisibility(View.GONE);
         viewHolder.imgViewAttachment.setLayoutParams(imgLayoutParams);
@@ -1020,38 +1016,20 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           }
 
         } else if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
-          if (!contentWithFaces.containsKey(message.getString("id"))) {
-            viewHolder.txtViewPerChatContent.setText("Loading...");
-            LoadFaceChatTask loadFaceChatTask = new LoadFaceChatTask(
-              context,
-              message.getString("content"),
-              new LoadFaceChatTask.Listener() {
 
-                @Override
-                public void onSuccess(SpannableStringBuilder text) {
-                  if (position >= listViewMessages.getFirstVisiblePosition() && position <= listViewMessages.getLastVisiblePosition()) {
-                    viewHolder.txtViewPerChatContent.setText(text);
-                  }
-                  contentWithFaces.put(message.optString("id"), text);
-                }
+          APIUtils.loadFacesFromMessage(
+            context,
+            message.getString("content"),
+            viewHolder.txtViewPerChatContent,
+            new APIUtils.OnFaceClickListener() {
 
-                @Override
-                public void onFail(int statusCode, String error) {
-                  Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
-                }
-              },
-              new LoadFaceChatTask.OnFaceClickListener() {
-
-                @Override
-                public void onClick(View widget, String faceId) {
-                  showFaceModal(faceId);
-                }
+              @Override
+              public void onClick(View widget, String faceId) {
+                showFaceModal(faceId);
               }
-            );
-            loadFaceChatTask.execute();
-          } else {
-            viewHolder.txtViewPerChatContent.setText(contentWithFaces.get(message.getString("id")));
-          }
+            }
+          );
+
         } else if (!message.isNull("content")) {
           viewHolder.txtViewPerChatContent.setText(message.getString("content"));
         } else {
