@@ -85,7 +85,7 @@ abstract public class APIService implements Serializable {
     if (cacheCollections == null) {
       cacheCollections = new HashMap<>();
     }
-    String queryId = DbCache.createQueryHash(query);
+    String queryId = APIUtils.hash(query.toString());
     if (!cacheCollections.containsKey(cacheName + '-' + queryId)) {
       cacheCollections.put(cacheName + '-' + queryId, new CacheCollection(cacheName, dbCache, queryId));
     }

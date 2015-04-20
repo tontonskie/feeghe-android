@@ -6,8 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.greenlemonmedia.feeghe.api.APIUtils;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,15 +43,6 @@ public class DbCache implements Serializable {
       instance = new DbCache(context);
     }
     return instance;
-  }
-
-  /**
-   *
-   * @param query
-   * @return
-   */
-  public static String createQueryHash(JSONObject query) {
-    return APIUtils.hash(query.toString());
   }
 
   /**
