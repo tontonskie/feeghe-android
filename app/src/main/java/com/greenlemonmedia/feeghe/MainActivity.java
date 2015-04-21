@@ -176,11 +176,11 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
     UITabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
     tabMessages.setContent(new TabContent());
-    tabMessages.setIndicator("Messages");
+    tabMessages.setIndicator("", getResources().getDrawable(R.drawable.messages));
 
     UITabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
     tabContacts.setContent(new TabContent());
-    tabContacts.setIndicator("Contacts");
+    tabContacts.setIndicator("", getResources().getDrawable(R.drawable.contacts));
 
 //    TabHost.TabSpec tabUpload = tabHost.newTabSpec(TAB_UPLOAD);
 //    tabUpload.setContent(new TabContent());
@@ -188,7 +188,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
     UITabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
     tabWallOfFaces.setContent(new TabContent());
-    tabWallOfFaces.setIndicator("Faces");
+    tabWallOfFaces.setIndicator("", getResources().getDrawable(R.drawable.wall_of_faces));
 
     tabHost.addTab(tabMessages);
     tabHost.addTab(tabContacts);
