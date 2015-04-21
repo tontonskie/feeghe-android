@@ -279,4 +279,19 @@ public class EditProfileFragment extends MainActivityFragment {
   public String getFragmentId() {
     return MainActivity.FRAG_EDIT_PROFILE;
   }
+
+  @Override
+  public boolean onSearchQuerySubmit(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    return false;
+  }
 }

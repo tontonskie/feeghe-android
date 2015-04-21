@@ -320,6 +320,21 @@ public class ContactsFragment extends MainActivityFragment {
     return MainActivity.FRAG_CONTACTS;
   }
 
+  @Override
+  public boolean onSearchQuerySubmit(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    return false;
+  }
+
   private class FeegheContactsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener, View.OnLongClickListener {
 
     public FeegheContactsAdapter(ArrayList<JSONObject> contacts) {

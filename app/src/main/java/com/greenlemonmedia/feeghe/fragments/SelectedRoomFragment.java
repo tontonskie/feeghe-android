@@ -101,12 +101,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private ProgressDialog preloader;
   private Button btnSendAttachment;
   private GalleryPickerModal modalGallery;
-  private Button btnShowSearch;
-  private LinearLayout containerSearchOptions;
-  private LinearLayout containerRoomEdit;
-  private Button btnCloseSearch;
-  private Button btnSearchMsg;
-  private EditText editTxtSearchMsg;
   private AttachedPreviewModal modalAttachedPreview;
   private SelectedFaceModal modalSelectedFace;
   private ImageView imgViewUsers;
@@ -196,12 +190,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     txtViewRoomTitle = (TextView) context.findViewById(R.id.txtViewSelectedRoomTitle);
     btnEditMembers = (Button) context.findViewById(R.id.btnEditSelectedRoomMembers);
     btnSendAttachment = (Button) context.findViewById(R.id.btnSendAttachment);
-    btnShowSearch = (Button) context.findViewById(R.id.btnSelectedRoomShowSearch);
-    containerSearchOptions = (LinearLayout) context.findViewById(R.id.containerSelectedRoomSearch);
-    containerRoomEdit = (LinearLayout) context.findViewById(R.id.containerSelectedRoomEdit);
-    btnCloseSearch = (Button) context.findViewById(R.id.btnSelectedRoomCloseSearch);
-    btnSearchMsg = (Button) context.findViewById(R.id.btnSelectedRoomSearch);
-    editTxtSearchMsg = (EditText) context.findViewById(R.id.editTxtSelectedRoomSearch);
     imgViewUsers = (ImageView) context.findViewById(R.id.imgViewSelectedRoomProfilePic);
 
     modalGallery = new GalleryPickerModal(context);
@@ -300,38 +288,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     });
   }
 
-  private void searchMessage(String q) {
-    JSONObject query = new JSONObject();
-    try {
-      query.put("room", currentRoomId);
-      query.put("content", new JSONObject("{\"contains\":\"" + q + "\"}"));
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
-    preloader = APIUtils.showPreloader(context);
-    messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
-
-      @Override
-      public void onSuccess(ResponseArray response) {
-        JSONArray msgs = response.getContent();
-        roomMessagesAdapter.clear();
-        try {
-          for (int i = 0; i < msgs.length(); i++) {
-            roomMessagesAdapter.add(msgs.getJSONObject(i));
-          }
-        } catch (JSONException ex) {
-          ex.printStackTrace();
-        }
-        preloader.dismiss();
-      }
-
-      @Override
-      public void onFail(int statusCode, String error, JSONObject validationError) {
-
-      }
-    });
-  }
-
   @Override
   public void onActivityResult(int reqCode, int resCode, Intent data) {
     super.onActivityResult(reqCode, resCode, data);
@@ -351,33 +307,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
   @Override
   protected void setupUIEvents() {
-    btnSearchMsg.setOnClickListener(new View.OnClickListener() {
-
-      @Override
-      public void onClick(View v) {
-        searchMessage(editTxtSearchMsg.getText().toString());
-      }
-    });
-
-    btnShowSearch.setOnClickListener(new View.OnClickListener() {
-
-      @Override
-      public void onClick(View v) {
-        containerSearchOptions.setVisibility(View.VISIBLE);
-        containerRoomEdit.setVisibility(View.GONE);
-      }
-    });
-
-    btnCloseSearch.setOnClickListener(new View.OnClickListener() {
-
-      @Override
-      public void onClick(View v) {
-        containerSearchOptions.setVisibility(View.GONE);
-        containerRoomEdit.setVisibility(View.VISIBLE);
-        loadMessages();
-      }
-    });
-
     btnSendAttachment.setOnClickListener(new View.OnClickListener() {
 
       @Override
@@ -560,6 +489,51 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   @Override
   public String getFragmentId() {
     return MainActivity.FRAG_SELECTED_ROOM;
+  }
+
+  @Override
+  public boolean onSearchQuerySubmit(String q) {
+    JSONObject query = new JSONObject();
+    try {
+      query.put("room", currentRoomId);
+      query.put("content", new JSONObject("{\"contains\":\"" + q + "\"}"));
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    final ProgressDialog searchPreloader = APIUtils.showPreloader(context);
+    messageService.query(messageService.createWhereQuery(query), new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        JSONArray msgs = response.getContent();
+        roomMessagesAdapter.clear();
+        try {
+          for (int i = 0; i < msgs.length(); i++) {
+            roomMessagesAdapter.add(msgs.getJSONObject(i));
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        searchPreloader.dismiss();
+      }
+
+      @Override
+      public void onFail(int statusCode, String error, JSONObject validationError) {
+
+      }
+    });
+    return true;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    loadMessages();
+    return true;
   }
 
   private void sendNewMessage(final String[] attachments) {

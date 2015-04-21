@@ -225,6 +225,21 @@ public class NewUserFragment extends MainActivityFragment {
     return MainActivity.FRAG_NEW_USER;
   }
 
+  @Override
+  public boolean onSearchQuerySubmit(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    return false;
+  }
+
   public void showSyncContactsForm() {
     view.showNext();
     Cursor contactsCursor = context.getContentResolver().query(

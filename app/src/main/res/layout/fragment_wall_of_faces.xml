@@ -4,34 +4,7 @@
              android:layout_height="match_parent"
              tools:context="com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment">
 
-  <LinearLayout
-    android:layout_alignParentTop="true"
-    android:orientation="horizontal"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/layoutWallOfFacesOptions"
-    android:weightSum="10">
-
-    <EditText
-      android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:layout_weight="7.75"
-      android:id="@+id/editTxtSearchFace"
-      android:background="#ffffff"
-      android:hint="Search"/>
-
-    <Button
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:text="Search"
-      android:layout_weight="2.25"
-      android:enabled="false"
-      android:id="@+id/btnSearchFace"/>
-
-  </LinearLayout>
-
   <GridView
-    android:layout_below="@+id/layoutWallOfFacesOptions"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/gridViewFaces"

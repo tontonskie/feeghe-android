@@ -9,83 +9,36 @@
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="75dp"
-    android:id="@+id/containerSelectedRoomOptions"
+    android:id="@+id/containerSelectedRoomEdit"
+    android:weightSum="10"
     android:layout_alignParentTop="true">
 
-    <LinearLayout
-      android:visibility="gone"
-      android:orientation="horizontal"
-      android:layout_width="match_parent"
+    <ImageView
+      android:id="@+id/imgViewSelectedRoomProfilePic"
       android:layout_height="match_parent"
-      android:id="@+id/containerSelectedRoomSearch"
-      android:weightSum="10">
+      android:layout_width="0dp"
+      android:adjustViewBounds="true"
+      android:layout_weight="2"/>
 
-      <EditText
-        android:layout_width="0dp"
-        android:layout_weight="7.5"
-        android:background="#fff"
-        android:layout_height="match_parent"
-        android:hint="Search"
-        android:id="@+id/editTxtSelectedRoomSearch"/>
-
-      <Button
-        android:layout_width="0dp"
-        android:layout_weight="1.25"
-        android:layout_height="match_parent"
-        android:text=">"
-        android:id="@+id/btnSelectedRoomSearch"/>
-
-      <Button
-        android:layout_width="0dp"
-        android:layout_weight="1.25"
-        android:layout_height="match_parent"
-        android:text="X"
-        android:id="@+id/btnSelectedRoomCloseSearch"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-      android:orientation="horizontal"
-      android:layout_width="match_parent"
+    <TextView
+      android:layout_width="0dp"
+      android:layout_weight="6.75"
       android:layout_height="match_parent"
-      android:id="@+id/containerSelectedRoomEdit"
-      android:weightSum="10">
+      android:textAppearance="?android:attr/textAppearanceMedium"
+      android:text="Room Name"
+      android:scrollHorizontally="true"
+      android:ellipsize="end"
+      android:maxLines="7"
+      android:id="@+id/txtViewSelectedRoomTitle"
+      android:gravity="center_vertical"
+      android:paddingLeft="5dp"/>
 
-      <ImageView
-        android:id="@+id/imgViewSelectedRoomProfilePic"
-        android:layout_height="match_parent"
-        android:layout_width="0dp"
-        android:adjustViewBounds="true"
-        android:layout_weight="2"/>
-
-      <TextView
-        android:layout_width="0dp"
-        android:layout_weight="5.5"
-        android:layout_height="match_parent"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Room Name"
-        android:scrollHorizontally="true"
-        android:ellipsize="end"
-        android:maxLines="7"
-        android:id="@+id/txtViewSelectedRoomTitle"
-        android:gravity="center_vertical"
-        android:paddingLeft="5dp"/>
-
-      <Button
-        android:layout_width="0dp"
-        android:layout_weight="1.25"
-        android:layout_height="match_parent"
-        android:text="E"
-        android:id="@+id/btnEditSelectedRoomMembers"/>
-
-      <Button
-        android:layout_width="0dp"
-        android:layout_weight="1.25"
-        android:layout_height="match_parent"
-        android:text="S"
-        android:id="@+id/btnSelectedRoomShowSearch"/>
-
-    </LinearLayout>
+    <Button
+      android:layout_width="0dp"
+      android:layout_weight="1.25"
+      android:layout_height="match_parent"
+      android:text="E"
+      android:id="@+id/btnEditSelectedRoomMembers"/>
 
   </LinearLayout>
 
@@ -96,7 +49,7 @@
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
     android:layout_above="@+id/newMessageBoxContainer"
-    android:layout_below="@+id/containerSelectedRoomOptions"
+    android:layout_below="@+id/containerSelectedRoomEdit"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>

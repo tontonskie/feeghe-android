@@ -9,8 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -37,10 +35,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private FaceService faceService;
   private FacesAdapter facesAdapter;
   private GridView gridViewFaces;
-  private EditText editTxtSearchFace;
   private ProgressDialog facesPreloader;
   private CacheCollection faceCacheCollection;
-  private Button btnSearchFace;
   private SelectedFaceModal selectedFaceModal;
   private TextView txtViewLoadingNext;
   private boolean isLoadingNextFaces = false;
@@ -57,15 +53,19 @@ public class WallOfFacesFragment extends MainActivityFragment {
     context = getCurrentActivity();
     faceService = new FaceService(context);
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
-    editTxtSearchFace = (EditText) context.findViewById(R.id.editTxtSearchFace);
-    btnSearchFace = (Button) context.findViewById(R.id.btnSearchFace);
     txtViewLoadingNext = (TextView) context.findViewById(R.id.txtViewLoadingNextFaces);
 
     selectedFaceModal = new SelectedFaceModal(context);
 
+    loadFaces();
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  public void loadFaces() {
     JSONObject cacheQuery = faceService.getCacheQuery();
     faceCacheCollection = faceService.getCacheCollection(cacheQuery);
-    ResponseArray facesFromCache = faceCacheCollection.getData();
+    final ResponseArray facesFromCache = faceCacheCollection.getData();
     if (facesFromCache.length() != 0) {
       setFaces(facesFromCache);
     } else {
@@ -76,7 +76,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (facesAdapter == null) {
+        if (facesFromCache.length() == 0) {
           setFaces(response);
           faceCacheCollection.save(response.getContent());
           facesPreloader.dismiss();
@@ -99,15 +99,11 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
       }
     });
-
-    setupUIEvents();
-    setupSocketEvents();
   }
 
   public void setFaces(ResponseArray response) {
     facesAdapter = new FacesAdapter(APIUtils.toList(response));
     gridViewFaces.setAdapter(facesAdapter);
-    btnSearchFace.setEnabled(true);
   }
 
   @Override
@@ -117,46 +113,6 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   @Override
   protected void setupUIEvents() {
-    final APIService.QueryCallback searchFaceCallback = new APIService.QueryCallback() {
-
-      @Override
-      public void onSuccess(ResponseArray response) {
-        facesAdapter.clear();
-        JSONArray searchResults = response.getContent();
-        try {
-          for (int i = 0; i < searchResults.length(); i++) {
-            facesAdapter.add(searchResults.getJSONObject(i));
-          }
-        } catch (JSONException ex) {
-          ex.printStackTrace();
-        }
-        txtViewLoadingNext.setVisibility(View.GONE);
-      }
-
-      @Override
-      public void onFail(int statusCode, String error, JSONObject validationError) {
-        txtViewLoadingNext.setVisibility(View.GONE);
-      }
-    };
-
-    btnSearchFace.setOnClickListener(new View.OnClickListener() {
-
-      @Override
-      public void onClick(View v) {
-        txtViewLoadingNext.setVisibility(View.VISIBLE);
-        JSONObject searchQuery = null;
-        String searchText = editTxtSearchFace.getText().toString();
-        if (!searchText.isEmpty()) {
-          try {
-            searchQuery = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
-          } catch (JSONException e) {
-            e.printStackTrace();
-          }
-        }
-        faceService.query(searchQuery, searchFaceCallback);
-      }
-    });
-
     selectedFaceModal.setOnDataChangedListener(new MainActivityModal.OnDataChangedListener() {
 
       @Override
@@ -208,7 +164,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
           isLoadingNextFaces = true;
           JSONObject nextFacesParams = null;
           try {
-            String searchText = editTxtSearchFace.getText().toString();
+            String searchText = context.getSearchView().getQuery().toString();
             if (searchText.isEmpty()) {
               nextFacesParams = new JSONObject();
             } else {
@@ -243,6 +199,52 @@ public class WallOfFacesFragment extends MainActivityFragment {
   @Override
   public String getFragmentId() {
     return MainActivity.FRAG_WALL_OF_FACES;
+  }
+
+  @Override
+  public boolean onSearchQuerySubmit(String searchText) {
+    txtViewLoadingNext.setVisibility(View.VISIBLE);
+    JSONObject searchQuery = null;
+    if (!searchText.isEmpty()) {
+      try {
+        searchQuery = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+    }
+    faceService.query(searchQuery, new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        facesAdapter.clear();
+        JSONArray searchResults = response.getContent();
+        try {
+          for (int i = 0; i < searchResults.length(); i++) {
+            facesAdapter.add(searchResults.getJSONObject(i));
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        txtViewLoadingNext.setVisibility(View.GONE);
+      }
+
+      @Override
+      public void onFail(int statusCode, String error, JSONObject validationError) {
+        txtViewLoadingNext.setVisibility(View.GONE);
+      }
+    });
+    return true;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    loadFaces();
+    return true;
   }
 
   private class FacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {

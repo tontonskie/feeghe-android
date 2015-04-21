@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -76,6 +77,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private ActionBarDrawerToggle toggleSettings;
   private DrawerLayout drawerSettings;
   private MainActivityFragment currentFragment;
+  private SearchView searchView;
 
   public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
@@ -410,12 +412,43 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     showFragment(new ContactsFragment());
   }
 
+  public SearchView getSearchView() {
+    return searchView;
+  }
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_main, menu);
     SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-    SearchView searchView = (SearchView) menu.findItem(R.id.actionSearchEditTxt).getActionView();
+    MenuItem menuItemSearch = menu.findItem(R.id.actionSearchEditTxt);
+    searchView = (SearchView) menuItemSearch.getActionView();
     searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+      @Override
+      public boolean onQueryTextSubmit(String s) {
+        return currentFragment.onSearchQuerySubmit(s);
+      }
+
+      @Override
+      public boolean onQueryTextChange(String s) {
+        return currentFragment.onSearchQueryChange(s);
+      }
+    });
+
+    MenuItemCompat.setOnActionExpandListener(menuItemSearch, new MenuItemCompat.OnActionExpandListener() {
+
+      @Override
+      public boolean onMenuItemActionCollapse(MenuItem item) {
+        return currentFragment.onSearchClose();
+      }
+
+      @Override
+      public boolean onMenuItemActionExpand(MenuItem item) {
+        return true;
+      }
+    });
     return true;
   }
 

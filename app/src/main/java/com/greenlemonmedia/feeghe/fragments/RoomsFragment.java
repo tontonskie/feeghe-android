@@ -147,6 +147,21 @@ public class RoomsFragment extends MainActivityFragment {
     return MainActivity.FRAG_ROOMS;
   }
 
+  @Override
+  public boolean onSearchQuerySubmit(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    return false;
+  }
+
   public void showRooms(ResponseArray response) {
     roomsAdapter = new RoomsAdapter(APIUtils.toList(response));
     listViewRooms.setAdapter(roomsAdapter);

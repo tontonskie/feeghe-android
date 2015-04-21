@@ -51,4 +51,19 @@ public class UploadFragment extends MainActivityFragment {
   public String getFragmentId() {
     return MainActivity.FRAG_UPLOAD;
   }
+
+  @Override
+  public boolean onSearchQuerySubmit(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchQueryChange(String query) {
+    return false;
+  }
+
+  @Override
+  public boolean onSearchClose() {
+    return false;
+  }
 }

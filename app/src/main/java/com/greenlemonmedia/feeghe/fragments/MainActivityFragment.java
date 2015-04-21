@@ -28,6 +28,12 @@ abstract public class MainActivityFragment extends Fragment {
 
   abstract public String getFragmentId();
 
+  abstract public boolean onSearchQuerySubmit(String query);
+
+  abstract public boolean onSearchQueryChange(String query);
+
+  abstract public boolean onSearchClose();
+
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
