@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TabWidget;
@@ -78,6 +79,11 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private DrawerLayout drawerSettings;
   private MainActivityFragment currentFragment;
   private SearchView searchView;
+  private String[] tabTags = {
+    TAB_MESSAGES,
+    TAB_CONTACTS,
+    TAB_WALL_OF_FACES
+  };
 
   public static final String TAB_WALL_OF_FACES = "wall_of_faces";
   public static final String TAB_MESSAGES = "messages";
@@ -174,26 +180,18 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     tabHost = (UITabHost) findViewById(R.id.tabHost);
     tabHost.setup();
 
-    UITabHost.TabSpec tabMessages = tabHost.newTabSpec(TAB_MESSAGES);
-    tabMessages.setContent(new TabContent());
-    tabMessages.setIndicator("", getResources().getDrawable(R.drawable.messages));
+    for (int i = 0; i < tabTags.length; i++) {
+      View tabIndicator = getLayoutInflater().inflate(R.layout.tab_indicator_main, null);
+      ImageView tabIcon = (ImageView) tabIndicator.findViewById(R.id.imgViewTabIndicatorMain);
+      tabIcon.setImageDrawable(APIUtils.getDrawable(context, tabTags[i]));
 
-    UITabHost.TabSpec tabContacts = tabHost.newTabSpec(TAB_CONTACTS);
-    tabContacts.setContent(new TabContent());
-    tabContacts.setIndicator("", getResources().getDrawable(R.drawable.contacts));
+      UITabHost.TabSpec tabSpec = tabHost.newTabSpec(tabTags[i]);
+      tabSpec.setContent(new TabContent());
+      tabSpec.setIndicator(tabIndicator);
 
-//    TabHost.TabSpec tabUpload = tabHost.newTabSpec(TAB_UPLOAD);
-//    tabUpload.setContent(new TabContent());
-//    tabUpload.setIndicator("Upload");
+      tabHost.addTab(tabSpec);
+    }
 
-    UITabHost.TabSpec tabWallOfFaces = tabHost.newTabSpec(TAB_WALL_OF_FACES);
-    tabWallOfFaces.setContent(new TabContent());
-    tabWallOfFaces.setIndicator("", getResources().getDrawable(R.drawable.wall_of_faces));
-
-    tabHost.addTab(tabMessages);
-    tabHost.addTab(tabContacts);
-//    tabHost.addTab(tabUpload);
-    tabHost.addTab(tabWallOfFaces);
     tabHost.setOnTabChangedListener(this);
     tabHost.setOnClickCurrentTab(new UITabHost.OnCLickCurrentTab() {
 
@@ -203,6 +201,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
       }
     });
     tabs = tabHost.getTabWidget();
+    setActiveTab(tabTags[0]);
   }
 
   private void setupSounds() {
@@ -325,8 +324,21 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     });
   }
 
+  public void setActiveTab(String tabId) {
+    int inactiveColor = getResources().getColor(R.color.mainTabInactive);
+    for (int i = 0; i < tabs.getChildCount(); i++) {
+      View tab = tabs.getChildTabViewAt(i);
+      tab.setBackgroundColor(inactiveColor);
+      ((ImageView) tab.findViewById(R.id.imgViewTabIndicatorMain)).setImageDrawable(APIUtils.getDrawable(context, tabTags[i]));
+    }
+    View tab = tabHost.getCurrentTabView();
+    tab.setBackgroundColor(getResources().getColor(R.color.mainTabActive));
+    ((ImageView) tab.findViewById(R.id.imgViewTabIndicatorMain)).setImageDrawable(APIUtils.getDrawable(context, tabId + "_white"));
+  }
+
   @Override
   public void onTabChanged(String tabId) {
+    setActiveTab(tabId);
     if (!isManualTabChange) {
       switch (tabId) {
         case TAB_WALL_OF_FACES:

@@ -860,6 +860,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
     public RoomMessagesAdapter(ArrayList<JSONObject> messages) {
       super(context, R.layout.per_chat, messages);
+
     }
 
     @Override

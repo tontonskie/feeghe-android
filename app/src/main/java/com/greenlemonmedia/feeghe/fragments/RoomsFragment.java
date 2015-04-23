@@ -186,10 +186,12 @@ public class RoomsFragment extends MainActivityFragment {
     private class RoomViewHolder {
       String id;
       JSONObject info;
+      View layoutRoom;
       TextView txtViewRoomRecentChat;
       TextView txtViewRoomName;
       ImageView imgViewRoomImg;
       TextView txtViewRoomUnread;
+      TextView txtViewRecentTimestamp;
     }
 
     public View getView(final int position, View convertView, ViewGroup parent) {
@@ -198,10 +200,12 @@ public class RoomsFragment extends MainActivityFragment {
         LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = vi.inflate(R.layout.per_room, null);
         viewHolder = new RoomViewHolder();
+        viewHolder.layoutRoom = convertView;
         viewHolder.imgViewRoomImg = (ImageView) convertView.findViewById(R.id.imgViewRoomImg);
         viewHolder.txtViewRoomName = (TextView) convertView.findViewById(R.id.txtViewRoomName);
         viewHolder.txtViewRoomRecentChat = (TextView) convertView.findViewById(R.id.txtViewRoomRecentChat);
         viewHolder.txtViewRoomUnread = (TextView) convertView.findViewById(R.id.txtViewRoomUnread);
+        viewHolder.txtViewRecentTimestamp = (TextView) convertView.findViewById(R.id.txtViewRoomTimestamp);
         convertView.setTag(viewHolder);
         convertView.setOnClickListener(this);
       } else {
@@ -219,8 +223,12 @@ public class RoomsFragment extends MainActivityFragment {
         int unreadCount = usersInRoom.getJSONObject(currentUserId).getInt("unreadCount");
         if (unreadCount > 0) {
           viewHolder.txtViewRoomUnread.setText(unreadCount + "");
+          viewHolder.txtViewRoomUnread.setVisibility(View.VISIBLE);
+          viewHolder.layoutRoom.setBackgroundColor(context.getResources().getColor(R.color.perRoomUnreadBg));
         } else {
           viewHolder.txtViewRoomUnread.setText("");
+          viewHolder.txtViewRoomUnread.setVisibility(View.INVISIBLE);
+          viewHolder.layoutRoom.setBackgroundColor(context.getResources().getColor(R.color.perRoomBg));
         }
 
         Iterator<String> iUsers = usersInRoom.keys();
@@ -249,8 +257,10 @@ public class RoomsFragment extends MainActivityFragment {
           } else {
             viewHolder.txtViewRoomRecentChat.setText(recentChat);
           }
+          viewHolder.txtViewRecentTimestamp.setText(room.getString("recentChatTimestamp"));
         } else {
           viewHolder.txtViewRoomRecentChat.setText("");
+          viewHolder.txtViewRecentTimestamp.setText("");
         }
       } catch (JSONException e) {
         e.printStackTrace();

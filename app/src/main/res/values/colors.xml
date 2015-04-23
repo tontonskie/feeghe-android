@@ -1,5 +1,20 @@
 <resources>
 
-  <color name="black_overlay">#66000000</color>
+  <color name="mainTabActive">#31353e</color>
+  <color name="mainTabInactive">#B7B5B6</color>
+
+  <color name="actionBarBg">#31353e</color>
+  <color name="actionBarText">#fff</color>
+
+  <color name="perRoomBg">#D6D6D6</color>
+  <color name="perRoomTitle">#ffffff</color>
+  <color name="perRoomRecentChat">#ffffff</color>
+  <color name="perRoomDivider">#ffffff</color>
+  <color name="perRoomUnreadBg">#3793F9</color>
+
+  <color name="perContactBg">#D6D6D6</color>
+  <color name="perContactDivider">#ffffff</color>
+  <color name="contactsTabActive">#BCBABB</color>
+  <color name="contactsTabInactive">#D6D6D6</color>
 
 </resources>

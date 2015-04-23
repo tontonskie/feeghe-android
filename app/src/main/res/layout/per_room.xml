@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:weightSum="10"
-              android:id="@+id/perRoomContainer"
-              android:padding="10dp">
+  android:orientation="horizontal"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:weightSum="10"
+  android:id="@+id/perRoomContainer"
+  android:background="@color/perRoomBg"
+  android:padding="10dp">
 
   <ImageView
     android:layout_width="0dp"
-    android:layout_height="match_parent"
+    android:layout_height="60dp"
+    android:adjustViewBounds="true"
+    android:scaleType="fitCenter"
     android:id="@+id/imgViewRoomImg"
     android:layout_weight="2"
     android:layout_marginRight="10dp"/>
@@ -17,7 +20,7 @@
   <LinearLayout
     android:orientation="vertical"
     android:layout_width="0dp"
-    android:layout_height="match_parent"
+    android:layout_height="60dp"
     android:layout_weight="8"
     android:id="@+id/perRoomContentContainer">
 
@@ -37,9 +40,9 @@
         android:scrollHorizontally="true"
         android:ellipsize="end"
         android:maxLines="1"
+        android:textColor="@color/perRoomTitle"
         android:layout_weight="9"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold"/>
 
       <TextView
         android:layout_width="0dp"
@@ -47,9 +50,11 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="..."
         android:id="@+id/txtViewRoomUnread"
+        android:gravity="center"
+        android:background="@drawable/per_room_unread_count"
         android:maxLines="1"
-        android:layout_weight="1"
-        />
+        android:textStyle="bold"
+        android:layout_weight="1"/>
 
     </LinearLayout>
 
@@ -67,20 +72,19 @@
         android:text="Loading..."
         android:id="@+id/txtViewRoomRecentChat"
         android:scrollHorizontally="true"
+        android:textColor="@color/perRoomRecentChat"
         android:ellipsize="end"
         android:maxLines="1"
-        android:layout_weight="8"
-        />
+        android:layout_weight="7"/>
 
       <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textSize="10dp"
         android:id="@+id/txtViewRoomTimestamp"
         android:maxLines="1"
-        android:layout_weight="2"
-        />
+        android:layout_weight="3"/>
 
     </LinearLayout>
   </LinearLayout>

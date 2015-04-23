@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.view.LayoutInflater;
@@ -13,8 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -36,7 +39,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ContactsFragment extends MainActivityFragment {
+public class ContactsFragment extends MainActivityFragment implements TabHost.OnTabChangeListener {
 
   private MainActivity context;
   private ListView listViewFeegheContacts;
@@ -58,6 +61,19 @@ public class ContactsFragment extends MainActivityFragment {
   private AlertDialog dialogSelFeegheContact;
   private JSONObject selectedFeegheContact;
   private UserService userService;
+  private TabWidget tabs;
+  private String[] tabTags = {
+    TAB_FEEGHE_CONTACTS,
+    TAB_PHONE_CONTACTS
+  };
+  private String[] tabIcons = {
+    "Feeghe Contacts",
+    "Phone Contacts"
+  };
+  private int[] tabContents = {
+    R.id.tabContentFeegheContacts,
+    R.id.tabContentPhoneContacts
+  };
 
   public static final String TAB_PHONE_CONTACTS = "contacts";
   public static final String TAB_FEEGHE_CONTACTS = "feeghe_contacts";
@@ -92,16 +108,18 @@ public class ContactsFragment extends MainActivityFragment {
     tabHostContacts = (TabHost) context.findViewById(R.id.tabHostContacts);
     tabHostContacts.setup();
 
-    TabHost.TabSpec tabFeegheContacts = tabHostContacts.newTabSpec(TAB_FEEGHE_CONTACTS);
-    tabFeegheContacts.setContent(R.id.tabContentFeegheContacts);
-    tabFeegheContacts.setIndicator("Feeghe Contacts");
+    for (int i = 0; i < tabTags.length; i++) {
+      View tabIndicator = context.getLayoutInflater().inflate(R.layout.tab_indicator_contacts, null);
+      ((TextView) tabIndicator.findViewById(R.id.txtViewTabIndicatorContacts)).setText(tabIcons[i]);
+      TabHost.TabSpec tabSpec = tabHostContacts.newTabSpec(tabTags[i]);
+      tabSpec.setContent(tabContents[i]);
+      tabSpec.setIndicator(tabIndicator);
+      tabHostContacts.addTab(tabSpec);
+    }
 
-    TabHost.TabSpec tabPhoneContacts = tabHostContacts.newTabSpec(TAB_PHONE_CONTACTS);
-    tabPhoneContacts.setContent(R.id.tabContentPhoneContacts);
-    tabPhoneContacts.setIndicator("Phone Contacts");
-
-    tabHostContacts.addTab(tabFeegheContacts);
-    tabHostContacts.addTab(tabPhoneContacts);
+    tabHostContacts.setOnTabChangedListener(this);
+    tabs = tabHostContacts.getTabWidget();
+    setActiveTab();
 
     JSONObject query = contactService.getCacheQuery();
     contactCacheCollection = contactService.getCacheCollection(query);
@@ -162,6 +180,14 @@ public class ContactsFragment extends MainActivityFragment {
     showPhoneContacts(phoneContacts);
 
     setupUIEvents();
+  }
+
+  private void setActiveTab() {
+    int inactiveColor = getResources().getColor(R.color.contactsTabInactive);
+    for (int i = 0; i < tabs.getChildCount(); i++) {
+      tabs.getChildTabViewAt(i).setBackgroundColor(inactiveColor);
+    }
+    tabHostContacts.getCurrentTabView().setBackgroundColor(getResources().getColor(R.color.contactsTabActive));
   }
 
   public void showFeegheContacts(ResponseArray response) {
@@ -335,6 +361,11 @@ public class ContactsFragment extends MainActivityFragment {
     return false;
   }
 
+  @Override
+  public void onTabChanged(String tabId) {
+    setActiveTab();
+  }
+
   private class FeegheContactsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener, View.OnLongClickListener {
 
     public FeegheContactsAdapter(ArrayList<JSONObject> contacts) {
@@ -390,6 +421,7 @@ public class ContactsFragment extends MainActivityFragment {
     private class FeegheContactViewHolder {
       TextView txtViewListContactName;
       TextView txtViewListContactNumber;
+      ImageView imgViewProfilePic;
       Button btnShowChat;
       Button btnShowCall;
       View nameContainer;
@@ -403,6 +435,7 @@ public class ContactsFragment extends MainActivityFragment {
         viewHolder = new FeegheContactViewHolder();
         viewHolder.txtViewListContactName = (TextView) convertView.findViewById(R.id.txtViewListContactName);
         viewHolder.txtViewListContactNumber = (TextView) convertView.findViewById(R.id.txtViewListContactNumber);
+        viewHolder.imgViewProfilePic = (ImageView) convertView.findViewById(R.id.imgViewPerContact);
         viewHolder.btnShowChat = (Button) convertView.findViewById(R.id.btnShowChat);
         viewHolder.btnShowCall = (Button) convertView.findViewById(R.id.btnShowCall);
         viewHolder.nameContainer = convertView.findViewById(R.id.perContactNameContainer);
@@ -421,7 +454,18 @@ public class ContactsFragment extends MainActivityFragment {
         viewHolder.txtViewListContactNumber.setText(user.getString("phoneNumber"));
         viewHolder.nameContainer.setTag(position);
         viewHolder.btnShowChat.setTag(user.getString("id"));
-        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
+//        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
+        if (!user.isNull("profilePic")) {
+          APIUtils.getPicasso(context)
+            .load(Uri.parse(APIUtils.getStaticUrl(user.getJSONObject("profilePic").getString("small"))))
+            .placeholder(R.drawable.placeholder)
+            .error(R.drawable.placeholder)
+            .into(viewHolder.imgViewProfilePic);
+        } else {
+          APIUtils.getPicasso(context)
+            .load(R.drawable.placeholder)
+            .into(viewHolder.imgViewProfilePic);
+        }
       } catch (JSONException e) {
         e.printStackTrace();
       }

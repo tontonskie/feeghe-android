@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -34,6 +35,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -343,21 +345,19 @@ public class APIUtils {
   }
 
   /**
-   *
-   * @param context
-   * @param sb
+   *  @param sb
    * @param face
    * @param faceId
    * @param start
    * @param end
    * @param faceClickListener
    */
-  public static void addFaceToMessage(Context context, SpannableStringBuilder sb, Bitmap face, final String faceId, int start, int end,
+  public static void addFaceToMessage(SpannableStringBuilder sb, BitmapDrawable face, final String faceId, int start, int end,
                                       final OnFaceClickListener faceClickListener) {
     if (sb == null || face == null) {
       return;
     }
-    sb.setSpan(new ImageSpan(context, face), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    sb.setSpan(new ImageSpan(face), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     if (faceClickListener != null) {
       ClickableSpan clickableSpan = new ClickableSpan() {
 
@@ -541,6 +541,18 @@ public class APIUtils {
 
   /**
    *
+   * @param txtView
+   * @param face
+   * @return
+   */
+  private static BitmapDrawable adjustFaceHeight(TextView txtView, Bitmap face) {
+    BitmapDrawable bitmapDrawable = new BitmapDrawable(txtView.getContext().getResources(), face);
+    bitmapDrawable.setBounds(0, 0, txtView.getLineHeight(), txtView.getLineHeight());
+    return bitmapDrawable;
+  }
+
+  /**
+   *
    * @param context
    * @param message
    * @param txtView
@@ -560,7 +572,7 @@ public class APIUtils {
 
       if (faceBmp != null) {
 
-        APIUtils.addFaceToMessage(context, sb, faceBmp, parser.group(1), parser.start(), parser.end(), faceClickListener);
+        APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, faceBmp), parser.group(1), parser.start(), parser.end(), faceClickListener);
         addedFaceToMessage++;
 
       } else {
@@ -575,7 +587,7 @@ public class APIUtils {
 
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-              APIUtils.addFaceToMessage(context, sb, bitmap, faceId, start, end, faceClickListener);
+              APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
               txtView.setText(sb);
             }
 
@@ -587,7 +599,7 @@ public class APIUtils {
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) {
               Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-              APIUtils.addFaceToMessage(context, sb, bitmap, faceId, start, end, faceClickListener);
+              APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
             }
           });
       }
@@ -599,5 +611,23 @@ public class APIUtils {
 
   public interface OnFaceClickListener {
     public void onClick(View widget, String faceId);
+  }
+
+  /**
+   *
+   * @param context
+   * @param id
+   * @return
+   */
+  public static Drawable getDrawable(Context context, String id) {
+    Drawable result = null;
+    Class res = R.drawable.class;
+    try {
+      Field field = res.getField(id);
+      result = context.getResources().getDrawable(field.getInt(null));
+    } catch (IllegalAccessException | NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+    return result;
   }
 }
