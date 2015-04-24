@@ -946,22 +946,26 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           viewHolder.txtViewChatMateName.setVisibility(View.GONE);
         }
 
-        if (nextUser == null || !nextUser.getString("id").equals(userId)) {
-          viewHolder.txtViewMessageTimestamp.setVisibility(View.VISIBLE);
+//        if (nextUser == null || !nextUser.getString("id").equals(userId)) {
+//          viewHolder.txtViewMessageTimestamp.setVisibility(View.VISIBLE);
           viewHolder.txtViewMessageTimestamp.setText(message.getString("timestamp"));
-        } else {
-          viewHolder.txtViewMessageTimestamp.setVisibility(View.GONE);
-        }
+//        } else {
+//          viewHolder.txtViewMessageTimestamp.setVisibility(View.GONE);
+//        }
 
         LinearLayout.LayoutParams imgLayoutParams = (LinearLayout.LayoutParams) viewHolder.imgViewAttachment.getLayoutParams();
         if (userId.equals(session.getUserId())) {
           viewHolder.txtViewChatMateName.setGravity(Gravity.RIGHT);
           viewHolder.txtViewPerChatContent.setGravity(Gravity.RIGHT);
+          viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_own);
+          viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentOwn));
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.RIGHT);
           imgLayoutParams.gravity = Gravity.RIGHT;
         } else {
           viewHolder.txtViewChatMateName.setGravity(Gravity.LEFT);
           viewHolder.txtViewPerChatContent.setGravity(Gravity.LEFT);
+          viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_received);
+          viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentReceived));
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
           imgLayoutParams.gravity = Gravity.LEFT;
         }

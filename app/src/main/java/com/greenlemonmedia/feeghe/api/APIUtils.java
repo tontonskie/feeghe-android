@@ -345,19 +345,17 @@ public class APIUtils {
   }
 
   /**
-   *  @param sb
+   *
+   * @param sb
    * @param face
    * @param faceId
    * @param start
    * @param end
    * @param faceClickListener
    */
-  public static void addFaceToMessage(SpannableStringBuilder sb, BitmapDrawable face, final String faceId, int start, int end,
-                                      final OnFaceClickListener faceClickListener) {
-    if (sb == null || face == null) {
-      return;
-    }
-    sb.setSpan(new ImageSpan(face), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+  private static void addFaceToMessage(SpannableStringBuilder sb, ImageSpan face, final String faceId, int start, int end,
+                                       final OnFaceClickListener faceClickListener) {
+    sb.setSpan(face, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     if (faceClickListener != null) {
       ClickableSpan clickableSpan = new ClickableSpan() {
 
@@ -375,6 +373,40 @@ public class APIUtils {
       };
       sb.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
+  }
+
+  /**
+   *
+   * @param sb
+   * @param context
+   * @param face
+   * @param faceId
+   * @param start
+   * @param end
+   * @param faceClickListener
+   */
+  public static void addFaceToMessage(SpannableStringBuilder sb, Context context, Bitmap face, String faceId, int start, int end,
+                                      OnFaceClickListener faceClickListener) {
+    if (sb == null || face == null) {
+      return;
+    }
+    addFaceToMessage(sb, new ImageSpan(context, face), faceId, start, end, faceClickListener);
+  }
+
+  /**
+   * @param sb
+   * @param face
+   * @param faceId
+   * @param start
+   * @param end
+   * @param faceClickListener
+   */
+  public static void addFaceToMessage(SpannableStringBuilder sb, BitmapDrawable face, String faceId, int start, int end,
+                                      OnFaceClickListener faceClickListener) {
+    if (sb == null || face == null) {
+      return;
+    }
+    addFaceToMessage(sb, new ImageSpan(face), faceId, start, end, faceClickListener);
   }
 
   /**
@@ -558,21 +590,38 @@ public class APIUtils {
    * @param txtView
    * @param faceClickListener
    */
+  public static void loadFacesFromMessage(Context context, String message, TextView txtView,
+                                          OnFaceClickListener faceClickListener) {
+    loadFacesFromMessage(context, message, txtView, faceClickListener, false);
+  }
+
+  /**
+   *
+   * @param context
+   * @param message
+   * @param txtView
+   * @param faceClickListener
+   * @param resize
+   */
   public static void loadFacesFromMessage(final Context context, String message, final TextView txtView,
-                                          final OnFaceClickListener faceClickListener) {
+                                          final OnFaceClickListener faceClickListener, final boolean resize) {
     final SpannableStringBuilder sb = new SpannableStringBuilder(message);
-    Matcher parser = APIUtils.parseMessage(message);
+    Matcher parser = parseMessage(message);
     int addedFaceToMessage = 0;
     txtView.setText("Loading...");
 
     while (parser.find()) {
 
-      String faceImageUrl = APIUtils.getStaticUrl(parser.group(2));
-      Bitmap faceBmp = APIUtils.getCachedBitmap(context, faceImageUrl);
+      String faceImageUrl = getStaticUrl(parser.group(2));
+      Bitmap faceBmp = getCachedBitmap(context, faceImageUrl);
 
       if (faceBmp != null) {
 
-        APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, faceBmp), parser.group(1), parser.start(), parser.end(), faceClickListener);
+        if (resize) {
+          addFaceToMessage(sb, adjustFaceHeight(txtView, faceBmp), parser.group(1), parser.start(), parser.end(), faceClickListener);
+        } else {
+          addFaceToMessage(sb, context, faceBmp, parser.group(1), parser.start(), parser.end(), faceClickListener);
+        }
         addedFaceToMessage++;
 
       } else {
@@ -581,13 +630,17 @@ public class APIUtils {
         final int end = parser.end();
         final String faceId = parser.group(1);
 
-        APIUtils.getPicasso(context)
+        getPicasso(context)
           .load(faceImageUrl)
           .into(new Target() {
 
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-              APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
+              if (resize) {
+                addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
+              } else {
+                addFaceToMessage(sb, context, bitmap, faceId, start, end, faceClickListener);
+              }
               txtView.setText(sb);
             }
 
@@ -599,7 +652,11 @@ public class APIUtils {
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) {
               Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-              APIUtils.addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
+              if (resize) {
+                addFaceToMessage(sb, adjustFaceHeight(txtView, bitmap), faceId, start, end, faceClickListener);
+              } else {
+                addFaceToMessage(sb, context, bitmap, faceId, start, end, faceClickListener);
+              }
             }
           });
       }

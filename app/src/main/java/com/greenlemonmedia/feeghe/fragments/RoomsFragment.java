@@ -253,7 +253,7 @@ public class RoomsFragment extends MainActivityFragment {
         if (!room.isNull("recentChat")) {
           String recentChat = room.getString("recentChat");
           if (!recentChat.isEmpty() && APIUtils.messageHasFace(recentChat)) {
-            APIUtils.loadFacesFromMessage(context, recentChat, viewHolder.txtViewRoomRecentChat, null);
+            APIUtils.loadFacesFromMessage(context, recentChat, viewHolder.txtViewRoomRecentChat, null, true);
           } else {
             viewHolder.txtViewRoomRecentChat.setText(recentChat);
           }

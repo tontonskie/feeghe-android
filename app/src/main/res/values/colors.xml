@@ -14,7 +14,24 @@
 
   <color name="perContactBg">#D6D6D6</color>
   <color name="perContactDivider">#ffffff</color>
+  <color name="perContactName">#3795F8</color>
   <color name="contactsTabActive">#BCBABB</color>
   <color name="contactsTabInactive">#D6D6D6</color>
+
+  <color name="selectedRoomBg">#E7EBEC</color>
+  <color name="selectedRoomTitle">#E7EBEC</color>
+  <color name="selectedRoomTitleBorderBottom">#ffffff</color>
+  <color name="selectedRoomInputContainer">#FFFFFF</color>
+
+  <color name="perChatContentReceivedBg">#FFFFFF</color>
+  <color name="perChatContentOwnBg">#3793F9</color>
+  <color name="perChatContentReceived">#000</color>
+  <color name="perChatContentOwn">#fff</color>
+
+  <color name="wallOfFacesTabActive">#BCBABB</color>
+  <color name="wallOfFacesTabInactive">#D6D6D6</color>
+
+  <color name="perFaceTitle">#3795F8</color>
+  <color name="perFaceUsage">#FC1B25</color>
 
 </resources>

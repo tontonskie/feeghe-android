@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:orientation="vertical"
   android:layout_width="match_parent"
-  android:layout_height="match_parent"
+  android:layout_height="wrap_content"
   android:id="@+id/perChatContainer"
   android:padding="7dp">
 
@@ -17,6 +17,10 @@
   <TextView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/per_chat_own"
+    android:padding="15dp"
+    android:layout_marginBottom="10dp"
+    android:textColor="@color/perChatContentOwn"
     android:textAppearance="?android:attr/textAppearanceMedium"
     android:id="@+id/txtViewPerChatContent"/>
 

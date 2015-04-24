@@ -83,6 +83,7 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textSize="10dp"
         android:id="@+id/txtViewRoomTimestamp"
+        android:gravity="right"
         android:maxLines="1"
         android:layout_weight="3"/>
 

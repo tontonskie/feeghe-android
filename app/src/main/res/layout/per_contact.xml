@@ -27,6 +27,8 @@
       android:layout_height="wrap_content"
       android:id="@+id/txtViewListContactName"
       android:textSize="20dp"
+      android:textStyle="bold"
+      android:textColor="@color/perContactName"
       android:gravity="center_vertical"/>
 
     <TextView
@@ -42,7 +44,7 @@
     style="?android:attr/buttonStyleSmall"
     android:layout_width="0dp"
     android:layout_height="30dp"
-    android:background="@drawable/messages"
+    android:background="@drawable/new_message"
     android:id="@+id/btnShowChat"
     android:layout_weight="1"
     android:layout_marginRight="20dp"

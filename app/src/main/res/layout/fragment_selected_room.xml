@@ -1,14 +1,15 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:orientation="vertical"
-             tools:context="com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment">
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  tools:context="com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment">
 
   <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="75dp"
+    android:background="@drawable/selected_room_title"
     android:id="@+id/containerSelectedRoomEdit"
     android:weightSum="10"
     android:layout_alignParentTop="true">
@@ -17,18 +18,21 @@
       android:id="@+id/imgViewSelectedRoomProfilePic"
       android:layout_height="match_parent"
       android:layout_width="0dp"
+      android:layout_marginLeft="10dp"
+      android:layout_marginRight="10dp"
       android:adjustViewBounds="true"
       android:layout_weight="2"/>
 
     <TextView
       android:layout_width="0dp"
-      android:layout_weight="6.75"
+      android:layout_weight="8"
       android:layout_height="match_parent"
       android:textAppearance="?android:attr/textAppearanceMedium"
       android:text="Room Name"
       android:scrollHorizontally="true"
       android:ellipsize="end"
       android:maxLines="7"
+      android:textStyle="bold"
       android:id="@+id/txtViewSelectedRoomTitle"
       android:gravity="center_vertical"
       android:paddingLeft="5dp"/>
@@ -38,13 +42,15 @@
       android:layout_weight="1.25"
       android:layout_height="match_parent"
       android:text="E"
-      android:id="@+id/btnEditSelectedRoomMembers"/>
+      android:id="@+id/btnEditSelectedRoomMembers"
+      android:visibility="gone"/>
 
   </LinearLayout>
 
   <ListView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/selectedRoomBg"
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
@@ -59,39 +65,45 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:weightSum="10"
+    android:background="@color/selectedRoomInputContainer"
     android:layout_alignParentBottom="false"
     android:id="@+id/newMessageBoxContainer"
     android:layout_above="@+id/newMessageOptionsContainer">
 
     <Button
       android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:text=":)"
+      android:layout_height="30dp"
+      android:layout_marginLeft="5dp"
+      android:layout_marginRight="5dp"
+      android:background="@drawable/contact"
       android:id="@+id/btnShowUseFace"
+      android:layout_gravity="center_vertical"
       android:layout_weight="1"/>
 
     <EditText
       android:layout_width="0dp"
-      android:layout_height="match_parent"
+      android:layout_height="50dp"
       android:id="@+id/txtNewMessage"
-      android:layout_weight="6.75"
+      android:layout_weight="7"
       android:background="#ffffffff"
-      android:hint="Type your message here"
+      android:hint="Type a message..."
       android:enabled="false"/>
 
     <Button
       android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:text="^"
+      android:layout_height="30dp"
+      android:background="@drawable/attach"
       android:id="@+id/btnSendAttachment"
+      android:layout_marginRight="10dp"
       android:layout_weight="1"/>
 
     <Button
       android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:text=">>"
+      android:layout_height="50dp"
+      android:background="@drawable/send_new_message"
       android:id="@+id/btnSendNewMessage"
-      android:layout_weight="1.25"/>
+      android:layout_marginRight="10dp"
+      android:layout_weight="1"/>
   </LinearLayout>
 
   <LinearLayout

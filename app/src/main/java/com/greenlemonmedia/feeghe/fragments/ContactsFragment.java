@@ -454,7 +454,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
         viewHolder.txtViewListContactNumber.setText(user.getString("phoneNumber"));
         viewHolder.nameContainer.setTag(position);
         viewHolder.btnShowChat.setTag(user.getString("id"));
-//        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
         if (!user.isNull("profilePic")) {
           APIUtils.getPicasso(context)
             .load(Uri.parse(APIUtils.getStaticUrl(user.getJSONObject("profilePic").getString("small"))))

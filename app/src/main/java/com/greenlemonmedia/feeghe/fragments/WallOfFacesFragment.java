@@ -11,6 +11,8 @@ import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 
 import com.greenlemonmedia.feeghe.MainActivity;
@@ -29,7 +31,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class WallOfFacesFragment extends MainActivityFragment {
+public class WallOfFacesFragment extends MainActivityFragment implements TabHost.OnTabChangeListener {
 
   private MainActivity context;
   private FaceService faceService;
@@ -39,8 +41,25 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private CacheCollection faceCacheCollection;
   private SelectedFaceModal selectedFaceModal;
   private TextView txtViewLoadingNext;
+  private TabHost tabHostFaces;
+  private TabWidget tabs;
   private boolean isLoadingNextFaces = false;
   private int prevCount = 0;
+  private String[] tabTags = {
+      TAB_ALL_FACES,
+      TAB_FAV_FACES
+  };
+  private String[] tabIcons = {
+      "Wall of Faces",
+      "Favorites"
+  };
+  private int[] tabContents = {
+      R.id.tabContentAllFaces,
+      R.id.tabContentFavFaces
+  };
+
+  public static final String TAB_ALL_FACES = "all_faces";
+  public static final String TAB_FAV_FACES = "favorite_faces";
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -48,6 +67,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
     return inflater.inflate(R.layout.fragment_wall_of_faces, container, false);
   }
 
+  @Override
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
@@ -57,12 +77,28 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
     selectedFaceModal = new SelectedFaceModal(context);
 
-    loadFaces();
+    tabHostFaces = (TabHost) context.findViewById(R.id.tabHostWallOfFaces);
+    tabHostFaces.setup();
+
+    for (int i = 0; i < tabTags.length; i++) {
+      View tabIndicator = context.getLayoutInflater().inflate(R.layout.tab_indicator_wall_of_faces, null);
+      ((TextView) tabIndicator.findViewById(R.id.txtViewTabIndicatorWallOfFaces)).setText(tabIcons[i]);
+      TabHost.TabSpec tabSpec = tabHostFaces.newTabSpec(tabTags[i]);
+      tabSpec.setContent(tabContents[i]);
+      tabSpec.setIndicator(tabIndicator);
+      tabHostFaces.addTab(tabSpec);
+    }
+
+    tabHostFaces.setOnTabChangedListener(this);
+    tabs = tabHostFaces.getTabWidget();
+    setActiveTab();
+
+    loadAllFaces();
     setupUIEvents();
     setupSocketEvents();
   }
 
-  public void loadFaces() {
+  public void loadAllFaces() {
     JSONObject cacheQuery = faceService.getCacheQuery();
     faceCacheCollection = faceService.getCacheCollection(cacheQuery);
     final ResponseArray facesFromCache = faceCacheCollection.getData();
@@ -243,8 +279,21 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   @Override
   public boolean onSearchClose() {
-    loadFaces();
+    loadAllFaces();
     return true;
+  }
+
+  @Override
+  public void onTabChanged(String tabId) {
+    setActiveTab();
+  }
+
+  private void setActiveTab() {
+    int inactiveColor = getResources().getColor(R.color.wallOfFacesTabInactive);
+    for (int i = 0; i < tabs.getChildCount(); i++) {
+      tabs.getChildTabViewAt(i).setBackgroundColor(inactiveColor);
+    }
+    tabHostFaces.getCurrentTabView().setBackgroundColor(getResources().getColor(R.color.wallOfFacesTabActive));
   }
 
   private class FacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
@@ -263,6 +312,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
       public JSONObject info;
       public ImageView imgViewFace;
       public TextView txtViewFaceTitle;
+      public TextView txtViewFaceUsage;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -273,6 +323,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
         viewHolder = new FaceViewHolder();
         viewHolder.imgViewFace = (ImageView) convertView.findViewById(R.id.imgViewFace);
         viewHolder.txtViewFaceTitle = (TextView) convertView.findViewById(R.id.txtViewFaceTitle);
+        viewHolder.txtViewFaceUsage = (TextView) convertView.findViewById(R.id.txtViewFaceUsage);
         convertView.setTag(viewHolder);
         convertView.setOnClickListener(this);
       } else {
@@ -282,6 +333,12 @@ public class WallOfFacesFragment extends MainActivityFragment {
       JSONObject face = getItem(position);
       viewHolder.info = face;
       try {
+        if (face.getInt("usedCount") == 0) {
+          viewHolder.txtViewFaceUsage.setVisibility(View.GONE);
+        } else {
+          viewHolder.txtViewFaceUsage.setVisibility(View.VISIBLE);
+          viewHolder.txtViewFaceUsage.setText(face.getString("usedCount"));
+        }
         APIUtils.getPicasso(context)
           .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("small"))))
           .into(viewHolder.imgViewFace);
