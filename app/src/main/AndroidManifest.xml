@@ -18,7 +18,7 @@
     <activity
       android:name=".MainActivity"
       android:screenOrientation="portrait"
-      android:windowSoftInputMode="adjustPan"
+      android:windowSoftInputMode="stateVisible|adjustResize"
       android:label="@string/app_name">
       <meta-data
         android:name="android.app.searchable"
@@ -27,7 +27,7 @@
     <activity
       android:name=".RegisterActivity"
       android:screenOrientation="portrait"
-      android:windowSoftInputMode="adjustPan"
+      android:windowSoftInputMode="stateVisible|adjustResize"
       android:label="@string/app_name"
       android:noHistory="true"
       android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >

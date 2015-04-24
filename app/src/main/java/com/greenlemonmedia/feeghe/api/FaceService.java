@@ -71,6 +71,12 @@ public class FaceService extends APIService {
 
   @Override
   public JSONObject getCacheQuery() {
-    return createWhereQuery(new JSONObject());
+    JSONObject cacheQuery = null;
+    try {
+      cacheQuery = createWhereQuery(new JSONObject("{\"or\":[{\"privacy\":{\"private\":false}},{\"user\":\"" + session.getUserId()+ "\"}]}"));
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return cacheQuery;
   }
 }

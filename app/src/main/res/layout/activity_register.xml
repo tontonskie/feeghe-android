@@ -4,11 +4,10 @@
   android:id="@+id/viewSwitcherRegister"
   xmlns:android="http://schemas.android.com/apk/res/android">
 
-
   <RelativeLayout
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#31353e"
+    android:background="@color/signUpBg"
     android:id="@+id/layoutRegister">
 
     <TextView
@@ -19,8 +18,8 @@
       android:id="@+id/txtRegisterTitle"
       android:layout_alignParentTop="true"
       android:layout_centerHorizontal="true"
-      android:layout_marginTop="105dp"
       android:textColor="#ffffff"
+      android:layout_marginTop="40dp"
       android:textSize="50dp"/>
 
     <TextView
@@ -32,49 +31,57 @@
       android:layout_marginTop="52dp"
       android:layout_below="@+id/txtRegisterTitle"
       android:textColor="#ffffff"
-      android:textSize="20dp"
+      android:textSize="18dp"
       android:gravity="center"
-      android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_marginLeft="30dp"
+      android:layout_marginRight="30dp"
+      android:layout_centerHorizontal="true"/>
 
-    <EditText
-      android:layout_width="wrap_content"
-      android:layout_height="40dp"
-      android:inputType="number"
-      android:ems="10"
-      android:id="@+id/editTxtPhoneNumber"
-      android:layout_marginTop="59dp"
-      android:background="#ffffff"
+    <LinearLayout
       android:layout_below="@+id/txtRegisterSubtitle"
-      android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"
-      android:layout_marginRight="20dp"
-      android:hint="09258801741"/>
+      android:layout_width="match_parent"
+      android:layout_height="50dp"
+      android:layout_marginTop="59dp"
+      android:id="@+id/containerSignUpInput"
+      android:orientation="horizontal"
+      android:weightSum="3">
 
-    <Spinner
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:id="@+id/spinCountryCodes"
-      android:layout_alignBottom="@+id/editTxtPhoneNumber"
-      android:layout_alignParentLeft="true"
-      android:layout_alignParentStart="true"
-      android:layout_toLeftOf="@+id/editTxtPhoneNumber"
-      android:layout_toStartOf="@+id/editTxtPhoneNumber"
-      android:layout_marginLeft="20dp"
-      android:layout_alignTop="@+id/editTxtPhoneNumber"
-      />
+      <Spinner
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:id="@+id/spinCountryCodes"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="10dp"/>
+
+      <EditText
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:layout_height="match_parent"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/editTxtPhoneNumber"
+        android:background="#ffffff"
+        android:layout_marginRight="20dp"
+        android:hint="09258801741"
+        android:paddingLeft="10dp"
+        android:textSize="18dp"/>
+
+    </LinearLayout>
 
     <Button
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      android:layout_width="200dp"
+      android:layout_height="50dp"
       android:text="Sign Up"
+      android:gravity="center"
       android:id="@+id/btnRegister"
-      android:layout_below="@+id/editTxtPhoneNumber"
+      android:textStyle="bold"
+      android:textColor="@color/btnTextColor"
+      android:layout_below="@+id/containerSignUpInput"
       android:layout_marginTop="35dp"
-      android:layout_alignRight="@+id/txtRegisterTitle"
-      android:layout_alignEnd="@+id/txtRegisterTitle"
-      android:layout_alignLeft="@+id/txtRegisterTitle"
-      android:layout_alignStart="@+id/txtRegisterTitle"/>
+      android:background="@drawable/btn_bg"
+      android:layout_centerHorizontal="true"
+      android:textSize="18dp"/>
 
     <TextView
       android:layout_width="wrap_content"
@@ -83,10 +90,7 @@
       android:text="Small Text"
       android:id="@+id/txtRegisterError"
       android:layout_below="@+id/txtRegisterSubtitle"
-      android:layout_alignRight="@+id/btnRegister"
-      android:layout_alignEnd="@+id/btnRegister"
-      android:layout_alignLeft="@+id/btnRegister"
-      android:layout_alignStart="@+id/btnRegister"
+      android:layout_centerHorizontal="true"
       android:layout_marginTop="20dp"
       android:visibility="gone"
       android:textColor="#ffff373b"/>
@@ -96,10 +100,11 @@
   <RelativeLayout
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#31353e"
+    android:background="@color/signUpBg"
     android:id="@+id/layoutVerify">
 
     <TextView
+      android:layout_marginTop="40dp"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:textAppearance="?android:attr/textAppearanceLarge"
@@ -107,7 +112,6 @@
       android:id="@+id/txtVerifyTitle"
       android:layout_alignParentTop="true"
       android:layout_centerHorizontal="true"
-      android:layout_marginTop="105dp"
       android:textColor="#ffffff"
       android:textSize="50dp"/>
 
@@ -120,50 +124,56 @@
       android:layout_marginTop="52dp"
       android:layout_below="@+id/txtVerifyTitle"
       android:textColor="#ffffff"
-      android:textSize="20dp"
+      android:textSize="18dp"
       android:gravity="center"
-      android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_marginLeft="30dp"
+      android:layout_marginRight="30dp"
+      android:layout_centerHorizontal="true"/>
 
     <EditText
       android:layout_width="wrap_content"
-      android:layout_height="40dp"
+      android:layout_height="50dp"
       android:ems="10"
       android:id="@+id/editTxtVerificationCode"
+      android:layout_below="@+id/txtVerifySubtitle"
       android:layout_marginTop="59dp"
       android:background="#ffffff"
-      android:layout_below="@+id/txtVerifySubtitle"
-      android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"
-      android:layout_marginRight="20dp"
-      android:layout_alignParentLeft="true"
-      android:layout_alignParentStart="true"
-      android:layout_marginLeft="20dp"
       android:hint="Verification Code"
-      android:inputType="text"/>
+      android:inputType="text"
+      android:paddingLeft="10dp"
+      android:textSize="18dp"
+      android:layout_alignLeft="@+id/txtVerifySubtitle"
+      android:layout_alignStart="@+id/txtVerifySubtitle"
+      android:layout_alignRight="@+id/txtVerifySubtitle"
+      android:layout_alignEnd="@+id/txtVerifySubtitle"/>
 
     <Button
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      android:layout_width="200dp"
+      android:layout_height="50dp"
       android:text="Verify"
       android:id="@+id/btnVerify"
+      android:gravity="center"
+      android:background="@drawable/btn_bg"
       android:layout_below="@+id/editTxtVerificationCode"
-      android:layout_marginTop="35dp"
-      android:layout_alignRight="@+id/txtVerifyTitle"
-      android:layout_alignEnd="@+id/txtVerifyTitle"
-      android:layout_alignLeft="@+id/txtVerifyTitle"
-      android:layout_alignStart="@+id/txtVerifyTitle"/>
+      android:layout_centerHorizontal="true"
+      android:textColor="#fff"
+      android:textStyle="bold"
+      android:textSize="18dp"
+      android:layout_marginTop="35dp"/>
 
     <Button
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      android:layout_width="200dp"
+      android:layout_height="50dp"
       android:text="Cancel"
       android:id="@+id/btnCancelVerification"
+      android:gravity="center"
+      android:background="@drawable/btn_bg"
       android:layout_below="@+id/btnVerify"
-      android:layout_alignRight="@+id/btnVerify"
-      android:layout_alignEnd="@+id/btnVerify"
-      android:layout_alignLeft="@+id/btnVerify"
-      android:layout_alignStart="@+id/btnVerify"/>
+      android:layout_centerHorizontal="true"
+      android:textColor="#fff"
+      android:textStyle="bold"
+      android:textSize="18dp"
+      android:layout_marginTop="10dp"/>
 
     <TextView
       android:layout_width="wrap_content"

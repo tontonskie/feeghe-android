@@ -180,35 +180,40 @@ public class DbCache implements Serializable {
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
         "content text not null, " +
-        "updated_at datetime current_timestamp);"
+        "updated_at datetime current_timestamp, " +
+        "UNIQUE(obj_id, query_id));"
       );
       db.execSQL("create table contact(" +
         "id integer primary key autoincrement, " +
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
         "content text not null, " +
-        "updated_at datetime current_timestamp);"
+        "updated_at datetime current_timestamp, " +
+        "UNIQUE(obj_id, query_id));"
       );
       db.execSQL("create table room(" +
         "id integer primary key autoincrement, " +
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
         "content text not null, " +
-        "updated_at datetime current_timestamp);"
+        "updated_at datetime current_timestamp, "+
+        "UNIQUE(obj_id, query_id));"
       );
       db.execSQL("create table face(" +
         "id integer primary key autoincrement, " +
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
         "content text not null, " +
-        "updated_at datetime current_timestamp);"
+        "updated_at datetime current_timestamp, "+
+        "UNIQUE(obj_id, query_id));"
       );
       db.execSQL("create table faceComments(" +
         "id integer primary key autoincrement, " +
         "obj_id varchar not null unique, " +
         "query_id varchar not null, " +
         "content text not null, " +
-        "updated_at datetime current_timestamp);"
+        "updated_at datetime current_timestamp, " +
+        "UNIQUE(obj_id, query_id));"
       );
     }
 

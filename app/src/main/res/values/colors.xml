@@ -1,5 +1,9 @@
 <resources>
 
+  <color name="btnTextColor">#fff</color>
+
+  <color name="signUpBg">#31353E</color>
+
   <color name="mainTabActive">#31353e</color>
   <color name="mainTabInactive">#B7B5B6</color>
 
