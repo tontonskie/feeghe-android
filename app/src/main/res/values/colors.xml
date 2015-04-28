@@ -32,9 +32,6 @@
   <color name="perChatContentReceived">#000</color>
   <color name="perChatContentOwn">#fff</color>
 
-  <color name="wallOfFacesTabActive">#BCBABB</color>
-  <color name="wallOfFacesTabInactive">#D6D6D6</color>
-
   <color name="perFaceTitle">#3795F8</color>
   <color name="perFaceUsage">#FC1B25</color>
 

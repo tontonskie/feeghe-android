@@ -1,84 +1,35 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:orientation="vertical"
   tools:context="com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment">
 
-  <TabHost
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:id="@+id/tabHostWallOfFaces">
+  <Spinner
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/spinner_bg"
+    android:id="@+id/spinFaceFilters"
+    android:layout_margin="10dp"
+    android:layout_alignParentTop="true"/>
 
-    <LinearLayout
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
-      android:orientation="vertical">
+  <GridView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/gridViewFaces"
+    android:layout_below="@+id/spinFaceFilters"
+    android:numColumns="3"/>
 
-      <TabWidget
-        android:id="@android:id/tabs"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-      </TabWidget>
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    android:text="Loading..."
+    android:padding="10dp"
+    android:layout_alignParentBottom="true"
+    android:id="@+id/txtViewLoadingNextFaces"
+    android:gravity="center_vertical|center_horizontal"
+    android:background="#3091FC"
+    android:textColor="#fff"
+    android:visibility="gone"/>
 
-      <FrameLayout
-        android:id="@android:id/tabcontent"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-
-        <RelativeLayout
-          android:id="@+id/tabContentAllFaces"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent">
-
-          <GridView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/gridViewFaces"
-            android:numColumns="3"/>
-
-          <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Loading..."
-            android:padding="10dp"
-            android:layout_alignParentBottom="true"
-            android:id="@+id/txtViewLoadingNextFaces"
-            android:gravity="center_vertical|center_horizontal"
-            android:background="#3091FC"
-            android:textColor="#fff"
-            android:visibility="gone"/>
-
-        </RelativeLayout>
-
-        <RelativeLayout
-          android:id="@+id/tabContentFavFaces"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent">
-
-          <GridView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/gridViewFavFaces"
-            android:numColumns="3"/>
-
-          <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Loading..."
-            android:padding="10dp"
-            android:layout_alignParentBottom="true"
-            android:id="@+id/txtViewLoadingNextFavFaces"
-            android:gravity="center_vertical|center_horizontal"
-            android:background="#3091FC"
-            android:textColor="#fff"
-            android:visibility="gone"/>
-
-        </RelativeLayout>
-
-      </FrameLayout>
-    </LinearLayout>
-  </TabHost>
-</LinearLayout>
+</RelativeLayout>

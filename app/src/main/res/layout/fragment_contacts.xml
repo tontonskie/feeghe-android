@@ -52,6 +52,7 @@
               android:layout_width="0dp"
               android:layout_weight="4"
               android:layout_height="wrap_content"
+              android:visibility="gone"
               android:text="Add To Feeghe Contacts"
               android:id="@+id/btnPhoneContactsSave"/>
 
@@ -88,6 +89,7 @@
               android:layout_weight="4"
               android:layout_height="wrap_content"
               android:text="Add New Contact"
+              android:visibility="gone"
               android:id="@+id/btnFeegheContactsCreate"/>
 
           </LinearLayout>

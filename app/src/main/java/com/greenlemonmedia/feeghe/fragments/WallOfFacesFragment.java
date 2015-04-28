@@ -8,11 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.TabHost;
-import android.widget.TabWidget;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,7 +33,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class WallOfFacesFragment extends MainActivityFragment implements TabHost.OnTabChangeListener {
+public class WallOfFacesFragment extends MainActivityFragment {
 
   private MainActivity context;
   private FaceService faceService;
@@ -43,28 +43,12 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
   private CacheCollection faceCacheCollection;
   private SelectedFaceModal selectedFaceModal;
   private TextView txtViewLoadingNext;
-  private TabHost tabHostFaces;
-  private TabWidget tabs;
-  private FacesAdapter favFacesAdapter;
-  private GridView gridViewFavFaces;
   private Session session;
+  private Spinner spinFaceFilters;
   private boolean isLoadingNextFaces = false;
   private int prevCount = 0;
-  private String[] tabTags = {
-      TAB_ALL_FACES,
-      TAB_FAV_FACES
-  };
-  private String[] tabIcons = {
-      "Wall of Faces",
-      "Favorites"
-  };
-  private int[] tabContents = {
-      R.id.tabContentAllFaces,
-      R.id.tabContentFavFaces
-  };
-
-  public static final String TAB_ALL_FACES = "all_faces";
-  public static final String TAB_FAV_FACES = "favorite_faces";
+  private JSONObject[] faceQueries;
+  private int selectedFilterPos = 0;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -79,26 +63,27 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
     session = Session.getInstance(context);
     faceService = new FaceService(context);
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
-    gridViewFavFaces = (GridView) context.findViewById(R.id.gridViewFavFaces);
     txtViewLoadingNext = (TextView) context.findViewById(R.id.txtViewLoadingNextFaces);
+    spinFaceFilters = (Spinner) context.findViewById(R.id.spinFaceFilters);
+
+    String[] filters = {
+      "Wall of Faces",
+      "Favorites",
+      "My Faces"
+    };
+    try {
+      faceQueries = new JSONObject[]{
+        faceService.getCacheQuery(),
+        faceService.createWhereQuery(new JSONObject("{\"favoritedBy." + session.getUserId() + "\":{\"!\":null},\"privacy\":{\"private\":false}}")),
+        (new JSONObject()).put("user", session.getUserId())
+      };
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    ArrayAdapter<String> faceFiltersAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, filters);
+    spinFaceFilters.setAdapter(faceFiltersAdapter);
 
     selectedFaceModal = new SelectedFaceModal(context);
-
-    tabHostFaces = (TabHost) context.findViewById(R.id.tabHostWallOfFaces);
-    tabHostFaces.setup();
-
-    for (int i = 0; i < tabTags.length; i++) {
-      View tabIndicator = context.getLayoutInflater().inflate(R.layout.tab_indicator_wall_of_faces, null);
-      ((TextView) tabIndicator.findViewById(R.id.txtViewTabIndicatorWallOfFaces)).setText(tabIcons[i]);
-      TabHost.TabSpec tabSpec = tabHostFaces.newTabSpec(tabTags[i]);
-      tabSpec.setContent(tabContents[i]);
-      tabSpec.setIndicator(tabIndicator);
-      tabHostFaces.addTab(tabSpec);
-    }
-
-    tabHostFaces.setOnTabChangedListener(this);
-    tabs = tabHostFaces.getTabWidget();
-    setActiveTab();
 
     loadAllFaces();
     setupUIEvents();
@@ -106,6 +91,7 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
   }
 
   private void loadAllFaces() {
+    prevCount = 0;
     JSONObject cacheQuery = faceService.getCacheQuery();
     faceCacheCollection = faceService.getCacheCollection(cacheQuery);
     final ResponseArray facesFromCache = faceCacheCollection.getData();
@@ -145,48 +131,68 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
   }
 
   private void loadFavoriteFaces() {
-    JSONObject query = null;
+    prevCount = 0;
     try {
-      query = faceService.createWhereQuery(new JSONObject("{\"favoritedBy." + session.getUserId() + "\":{\"!\":null},\"privacy\":{\"private\":false}}"));
+      final JSONObject query = faceService.createWhereQuery(
+        new JSONObject("{\"favoritedBy." + session.getUserId() + "\":{\"!\":null},\"privacy\":{\"private\":false}}")
+      );
+      final ResponseArray favFacesCache = faceService.getCacheCollection(query).getData();
+      if (favFacesCache.length() != 0) {
+        setFavFaces(favFacesCache);
+      }
+      faceService.query(query, new APIService.QueryCallback() {
+
+        @Override
+        public void onSuccess(ResponseArray response) {
+          CacheCollection cache = faceService.getCacheCollection(query);
+          if (favFacesCache.length() == 0) {
+            cache.save(response.getContent());
+          } else {
+            response = cache.updateCollection(response);
+          }
+          setFavFaces(response);
+        }
+
+        @Override
+        public void onFail(int statusCode, String error, JSONObject validationError) {
+          Toast.makeText(context, "Error in getting favorites: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
+        }
+      });
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    final ResponseArray favFacesCache = faceService.getCacheCollection(query).getData();
-    if (favFacesCache.length() != 0) {
-      setFavoriteFaces(favFacesCache);
+  }
+
+  private void loadOwnFaces() {
+    prevCount = 0;
+    final JSONObject query = new JSONObject();
+    try {
+      query.put("user", session.getUserId());
+    } catch (JSONException e) {
+      e.printStackTrace();
     }
-    final JSONObject finalQuery = query;
+    final ResponseArray ownFacesCache = faceService.getCacheCollection(query).getData();
+    if (ownFacesCache.length() != 0) {
+      setOwnFaces(ownFacesCache);
+    }
     faceService.query(query, new APIService.QueryCallback() {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        CacheCollection cache = faceService.getCacheCollection(finalQuery);
-        if (favFacesCache.length() == 0) {
-          cache.save(response.getContent());
-          setFavoriteFaces(favFacesCache);
+        CacheCollection cache = faceService.getCacheCollection(query);
+        if (ownFacesCache.length() == 0) {
+          cache.save(ownFacesCache.getContent());
         } else {
-          favFacesAdapter.clear();
-          JSONArray newFavs = cache.updateCollection(response).getContent();
-          try {
-            for (int i = 0; i < newFavs.length(); i++) {
-              favFacesAdapter.add(newFavs.getJSONObject(i));
-            }
-          } catch (JSONException ex) {
-            ex.printStackTrace();
-          }
+          response = cache.updateCollection(response);
         }
+        setOwnFaces(response);
       }
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        Toast.makeText(context, "Error in getting favorites: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
+
       }
     });
-  }
-
-  private void setFavoriteFaces(ResponseArray response) {
-    favFacesAdapter = new FacesAdapter(APIUtils.toList(response));
-    gridViewFavFaces.setAdapter(favFacesAdapter);
   }
 
   private void setAllFaces(ResponseArray response) {
@@ -194,9 +200,47 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
     gridViewFaces.setAdapter(facesAdapter);
   }
 
+  private void setFavFaces(ResponseArray response) {
+    JSONArray favFaces = response.getContent();
+    facesAdapter.clear();
+    try {
+      for (int i = 0; i < favFaces.length(); i++) {
+        facesAdapter.add(favFaces.getJSONObject(i));
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  private void setOwnFaces(ResponseArray response) {
+    JSONArray ownFaces = response.getContent();
+    facesAdapter.clear();
+    try {
+      for (int i = 0; i < ownFaces.length(); i++) {
+        facesAdapter.add(ownFaces.getJSONObject(i));
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+  }
+
   @Override
   public String getTabId() {
     return MainActivity.TAB_WALL_OF_FACES;
+  }
+
+  private void loadSelectedFilter() {
+    switch (selectedFilterPos) {
+      case 0:
+        loadAllFaces();
+        break;
+      case 1:
+        loadFavoriteFaces();
+        break;
+      case 2:
+        loadOwnFaces();
+        break;
+    }
   }
 
   @Override
@@ -212,6 +256,20 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
           facesAdapter.remove(oldFaceData);
           facesAdapter.insert(newFaceData, position);
         }
+      }
+    });
+
+    spinFaceFilters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        selectedFilterPos = position;
+        loadSelectedFilter();
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+
       }
     });
 
@@ -247,17 +305,11 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
 
       @Override
       public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        if (facesAdapter != null && prevCount != facesAdapter.getCount() && (firstVisibleItem + visibleItemCount) >= totalItemCount  && !isLoadingNextFaces) {
+        if (facesAdapter != null && prevCount != facesAdapter.getCount() && (firstVisibleItem + visibleItemCount) >= totalItemCount && !isLoadingNextFaces) {
           prevCount = facesAdapter.getCount();
           isLoadingNextFaces = true;
-          JSONObject nextFacesParams = null;
+          JSONObject nextFacesParams = createSearchQuery(context.getSearchView().getQuery().toString());
           try {
-            String searchText = context.getSearchView().getQuery().toString();
-            if (searchText.isEmpty()) {
-              nextFacesParams = faceService.getCacheQuery();
-            } else {
-              nextFacesParams = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
-            }
             nextFacesParams.put("skip", prevCount);
           } catch (JSONException ex) {
             ex.printStackTrace();
@@ -289,18 +341,34 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
     return MainActivity.FRAG_WALL_OF_FACES;
   }
 
+  private JSONObject createSearchQuery(String searchText) {
+    JSONObject searchQuery = null;
+    try {
+      if (searchText.isEmpty()) {
+        searchQuery = faceQueries[selectedFilterPos];
+      } else {
+        switch (selectedFilterPos) {
+          case 0:
+          case 1:
+            searchQuery = faceQueries[selectedFilterPos];
+            break;
+          case 2:
+            searchQuery = faceService.createWhereQuery(faceQueries[selectedFilterPos]);
+            break;
+        }
+        searchQuery.getJSONObject("where")
+          .put("or", new JSONArray("[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]"));
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
+    return searchQuery;
+  }
+
   @Override
   public boolean onSearchQuerySubmit(String searchText) {
     txtViewLoadingNext.setVisibility(View.VISIBLE);
-    JSONObject searchQuery = null;
-    if (!searchText.isEmpty()) {
-      try {
-        searchQuery = new JSONObject("{\"where\":{\"or\":[{\"title\":{\"contains\":\"" + searchText + "\"}},{\"tags\":{\"contains\":\"" + searchText + "\"}}]}}");
-      } catch (JSONException e) {
-        e.printStackTrace();
-      }
-    }
-    faceService.query(searchQuery, new APIService.QueryCallback() {
+    faceService.query(createSearchQuery(searchText), new APIService.QueryCallback() {
 
       @Override
       public void onSuccess(ResponseArray response) {
@@ -331,26 +399,8 @@ public class WallOfFacesFragment extends MainActivityFragment implements TabHost
 
   @Override
   public boolean onSearchClose() {
-    loadAllFaces();
+    loadSelectedFilter();
     return true;
-  }
-
-  @Override
-  public void onTabChanged(String tabId) {
-    setActiveTab();
-    if (tabId.equals(TAB_FAV_FACES)) {
-      loadFavoriteFaces();
-    } else {
-      loadAllFaces();
-    }
-  }
-
-  private void setActiveTab() {
-    int inactiveColor = getResources().getColor(R.color.wallOfFacesTabInactive);
-    for (int i = 0; i < tabs.getChildCount(); i++) {
-      tabs.getChildTabViewAt(i).setBackgroundColor(inactiveColor);
-    }
-    tabHostFaces.getCurrentTabView().setBackgroundColor(getResources().getColor(R.color.wallOfFacesTabActive));
   }
 
   private class FacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {
