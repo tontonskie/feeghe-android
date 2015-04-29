@@ -114,7 +114,8 @@ public class RegisterActivity extends Activity {
 
       @Override
       public void onClick(View v) {
-        String countryCode = ((JSONObject) spinCountryCodes.getSelectedItem()).optString("dialCode");
+        String dialCode = ((JSONObject) spinCountryCodes.getSelectedItem()).optString("dialCode");
+        session.set(Session.DIAL_CODE, dialCode);
         String phoneNumber = editTxtPhoneNumber.getText().toString();
         if (phoneNumber.isEmpty()) {
           txtRegisterError.setText("Phone number is required");
@@ -122,7 +123,10 @@ public class RegisterActivity extends Activity {
           return;
         }
         txtRegisterError.setVisibility(View.GONE);
-        phoneNumber = countryCode + phoneNumber;
+        if (phoneNumber.indexOf("0") == 0) {
+          phoneNumber = phoneNumber.substring(1);
+        }
+        phoneNumber = dialCode + phoneNumber;
         final ProgressDialog preloader = APIUtils.showPreloader(context);
         userService.register(phoneNumber, new APIService.SaveCallback() {
 

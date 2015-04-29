@@ -8,10 +8,12 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -31,10 +33,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TabWidget;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
+import com.greenlemonmedia.feeghe.api.ContactService;
 import com.greenlemonmedia.feeghe.api.MessageService;
+import com.greenlemonmedia.feeghe.api.ResponseArray;
+import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.api.Socket;
 import com.greenlemonmedia.feeghe.api.UserService;
@@ -48,6 +54,7 @@ import com.greenlemonmedia.feeghe.fragments.RoomsFragment;
 import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
+import com.greenlemonmedia.feeghe.tasks.GetPhoneContactsTask;
 import com.greenlemonmedia.feeghe.ui.UITabHost;
 import com.koushikdutta.async.http.socketio.DisconnectCallback;
 import com.koushikdutta.async.http.socketio.ErrorCallback;
@@ -55,6 +62,7 @@ import com.koushikdutta.async.http.socketio.ReconnectCallback;
 import com.koushikdutta.async.http.socketio.SocketIOClient;
 import com.koushikdutta.async.http.socketio.SocketIORequest;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -79,6 +87,8 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private DrawerLayout drawerSettings;
   private MainActivityFragment currentFragment;
   private SearchView searchView;
+  private ContactService contactService;
+  private PhoneContactsObserver phoneContactsObserver;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -108,6 +118,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     userService = new UserService(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
+    contactService = new ContactService(context);
     roomCacheCollection = roomService.getCacheCollection();
 
     if (!session.isLoggedIn()) {
@@ -120,6 +131,83 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     setupSounds();
     setupSocketConnection();
     setupKeyboardDetection();
+
+    registerObservers();
+  }
+
+  private void registerObservers() {
+    phoneContactsObserver = new PhoneContactsObserver();
+    getContentResolver().registerContentObserver(
+      ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+      true,
+      phoneContactsObserver
+    );
+  }
+
+  private class PhoneContactsObserver extends ContentObserver {
+
+    public PhoneContactsObserver() {
+      super(null);
+    }
+
+    public void onChange(boolean selfChange) {
+      super.onChange(selfChange);
+      updateContacts();
+    }
+  }
+
+  public void updateContacts() {
+    GetPhoneContactsTask.GetPhoneContactsListener listener = new GetPhoneContactsTask.GetPhoneContactsListener() {
+
+      @Override
+      public void onSuccess(JSONArray contacts) {
+        JSONObject query = new JSONObject();
+        try {
+          query.put("phoneNumber", contacts);
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+        userService.query(userService.createWhereQuery(query), new APIService.QueryCallback() {
+
+          @Override
+          public void onSuccess(ResponseArray response) {
+            JSONArray userIds = new JSONArray();
+            JSONArray users = response.getContent();
+            try {
+              for (int i = 0; i < users.length(); i++) {
+                userIds.put(users.getJSONObject(i).getString("id"));
+              }
+            } catch (JSONException ex) {
+              ex.printStackTrace();
+            }
+            contactService.sync(userIds, new APIService.SaveCallback() {
+
+              @Override
+              public void onSuccess(ResponseObject response) {
+                JSONArray syncedContacts = null;
+                try {
+                  syncedContacts = response.getContent().getJSONArray("contacts");
+                } catch (JSONException e) {
+                  e.printStackTrace();
+                }
+                contactService.getCacheCollection().updateCollection(syncedContacts);
+              }
+
+              @Override
+              public void onFail(int statusCode, String error, JSONObject validationError) {
+                Toast.makeText(context, "Failed to sync contacts", Toast.LENGTH_LONG).show();
+              }
+            });
+          }
+
+          @Override
+          public void onFail(int statusCode, String error, JSONObject validationError) {
+
+          }
+        });
+      }
+    };
+    new GetPhoneContactsTask(context, listener).execute();
   }
 
   private void setupNavDrawer() {
@@ -214,7 +302,22 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     alertSoundId = soundPool.load(this, R.raw.alert, 1);
   }
 
+  private void loadHome() {
+    currentUser = userService.getCurrentUser();
+    if (currentUser.hasStatus(Session.User.STATUS_INCOMPLETE)) {
+      showNewUserFragment();
+    } else {
+      showMessagesFragment();
+    }
+    initSocketEvents();
+    updateContacts();
+  }
+
   private void setupSocketConnection() {
+    if (Socket.isConnected()) {
+      loadHome();
+      return;
+    }
     final ProgressDialog preloader = APIUtils.showPreloader(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
@@ -225,14 +328,8 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
       @Override
       public void onConnect(SocketIOClient client) {
-        currentUser = userService.getCurrentUser();
         preloader.dismiss();
-        if (currentUser.hasStatus(Session.User.STATUS_INCOMPLETE)) {
-          showNewUserFragment();
-        } else {
-          showMessagesFragment();
-        }
-        initSocketEvents();
+        loadHome();
       }
     });
   }
@@ -254,7 +351,6 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
             currentFragment.onKeyboardHide();
           }
         }
-
       }
     });
   }
@@ -491,6 +587,12 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
       return;
     }
     finish();
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    getContentResolver().unregisterContentObserver(phoneContactsObserver);
   }
 
   public void backToRegistration() {

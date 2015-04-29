@@ -27,6 +27,7 @@ public class Session {
   public static final String VERIFICATION_KEY = "verification";
   public static final String USER_KEY = "user";
   public static final String PREFERENCE_NAME = "feeghe_user_session";
+  public static final String DIAL_CODE = "dial_code";
   public static final int PREFERENCE_MODE = 0;
 
   public class User extends HashMap<String, Object> {

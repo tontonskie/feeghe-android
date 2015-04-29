@@ -1,6 +1,5 @@
 package com.greenlemonmedia.feeghe.fragments;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,10 +38,9 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private FaceService faceService;
   private FacesAdapter facesAdapter;
   private GridView gridViewFaces;
-  private ProgressDialog facesPreloader;
   private CacheCollection faceCacheCollection;
   private SelectedFaceModal selectedFaceModal;
-  private TextView txtViewLoadingNext;
+  private TextView txtViewLoading;
   private Session session;
   private Spinner spinFaceFilters;
   private boolean isLoadingNextFaces = false;
@@ -63,7 +61,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
     session = Session.getInstance(context);
     faceService = new FaceService(context);
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
-    txtViewLoadingNext = (TextView) context.findViewById(R.id.txtViewLoadingNextFaces);
+    txtViewLoading = (TextView) context.findViewById(R.id.txtViewLoadingFaces);
     spinFaceFilters = (Spinner) context.findViewById(R.id.spinFaceFilters);
 
     String[] filters = {
@@ -92,13 +90,14 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   private void loadAllFaces() {
     prevCount = 0;
+    gridViewFaces.smoothScrollToPosition(0);
     JSONObject cacheQuery = faceService.getCacheQuery();
     faceCacheCollection = faceService.getCacheCollection(cacheQuery);
     final ResponseArray facesFromCache = faceCacheCollection.getData();
     if (facesFromCache.length() != 0) {
       setAllFaces(facesFromCache);
     } else {
-      facesPreloader = APIUtils.showPreloader(context);
+      txtViewLoading.setVisibility(View.VISIBLE);
     }
 
     faceService.query(cacheQuery, new APIService.QueryCallback() {
@@ -108,7 +107,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
         if (facesFromCache.length() == 0) {
           setAllFaces(response);
           faceCacheCollection.save(response.getContent());
-          facesPreloader.dismiss();
+          txtViewLoading.setVisibility(View.GONE);
         } else {
           facesAdapter.clear();
           JSONArray addedFaces = faceCacheCollection.updateCollection(response).getContent();
@@ -132,6 +131,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   private void loadFavoriteFaces() {
     prevCount = 0;
+    gridViewFaces.smoothScrollToPosition(0);
     try {
       final JSONObject query = faceService.createWhereQuery(
         new JSONObject("{\"favoritedBy." + session.getUserId() + "\":{\"!\":null},\"privacy\":{\"private\":false}}")
@@ -165,6 +165,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   private void loadOwnFaces() {
     prevCount = 0;
+    gridViewFaces.smoothScrollToPosition(0);
     final JSONObject query = new JSONObject();
     try {
       query.put("user", session.getUserId());
@@ -285,13 +286,13 @@ public class WallOfFacesFragment extends MainActivityFragment {
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
-        txtViewLoadingNext.setVisibility(View.GONE);
+        txtViewLoading.setVisibility(View.GONE);
         isLoadingNextFaces = false;
       }
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        txtViewLoadingNext.setVisibility(View.GONE);
+        txtViewLoading.setVisibility(View.GONE);
         isLoadingNextFaces = false;
       }
     };
@@ -314,7 +315,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
           } catch (JSONException ex) {
             ex.printStackTrace();
           }
-          txtViewLoadingNext.setVisibility(View.VISIBLE);
+          txtViewLoading.setVisibility(View.VISIBLE);
           faceService.query(nextFacesParams, nextFacesCallback);
         }
       }
@@ -367,7 +368,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
   @Override
   public boolean onSearchQuerySubmit(String searchText) {
-    txtViewLoadingNext.setVisibility(View.VISIBLE);
+    txtViewLoading.setVisibility(View.VISIBLE);
+    gridViewFaces.smoothScrollToPosition(0);
     faceService.query(createSearchQuery(searchText), new APIService.QueryCallback() {
 
       @Override
@@ -381,12 +383,12 @@ public class WallOfFacesFragment extends MainActivityFragment {
         } catch (JSONException ex) {
           ex.printStackTrace();
         }
-        txtViewLoadingNext.setVisibility(View.GONE);
+        txtViewLoading.setVisibility(View.GONE);
       }
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        txtViewLoadingNext.setVisibility(View.GONE);
+        txtViewLoading.setVisibility(View.GONE);
       }
     });
     return true;

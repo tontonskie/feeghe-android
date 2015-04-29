@@ -121,8 +121,7 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
     tabs = tabHostContacts.getTabWidget();
     setActiveTab();
 
-    JSONObject query = contactService.getCacheQuery();
-    contactCacheCollection = contactService.getCacheCollection(query);
+    contactCacheCollection = contactService.getCacheCollection();
     final ResponseArray responseFromCache = contactCacheCollection.getData();
     if (responseFromCache.getContent().length() != 0) {
       showFeegheContacts(responseFromCache);
@@ -130,7 +129,7 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
       contactsPreloader = APIUtils.showPreloader(context);
     }
 
-    contactService.query(query, new APIService.QueryCallback() {
+    contactService.query(contactService.getCacheQuery(), new APIService.QueryCallback() {
 
       @Override
       public void onSuccess(ResponseArray response) {
@@ -518,8 +517,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
         viewHolder.btnShowCall = (Button) convertView.findViewById(R.id.btnShowCall);
         viewHolder.btnShowChat.setOnClickListener(this);
         viewHolder.btnShowCall.setOnClickListener(this);
-        viewHolder.btnShowCall.setVisibility(View.INVISIBLE);
-        viewHolder.btnShowChat.setVisibility(View.INVISIBLE);
         convertView.setTag(viewHolder);
       } else {
         viewHolder = (PhoneContactViewHolder) convertView.getTag();

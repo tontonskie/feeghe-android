@@ -46,9 +46,7 @@ abstract public class Socket {
    * @param session
    * @param connectionListener
    */
-  public static void connect(Session session, SocketConnectionListener connectionListener) {
-    if (isConnected()) return;
-    final SocketConnectionListener listener = connectionListener;
+  public static void connect(Session session, final SocketConnectionListener connectionListener) {
     String qstring = "token=" + session.getToken() + "&user=" + session.getUserId();
     qstring += "&__sails_io_sdk_version=0.10.0&__sails_io_sdk_platform=mobile&__sails_io_sdk_language=java";
     qstring += "&t=" + new Date().getTime();
@@ -58,7 +56,7 @@ abstract public class Socket {
       wsUrl += ':' + APIService.PORT;
     }
     SocketIORequest socketRequest = new SocketIORequest(wsUrl, "", qstring);
-    listener.onStartConnecting(socketRequest);
+    connectionListener.onStartConnecting(socketRequest);
     SocketIOClient.connect(AsyncHttpClient.getDefaultInstance(), socketRequest, new ConnectCallback() {
 
       @Override
@@ -68,7 +66,7 @@ abstract public class Socket {
           return;
         }
         client = socketClient;
-        listener.onConnect(client);
+        connectionListener.onConnect(client);
       }
     });
   }

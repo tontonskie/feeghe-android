@@ -101,7 +101,7 @@ public class CacheCollection {
 
   public void deleteCollection() {
     cache.deleteByQueryId(tableName, queryId);
-    objectIds = new ArrayList<>();
+    objectIds.clear();
     cacheData = new ResponseArray(new JSONArray(), true);
   }
 
