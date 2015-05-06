@@ -170,12 +170,25 @@ public class RegisterActivity extends Activity {
           public void onSuccess(ResponseObject response) {
             JSONObject data = response.getContent();
             try {
-              session.setCredentials(data.getString("token"), data.getString("user"));
+              String verifiedUserId = data.getString("user");
+              session.setCredentials(data.getString("token"), verifiedUserId);
+              userService.get(verifiedUserId, new APIService.GetCallback() {
+
+                @Override
+                public void onSuccess(ResponseObject response) {
+                  session.setCurrentUser(response);
+                  preloader.dismiss();
+                  goToMainActivity();
+                }
+
+                @Override
+                public void onFail(int statusCode, String error, JSONObject validationError) {
+
+                }
+              });
             } catch (JSONException e) {
               e.printStackTrace();
             }
-            preloader.dismiss();
-            goToMainActivity();
           }
 
           @Override

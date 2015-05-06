@@ -1,7 +1,6 @@
 package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -19,6 +18,7 @@ import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -49,7 +49,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
   private CacheCollection contactCacheCollection;
   private FeegheContactsAdapter feegheContactsAdapter;
   private PhoneContactsAdapter phoneContactsAdapter;
-  private ProgressDialog contactsPreloader;
   private TabHost tabHostContacts;
   private Button btnFeegheContactsCreate;
   private Button btnPhoneContactsSave;
@@ -125,8 +124,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
     final ResponseArray responseFromCache = contactCacheCollection.getData();
     if (responseFromCache.getContent().length() != 0) {
       showFeegheContacts(responseFromCache);
-    } else {
-      contactsPreloader = APIUtils.showPreloader(context);
     }
 
     contactService.query(contactService.getCacheQuery(), new APIService.QueryCallback() {
@@ -136,7 +133,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
         if (feegheContactsAdapter == null) {
           showFeegheContacts(response);
           contactCacheCollection.save(response.getContent());
-          contactsPreloader.dismiss();
         } else {
           feegheContactsAdapter.clear();
           JSONArray addedContacts = contactCacheCollection.updateCollection(response).getContent();
@@ -153,7 +149,7 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        contactsPreloader.dismiss();
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 
@@ -395,7 +391,7 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
 
           @Override
           public void onFail(int statusCode, String error) {
-
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
           }
         }
       );

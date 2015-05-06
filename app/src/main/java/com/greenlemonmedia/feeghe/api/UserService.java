@@ -87,24 +87,12 @@ public class UserService extends APIService {
 
   /**
    *
-   * @param callback
-   */
-  public void logout(DeleteCallback callback) {
-    apiAsyncCall(new HttpDelete(getBaseUrl("logout")), callback);
-  }
-
-  public void updateCurrentUser() {
-    session.setCurrentUser(get(session.getUserId()));
-  }
-
-  /**
-   *
    * @return
    */
   public Session.User getCurrentUser() {
     Session.User currentUser = session.getCurrentUser();
     if (currentUser == null) {
-      updateCurrentUser();
+      session.setCurrentUser(get(session.getUserId()));
       currentUser = session.getCurrentUser();
     }
     return currentUser;

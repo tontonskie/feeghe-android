@@ -124,7 +124,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        txtViewLoading.setVisibility(View.GONE);
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
   }

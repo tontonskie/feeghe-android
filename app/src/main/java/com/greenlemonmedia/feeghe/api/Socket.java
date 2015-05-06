@@ -83,6 +83,7 @@ abstract public class Socket {
    * @param callback
    */
   public static void on(String event, final APIService.EventCallback callback) {
+    if (!isConnected()) return;
     client.on(event, new EventCallback() {
 
       @Override

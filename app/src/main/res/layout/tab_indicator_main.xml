@@ -5,8 +5,8 @@
   android:background="@color/mainTabInactive">
 
   <ImageView
-    android:layout_width="35dp"
-    android:layout_height="35dp"
+    android:layout_width="30dp"
+    android:layout_height="30dp"
     android:layout_marginRight="5dp"
     android:layout_marginLeft="5dp"
     android:layout_marginBottom="5dp"

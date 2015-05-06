@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -93,7 +94,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 
@@ -140,7 +141,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
 
               @Override
               public void onFail(int statusCode, String error, JSONObject validationError) {
-
+                Toast.makeText(context, error, Toast.LENGTH_LONG).show();
               }
             });
             return;
@@ -155,7 +156,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
 
             @Override
             public void onFail(int statusCode, String error, JSONObject validationError) {
-
+              Toast.makeText(context, error, Toast.LENGTH_LONG).show();
             }
           });
 

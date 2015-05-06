@@ -76,7 +76,7 @@ public class EditProfileFragment extends MainActivityFragment {
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 

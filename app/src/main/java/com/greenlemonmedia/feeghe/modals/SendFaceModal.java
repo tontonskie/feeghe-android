@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -103,7 +104,7 @@ public class SendFaceModal extends MainActivityModal {
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 
@@ -199,14 +200,14 @@ public class SendFaceModal extends MainActivityModal {
 
                   @Override
                   public void onFail(int statusCode, String error, JSONObject validationError) {
-
+                    Toast.makeText(context, error, Toast.LENGTH_LONG).show();
                   }
                 });
               }
 
               @Override
               public void onFail(int statusCode, String error) {
-
+                Toast.makeText(context, error, Toast.LENGTH_LONG).show();
               }
             }
           );

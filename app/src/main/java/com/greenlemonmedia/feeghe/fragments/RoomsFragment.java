@@ -1,6 +1,5 @@
 package com.greenlemonmedia.feeghe.fragments;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 import com.greenlemonmedia.feeghe.R;
@@ -37,7 +37,6 @@ public class RoomsFragment extends MainActivityFragment {
   private Session session;
   private RoomService roomService;
   private CacheCollection roomCacheCollection;
-  private ProgressDialog roomsPreloader;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,10 +55,9 @@ public class RoomsFragment extends MainActivityFragment {
     roomCacheCollection = roomService.getCacheCollection(request);
 
     final ResponseArray responseFromCache = roomCacheCollection.getData();
+
     if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
-    } else {
-      roomsPreloader = APIUtils.showPreloader(context);
     }
 
     roomService.query(request, new APIService.QueryCallback() {
@@ -69,7 +67,6 @@ public class RoomsFragment extends MainActivityFragment {
         if (responseFromCache.length() == 0) {
           showRooms(response);
           roomCacheCollection.save(response.getContent());
-          roomsPreloader.dismiss();
         } else {
           roomsAdapter.clear();
           JSONArray addedRooms = roomCacheCollection.updateCollection(response).getContent();
@@ -86,7 +83,7 @@ public class RoomsFragment extends MainActivityFragment {
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 

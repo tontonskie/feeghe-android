@@ -664,10 +664,12 @@ abstract public class APIService implements Serializable {
     @Override
     protected Response doInBackground(Void... params) {
       Response result = null;
-      try {
-        result = parseResponse(httpClient.execute(request), isArray);
-      } catch (IOException e) {
-        e.printStackTrace();
+      if (APIUtils.isConnected(context)) {
+        try {
+          result = parseResponse(httpClient.execute(request), isArray);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
       return result;
     }

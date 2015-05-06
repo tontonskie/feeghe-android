@@ -3,7 +3,6 @@ package com.greenlemonmedia.feeghe;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -138,9 +137,9 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private void registerObservers() {
     phoneContactsObserver = new PhoneContactsObserver();
     getContentResolver().registerContentObserver(
-      ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-      true,
-      phoneContactsObserver
+        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+        true,
+        phoneContactsObserver
     );
   }
 
@@ -314,11 +313,11 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   }
 
   private void setupSocketConnection() {
-    if (Socket.isConnected()) {
+    boolean isConnected = APIUtils.isConnected(context);
+    if (!isConnected || (isConnected && Socket.isConnected())) {
       loadHome();
       return;
     }
-    final ProgressDialog preloader = APIUtils.showPreloader(this);
     Socket.connect(session, new Socket.SocketConnectionListener() {
 
       @Override
@@ -328,7 +327,6 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
       @Override
       public void onConnect(SocketIOClient client) {
-        preloader.dismiss();
         loadHome();
       }
     });
@@ -393,31 +391,33 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     });
 
     SocketIOClient socketClient = Socket.getClient();
-    socketClient.setDisconnectCallback(new DisconnectCallback() {
+    if (socketClient != null) {
+      socketClient.setDisconnectCallback(new DisconnectCallback() {
 
-      @Override
-      public void onDisconnect(Exception e) {
-        if (e != null) {
-          Log.d("socket disconnect", e.getMessage());
+        @Override
+        public void onDisconnect(Exception e) {
+          if (e != null) {
+            Log.d("socket disconnect", e.getMessage());
+          }
         }
-      }
-    });
+      });
 
-    socketClient.setErrorCallback(new ErrorCallback() {
+      socketClient.setErrorCallback(new ErrorCallback() {
 
-      @Override
-      public void onError(String error) {
-        Log.d("socket error", error);
-      }
-    });
+        @Override
+        public void onError(String error) {
+          Log.d("socket error", error);
+        }
+      });
 
-    socketClient.setReconnectCallback(new ReconnectCallback() {
+      socketClient.setReconnectCallback(new ReconnectCallback() {
 
-      @Override
-      public void onReconnect() {
-        Log.d("socket reconnect", "reconnect");
-      }
-    });
+        @Override
+        public void onReconnect() {
+          Log.d("socket reconnect", "reconnect");
+        }
+      });
+    }
   }
 
   public void setActiveTab(String tabId) {

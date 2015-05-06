@@ -10,6 +10,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -667,7 +669,7 @@ public class APIUtils {
   }
 
   public interface OnFaceClickListener {
-    public void onClick(View widget, String faceId);
+    void onClick(View widget, String faceId);
   }
 
   /**
@@ -682,9 +684,24 @@ public class APIUtils {
     try {
       Field field = res.getField(id);
       result = context.getResources().getDrawable(field.getInt(null));
-    } catch (IllegalAccessException | NoSuchFieldException e) {
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (NoSuchFieldException e) {
       e.printStackTrace();
     }
     return result;
+  }
+
+  /**
+   *
+   * @param context
+   * @return
+   */
+  public static boolean isConnected(Context context) {
+    NetworkInfo netInfo = ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+    if (netInfo != null && netInfo.isConnected()) {
+      return true;
+    }
+    return false;
   }
 }

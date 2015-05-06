@@ -10,6 +10,7 @@ import com.greenlemonmedia.feeghe.api.ResponseObject;
 import com.greenlemonmedia.feeghe.api.RoomService;
 import com.greenlemonmedia.feeghe.storage.Session;
 
+import org.apache.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +27,7 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
   private RoomService roomService;
 
   public interface Listener extends TaskListener {
-    public void onSuccess(ResponseObject response);
+    void onSuccess(ResponseObject response);
   }
 
   public GoToRoomTask(Activity context, String chatMateId, Listener listener) {
@@ -64,7 +65,7 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
 
   public void onPostExecute(ResponseArray checkResponse) {
     try {
-      if (checkResponse.isOk()) {
+      if (checkResponse != null && checkResponse.isOk()) {
         if (checkResponse.getContent().length() == 0) {
           JSONObject saveData = new JSONObject();
           saveData.put("creator", session.getUserId());
@@ -83,6 +84,7 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
             @Override
             public void onFail(int statusCode, String error, JSONObject validationError) {
               listener.onFail(statusCode, error);
+              preloader.dismiss();
             }
           });
         } else {
@@ -92,8 +94,12 @@ public class GoToRoomTask extends AsyncTask<Void, Void, ResponseArray> {
           ));
           preloader.dismiss();
         }
-      } else {
+      } else if (checkResponse != null) {
         listener.onFail(checkResponse.getStatusCode(), checkResponse.getErrorMessage());
+        preloader.dismiss();
+      } else {
+        listener.onFail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Please check your internet connection");
+        preloader.dismiss();
       }
     } catch (JSONException ex) {
       ex.printStackTrace();

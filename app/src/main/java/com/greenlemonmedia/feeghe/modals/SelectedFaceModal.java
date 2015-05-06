@@ -139,7 +139,7 @@ public class SelectedFaceModal extends MainActivityModal {
 
           @Override
           public void onFail(int statusCode, String error, JSONObject validationError) {
-
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
           }
         });
 
@@ -183,7 +183,7 @@ public class SelectedFaceModal extends MainActivityModal {
 
           @Override
           public void onFail(int statusCode, String error, JSONObject validationError) {
-            Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
           }
         });
         switcherSelectedFace.showNext();
@@ -217,7 +217,7 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
-        JSONObject face = (JSONObject) getData();
+        final JSONObject face = (JSONObject) getData();
         try {
           btnLikeFace.setText("Loading...");
           btnLikeFace.setEnabled(false);
@@ -238,7 +238,13 @@ public class SelectedFaceModal extends MainActivityModal {
 
             @Override
             public void onFail(int statusCode, String error, JSONObject validationError) {
-              Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+              Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+              if (face.optBoolean("liked", false)) {
+                btnLikeFace.setText("Unlike \n" + face.optInt("likesCount", 0));
+              } else {
+                btnLikeFace.setText("Like \n" + face.optInt("likesCount", 0));
+              }
+              btnLikeFace.setEnabled(true);
             }
           });
         } catch (JSONException e) {
@@ -251,7 +257,7 @@ public class SelectedFaceModal extends MainActivityModal {
 
       @Override
       public void onClick(View v) {
-        JSONObject data = (JSONObject) getData();
+        final JSONObject data = (JSONObject) getData();
         try {
           btnSaveSelectedFace.setText("Loading...");
           btnSaveSelectedFace.setEnabled(false);
@@ -272,7 +278,13 @@ public class SelectedFaceModal extends MainActivityModal {
 
             @Override
             public void onFail(int statusCode, String error, JSONObject validationError) {
-              Toast.makeText(context, statusCode + ": " + error, Toast.LENGTH_SHORT).show();
+              Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
+              if (data.optBoolean("favorite", false)) {
+                btnSaveSelectedFace.setText("Unfavorite");
+              } else {
+                btnSaveSelectedFace.setText("Save");
+              }
+              btnSaveSelectedFace.setEnabled(true);
             }
           });
         } catch (JSONException e) {

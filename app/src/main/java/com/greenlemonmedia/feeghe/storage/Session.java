@@ -28,6 +28,7 @@ public class Session {
   public static final String USER_KEY = "user";
   public static final String PREFERENCE_NAME = "feeghe_user_session";
   public static final String DIAL_CODE = "dial_code";
+  public static final String USER_INFO_KEY = "user_info";
   public static final int PREFERENCE_MODE = 0;
 
   public class User extends HashMap<String, Object> {
@@ -123,7 +124,11 @@ public class Session {
       return getString("status").equals(status);
     }
 
-    public JSONObject toJSON()  {
+    /**
+     *
+     * @return
+     */
+    public JSONObject toJSON() {
       return new JSONObject(this);
     }
   }
@@ -135,6 +140,14 @@ public class Session {
   private Session(SharedPreferences preferences) {
     session = preferences;
     editor = session.edit();
+    String userInfo = session.getString(USER_INFO_KEY, null);
+    if (userInfo != null) {
+      try {
+        setCurrentUser(new JSONObject(userInfo));
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   /**
@@ -150,7 +163,10 @@ public class Session {
    * @param user
    */
   public void setCurrentUser(JSONObject user) {
+    editor.putString(USER_INFO_KEY, user.toString());
+    editor.commit();
     currentUser = new User(user);
+
   }
 
   /**

@@ -98,7 +98,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private TextView txtViewRoomTitle;
   private Button btnEditMembers;
   private SelectedRoomUsersModal modalEditUsers;
-  private ProgressDialog preloader;
   private Button btnSendAttachment;
   private GalleryPickerModal modalGallery;
   private AttachedPreviewModal modalAttachedPreview;
@@ -244,7 +243,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        Toast.makeText(context, "Usable faces error: " + statusCode + " " + error, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, error, Toast.LENGTH_SHORT).show();
       }
     });
   }
@@ -255,8 +254,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     final ResponseArray responseFromCache = messageCacheCollection.getData();
     if (responseFromCache.length() > 0) {
       setMessages(responseFromCache);
-    } else {
-      preloader = APIUtils.showPreloader(context);
     }
 
     messageService.query(messageQuery, new APIService.QueryCallback() {
@@ -266,7 +263,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         if (responseFromCache.length() == 0) {
           setMessages(response);
           messageCacheCollection.save(response.getContent());
-          preloader.dismiss();
         } else {
           JSONArray newMessages = response.getContent();
           messageCacheCollection.updateCollection(newMessages);
@@ -283,7 +279,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-        Toast.makeText(context, "Code: " + statusCode + " " + error, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
   }
@@ -954,12 +950,14 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 //        }
 
         LinearLayout.LayoutParams imgLayoutParams = (LinearLayout.LayoutParams) viewHolder.imgViewAttachment.getLayoutParams();
+        LinearLayout.LayoutParams txtViewLayoutParams = (LinearLayout.LayoutParams) viewHolder.txtViewPerChatContent.getLayoutParams();
         if (userId.equals(session.getUserId())) {
           viewHolder.txtViewChatMateName.setGravity(Gravity.RIGHT);
           viewHolder.txtViewPerChatContent.setGravity(Gravity.RIGHT);
           viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_own);
           viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentOwn));
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.RIGHT);
+          txtViewLayoutParams.gravity = Gravity.RIGHT;
           imgLayoutParams.gravity = Gravity.RIGHT;
         } else {
           viewHolder.txtViewChatMateName.setGravity(Gravity.LEFT);
@@ -967,6 +965,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_received);
           viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentReceived));
           viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
+          txtViewLayoutParams.gravity = Gravity.LEFT;
           imgLayoutParams.gravity = Gravity.LEFT;
         }
 
@@ -974,6 +973,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
         viewHolder.imgViewAttachment.setVisibility(View.GONE);
         viewHolder.imgViewAttachment.setLayoutParams(imgLayoutParams);
+        viewHolder.txtViewPerChatContent.setLayoutParams(txtViewLayoutParams);
 
         if (!message.isNull("files") && message.getJSONArray("files").length() > 0) {
 
