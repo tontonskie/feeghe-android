@@ -236,8 +236,8 @@ public class NewUserFragment extends MainActivityFragment {
   }
 
   @Override
-  public boolean onSearchClose() {
-    return false;
+  public void onSearchClose() {
+    return;
   }
 
   public void showSyncContactsForm() {

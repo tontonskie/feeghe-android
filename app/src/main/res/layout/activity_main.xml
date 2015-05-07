@@ -1,5 +1,6 @@
 <android.support.v4.widget.DrawerLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/drawerLayoutSettings"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
@@ -7,9 +8,10 @@
   <FrameLayout
     android:id="@+id/drawerFrameSettings"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent"/>
 
   <ListView
+    android:layout_marginTop="?attr/actionBarSize"
     android:id="@+id/drawerListSettings"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,6 +35,62 @@
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
       android:orientation="vertical">
+
+      <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbarMain"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        app:theme="@style/ActionBarStyle">
+
+        <LinearLayout
+          android:orientation="horizontal"
+          android:layout_width="fill_parent"
+          android:layout_height="match_parent"
+          android:visibility="gone"
+          android:id="@+id/selectedRoomTitleContainer"
+          android:weightSum="10">
+
+          <ImageView
+            android:id="@+id/imgViewSelectedRoomProfilePic"
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:adjustViewBounds="true"
+            android:layout_weight="2"/>
+
+          <TextView
+            android:layout_width="0dp"
+            android:layout_weight="8"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Room Name"
+            android:scrollHorizontally="true"
+            android:ellipsize="end"
+            android:maxLines="7"
+            android:textColor="@color/actionBarText"
+            android:textStyle="bold"
+            android:id="@+id/txtViewSelectedRoomTitle"
+            android:gravity="center_vertical"
+            android:paddingLeft="5dp"/>
+
+          <Button
+            android:layout_width="0dp"
+            android:layout_weight="1.25"
+            android:layout_height="match_parent"
+            android:text="E"
+            android:id="@+id/btnEditSelectedRoomMembers"
+            android:visibility="gone"/>
+
+        </LinearLayout>
+
+        <Spinner
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:visibility="gone"
+          android:id="@+id/spinActionBarTitle"/>
+
+      </android.support.v7.widget.Toolbar>
 
       <FrameLayout
         android:layout_width="fill_parent"

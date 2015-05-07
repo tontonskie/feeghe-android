@@ -11,7 +11,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,7 +41,6 @@ public class WallOfFacesFragment extends MainActivityFragment {
   private SelectedFaceModal selectedFaceModal;
   private TextView txtViewLoading;
   private Session session;
-  private Spinner spinFaceFilters;
   private boolean isLoadingNextFaces = false;
   private int prevCount = 0;
   private JSONObject[] faceQueries;
@@ -62,13 +60,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
     faceService = new FaceService(context);
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
     txtViewLoading = (TextView) context.findViewById(R.id.txtViewLoadingFaces);
-    spinFaceFilters = (Spinner) context.findViewById(R.id.spinFaceFilters);
 
-    String[] filters = {
-      "Wall of Faces",
-      "Favorites",
-      "My Faces"
-    };
     try {
       faceQueries = new JSONObject[]{
         faceService.getCacheQuery(),
@@ -78,8 +70,6 @@ public class WallOfFacesFragment extends MainActivityFragment {
     } catch (JSONException e) {
       e.printStackTrace();
     }
-    ArrayAdapter<String> faceFiltersAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, filters);
-    spinFaceFilters.setAdapter(faceFiltersAdapter);
 
     selectedFaceModal = new SelectedFaceModal(context);
 
@@ -261,7 +251,12 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
     });
 
-    spinFaceFilters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    String[] filters = {
+      "Wall of Feeghes",
+      "Favorites",
+      "My Faces"
+    };
+    context.setActionBarSpinner(filters, new AdapterView.OnItemSelectedListener() {
 
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -401,9 +396,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
   }
 
   @Override
-  public boolean onSearchClose() {
+  public void onSearchClose() {
     loadSelectedFilter();
-    return true;
   }
 
   private class FacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {

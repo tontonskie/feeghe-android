@@ -32,7 +32,7 @@ abstract public class MainActivityFragment extends Fragment {
 
   abstract public boolean onSearchQueryChange(String query);
 
-  abstract public boolean onSearchClose();
+  abstract public void onSearchClose();
 
   @Override
   public void onAttach(Activity activity) {

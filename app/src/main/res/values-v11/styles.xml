@@ -4,6 +4,8 @@
     <item name="android:actionBarStyle">@style/ActionBarStyle</item>
     <item name="android:windowActionBarOverlay">true</item>
     <item name="android:windowBackground">@null</item>
+    <item name="android:windowActionBar">false</item>
+    <item name="windowActionBar">false</item>
     <item name="metaButtonBarStyle">?android:attr/buttonBarStyle</item>
     <item name="metaButtonBarButtonStyle">?android:attr/buttonBarButtonStyle</item>
   </style>
@@ -11,12 +13,8 @@
   <style name="ActionBarStyle" parent="@style/Widget.AppCompat.ActionBar">
     <item name="android:background">@color/actionBarBg</item>
     <item name="background">@color/actionBarBg</item>
-    <item name="android:titleTextStyle">@style/ActionBarTitleTextStyle</item>
-    <item name="titleTextStyle">@style/ActionBarTitleTextStyle</item>
-  </style>
-
-  <style name="ActionBarTitleTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
-    <item name="android:textColor">@color/actionBarText</item>
+    <item name="android:textColorPrimary">@color/actionBarText</item>
+    <item name="android:textColorSecondary">@color/actionBarText</item>
   </style>
 
 </resources>

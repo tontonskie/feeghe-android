@@ -56,6 +56,7 @@ public class EditProfileFragment extends MainActivityFragment {
     super.onActivityCreated(savedInstanceState);
 
     context = getCurrentActivity();
+    context.setActionBarTitle(getResources().getString(R.string.app_name));
     session = Session.getInstance(context);
     userService = new UserService(context);
 
@@ -291,7 +292,7 @@ public class EditProfileFragment extends MainActivityFragment {
   }
 
   @Override
-  public boolean onSearchClose() {
-    return false;
+  public void onSearchClose() {
+
   }
 }

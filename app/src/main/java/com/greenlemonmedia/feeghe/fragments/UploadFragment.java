@@ -63,7 +63,7 @@ public class UploadFragment extends MainActivityFragment {
   }
 
   @Override
-  public boolean onSearchClose() {
-    return false;
+  public void onSearchClose() {
+
   }
 }

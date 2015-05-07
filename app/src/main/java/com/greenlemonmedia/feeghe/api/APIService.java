@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import com.greenlemonmedia.feeghe.storage.DbCache;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.socketio.Acknowledge;
+import com.koushikdutta.async.http.socketio.SocketIOClient;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -530,7 +531,20 @@ abstract public class APIService implements Serializable {
     } catch (JSONException ex) {
       ex.printStackTrace();
     }
-    Socket.getClient().emit(method, args, new Acknowledge() {
+    SocketIOClient client = Socket.getClient();
+    if (client == null) {
+      if (callback != null) {
+        context.runOnUiThread(new Runnable() {
+
+          @Override
+          public void run() {
+            callback.onFail(500, "Please check your internet connection", null);
+          }
+        });
+      }
+      return;
+    }
+    client.emit(method, args, new Acknowledge() {
 
       @Override
       public void acknowledge(final JSONArray arguments) {
@@ -605,44 +619,44 @@ abstract public class APIService implements Serializable {
   }
 
   public interface Callback {
-    public void onFail(int statusCode, String error, JSONObject validationError);
+    void onFail(int statusCode, String error, JSONObject validationError);
   }
 
   public interface APICallback extends Callback {
-    public void onSuccess(Response response);
+    void onSuccess(Response response);
   }
 
   public interface QueryCallback extends Callback {
-    public void onSuccess(ResponseArray response);
+    void onSuccess(ResponseArray response);
   }
 
   public interface SaveCallback extends Callback {
-    public void onSuccess(ResponseObject response);
+    void onSuccess(ResponseObject response);
   }
 
   public interface UpdateCallback extends Callback {
-    public void onSuccess(ResponseObject response);
+    void onSuccess(ResponseObject response);
   }
 
   public interface DeleteCallback extends Callback {
-    public void onSuccess(ResponseObject response);
+    void onSuccess(ResponseObject response);
   }
 
   public interface GetCallback extends Callback {
-    public void onSuccess(ResponseObject response);
+    void onSuccess(ResponseObject response);
   }
 
   public interface SocketCallback {
-    public void onSuccess(ResponseObject response);
-    public void onFail(int statusCode, String error, JSONObject validationError);
+    void onSuccess(ResponseObject response);
+    void onFail(int statusCode, String error, JSONObject validationError);
   }
 
   public interface EventCallback {
-    public void onEvent(JSONObject evt);
+    void onEvent(JSONObject evt);
   }
 
   public interface UploadProgressListener {
-    public void onProgress(int completed);
+    void onProgress(int completed);
   }
 
   private class AsyncCall extends AsyncTask<Void, Void, Response> {

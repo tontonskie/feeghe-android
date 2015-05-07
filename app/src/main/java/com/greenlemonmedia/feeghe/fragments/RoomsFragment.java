@@ -47,6 +47,7 @@ public class RoomsFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
+    context.setActionBarTitle(getResources().getString(R.string.app_name));
     listViewRooms = (ListView) context.findViewById(R.id.listViewRooms);
 
     session = Session.getInstance(context);
@@ -155,8 +156,8 @@ public class RoomsFragment extends MainActivityFragment {
   }
 
   @Override
-  public boolean onSearchClose() {
-    return false;
+  public void onSearchClose() {
+
   }
 
   public void showRooms(ResponseArray response) {

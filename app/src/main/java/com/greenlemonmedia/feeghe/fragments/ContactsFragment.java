@@ -10,13 +10,12 @@ import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TabHost;
-import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +38,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ContactsFragment extends MainActivityFragment implements TabHost.OnTabChangeListener {
+public class ContactsFragment extends MainActivityFragment {
 
   private MainActivity context;
   private ListView listViewFeegheContacts;
@@ -49,7 +48,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
   private CacheCollection contactCacheCollection;
   private FeegheContactsAdapter feegheContactsAdapter;
   private PhoneContactsAdapter phoneContactsAdapter;
-  private TabHost tabHostContacts;
   private Button btnFeegheContactsCreate;
   private Button btnPhoneContactsSave;
   private EditText editTxtNewFeegheContact;
@@ -60,22 +58,8 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
   private AlertDialog dialogSelFeegheContact;
   private JSONObject selectedFeegheContact;
   private UserService userService;
-  private TabWidget tabs;
-  private String[] tabTags = {
-    TAB_FEEGHE_CONTACTS,
-    TAB_PHONE_CONTACTS
-  };
-  private String[] tabIcons = {
-    "Feeghe Contacts",
-    "Phone Contacts"
-  };
-  private int[] tabContents = {
-    R.id.tabContentFeegheContacts,
-    R.id.tabContentPhoneContacts
-  };
-
-  public static final String TAB_PHONE_CONTACTS = "contacts";
-  public static final String TAB_FEEGHE_CONTACTS = "feeghe_contacts";
+  private View phoneContactsContainer;
+  private View feegheContactsContainer;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -93,6 +77,8 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
     listViewPhoneContacts = (ListView) context.findViewById(R.id.listViewPhoneContacts);
     btnFeegheContactsCreate = (Button) context.findViewById(R.id.btnFeegheContactsCreate);
     btnPhoneContactsSave = (Button) context.findViewById(R.id.btnPhoneContactsSave);
+    feegheContactsContainer = context.findViewById(R.id.tabContentFeegheContacts);
+    phoneContactsContainer = context.findViewById(R.id.tabContentPhoneContacts);
 
     dialogNewFeegheContactBuilder = new AlertDialog.Builder(context);
     View dialogContent = context.getLayoutInflater().inflate(R.layout.dialog_create_feeghe_contact, null);
@@ -103,22 +89,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
 
     dialogSelFeegheContactBuilder = new AlertDialog.Builder(context);
     dialogSelFeegheContactBuilder.setTitle("Choose Action");
-
-    tabHostContacts = (TabHost) context.findViewById(R.id.tabHostContacts);
-    tabHostContacts.setup();
-
-    for (int i = 0; i < tabTags.length; i++) {
-      View tabIndicator = context.getLayoutInflater().inflate(R.layout.tab_indicator_contacts, null);
-      ((TextView) tabIndicator.findViewById(R.id.txtViewTabIndicatorContacts)).setText(tabIcons[i]);
-      TabHost.TabSpec tabSpec = tabHostContacts.newTabSpec(tabTags[i]);
-      tabSpec.setContent(tabContents[i]);
-      tabSpec.setIndicator(tabIndicator);
-      tabHostContacts.addTab(tabSpec);
-    }
-
-    tabHostContacts.setOnTabChangedListener(this);
-    tabs = tabHostContacts.getTabWidget();
-    setActiveTab();
 
     contactCacheCollection = contactService.getCacheCollection();
     final ResponseArray responseFromCache = contactCacheCollection.getData();
@@ -177,14 +147,6 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
     setupUIEvents();
   }
 
-  private void setActiveTab() {
-    int inactiveColor = getResources().getColor(R.color.contactsTabInactive);
-    for (int i = 0; i < tabs.getChildCount(); i++) {
-      tabs.getChildTabViewAt(i).setBackgroundColor(inactiveColor);
-    }
-    tabHostContacts.getCurrentTabView().setBackgroundColor(getResources().getColor(R.color.contactsTabActive));
-  }
-
   public void showFeegheContacts(ResponseArray response) {
     feegheContactsAdapter = new FeegheContactsAdapter(APIUtils.toList(response));
     listViewFeegheContacts.setAdapter(feegheContactsAdapter);
@@ -202,6 +164,29 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
 
   @Override
   protected void setupUIEvents() {
+    String[] filters = {
+      "Feeghe Contacts",
+      "Phone Contacts"
+    };
+    context.setActionBarSpinner(filters, new AdapterView.OnItemSelectedListener() {
+
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (position == 0) {
+          phoneContactsContainer.setVisibility(View.GONE);
+          feegheContactsContainer.setVisibility(View.VISIBLE);
+        } else if (position == 1) {
+          phoneContactsContainer.setVisibility(View.VISIBLE);
+          feegheContactsContainer.setVisibility(View.GONE);
+        }
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+
+      }
+    });
+
     String[] feegheContactActions = new String[] {
       "Delete"
     };
@@ -352,13 +337,8 @@ public class ContactsFragment extends MainActivityFragment implements TabHost.On
   }
 
   @Override
-  public boolean onSearchClose() {
-    return false;
-  }
-
-  @Override
-  public void onTabChanged(String tabId) {
-    setActiveTab();
+  public void onSearchClose() {
+    return;
   }
 
   private class FeegheContactsAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener, View.OnLongClickListener {

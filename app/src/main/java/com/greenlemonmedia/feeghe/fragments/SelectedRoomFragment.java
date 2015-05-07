@@ -167,6 +167,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
     context = getCurrentActivity();
+    context.showActionBarSelectedRoom();
     setRoomVars();
 
     session = Session.getInstance(context);
@@ -527,9 +528,8 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   }
 
   @Override
-  public boolean onSearchClose() {
+  public void onSearchClose() {
     loadMessages();
-    return true;
   }
 
   private void sendNewMessage(final String[] attachments) {

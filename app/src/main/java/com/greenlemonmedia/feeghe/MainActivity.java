@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -21,6 +23,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,6 +34,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TabWidget;
 import android.widget.Toast;
 
@@ -88,6 +92,11 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private SearchView searchView;
   private ContactService contactService;
   private PhoneContactsObserver phoneContactsObserver;
+  private Toolbar toolbar;
+  private Spinner spinActionBar;
+  private ActionBar actionBar;
+  private MenuItem menuItemSearch;
+  private LinearLayout selectedRoomTitleContainer;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -229,26 +238,60 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
       }
     });
 
-    final ActionBar actionBar = getSupportActionBar();
-//    actionBar.setDisplayHomeAsUpEnabled(true);
-//    actionBar.setHomeButtonEnabled(true);
-//    actionBar.setHomeAsUpIndicator(R.drawable.ic_drawer);
+    toolbar = (Toolbar) findViewById(R.id.toolbarMain);
+    setSupportActionBar(toolbar);
+    spinActionBar = (Spinner) toolbar.findViewById(R.id.spinActionBarTitle);
+    selectedRoomTitleContainer = (LinearLayout) context.findViewById(R.id.selectedRoomTitleContainer);
+    actionBar = getSupportActionBar();
+    actionBar.setHomeButtonEnabled(false);
+    actionBar.setDisplayHomeAsUpEnabled(false);
 
-    toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc) {
+    toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, toolbar, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc) {
 
-      public void onDrawerClosed(View view) {
+      public void onDrawerClosed(View view) {;
         actionBar.setTitle("Feeghe");
-        invalidateOptionsMenu();
+        supportInvalidateOptionsMenu();
       }
 
       public void onDrawerOpened(View drawerView) {
-        actionBar.setTitle("Settings");
-        invalidateOptionsMenu();
         listViewSettings.bringToFront();
+        actionBar.setTitle("Settings");
+        supportInvalidateOptionsMenu();
       }
     };
 
+    toggleSettings.setDrawerIndicatorEnabled(false);
     drawerSettings.setDrawerListener(toggleSettings);
+  }
+
+  public void setActionBarSpinner(String[] selections, AdapterView.OnItemSelectedListener listener) {
+    closeSearch();
+    spinActionBar.setVisibility(View.VISIBLE);
+    spinActionBar.setAdapter(new ArrayAdapter<>(context, R.layout.spinner_action_bar, selections));
+    if (listener != null) {
+      spinActionBar.setOnItemSelectedListener(listener);
+    }
+    actionBar.setDisplayShowTitleEnabled(false);
+    selectedRoomTitleContainer.setVisibility(View.GONE);
+  }
+
+  public void closeSearch() {
+    if (menuItemSearch != null) {
+      menuItemSearch.collapseActionView();
+    }
+  }
+
+  public void setActionBarTitle(String title) {
+    spinActionBar.setVisibility(View.GONE);
+    actionBar.setDisplayShowTitleEnabled(true);
+    actionBar.setTitle(title);
+    selectedRoomTitleContainer.setVisibility(View.GONE);
+  }
+
+  public void showActionBarSelectedRoom() {
+    actionBar.setDisplayShowTitleEnabled(false);
+    spinActionBar.setVisibility(View.GONE);
+    selectedRoomTitleContainer.setVisibility(View.VISIBLE);
   }
 
   @Override
@@ -528,7 +571,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_main, menu);
     SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-    MenuItem menuItemSearch = menu.findItem(R.id.actionSearchEditTxt);
+    menuItemSearch = menu.findItem(R.id.actionSearchEditTxt);
     searchView = (SearchView) menuItemSearch.getActionView();
     searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 
@@ -549,7 +592,8 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
       @Override
       public boolean onMenuItemActionCollapse(MenuItem item) {
-        return currentFragment.onSearchClose();
+        currentFragment.onSearchClose();
+        return true;
       }
 
       @Override
@@ -562,6 +606,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
+    Log.d("test", "test");
     if (toggleSettings.onOptionsItemSelected(item)) {
       return true;
     }

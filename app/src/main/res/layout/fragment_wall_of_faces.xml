@@ -4,19 +4,10 @@
   android:layout_height="match_parent"
   tools:context="com.greenlemonmedia.feeghe.fragments.WallOfFacesFragment">
 
-  <Spinner
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/spinner_bg"
-    android:id="@+id/spinFaceFilters"
-    android:layout_margin="10dp"
-    android:layout_alignParentTop="true"/>
-
   <GridView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/gridViewFaces"
-    android:layout_below="@+id/spinFaceFilters"
     android:numColumns="3"/>
 
   <TextView
