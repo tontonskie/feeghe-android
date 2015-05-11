@@ -30,6 +30,7 @@ public class Session {
   public static final String DIAL_CODE = "dial_code";
   public static final String USER_INFO_KEY = "user_info";
   public static final int PREFERENCE_MODE = 0;
+  public static final String REG_ID = "reg_id";
 
   public class User extends HashMap<String, Object> {
 

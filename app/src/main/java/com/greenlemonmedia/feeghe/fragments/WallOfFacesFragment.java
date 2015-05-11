@@ -33,7 +33,6 @@ import java.util.ArrayList;
 
 public class WallOfFacesFragment extends MainActivityFragment {
 
-  private MainActivity context;
   private FaceService faceService;
   private FacesAdapter facesAdapter;
   private GridView gridViewFaces;
@@ -55,7 +54,7 @@ public class WallOfFacesFragment extends MainActivityFragment {
   @Override
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
-    context = getCurrentActivity();
+
     session = Session.getInstance(context);
     faceService = new FaceService(context);
     gridViewFaces = (GridView) context.findViewById(R.id.gridViewFaces);
@@ -251,25 +250,6 @@ public class WallOfFacesFragment extends MainActivityFragment {
       }
     });
 
-    String[] filters = {
-      "Wall of Feeghes",
-      "Favorites",
-      "My Faces"
-    };
-    context.setActionBarSpinner(filters, new AdapterView.OnItemSelectedListener() {
-
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        selectedFilterPos = position;
-        loadSelectedFilter();
-      }
-
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-
-      }
-    });
-
     final APIService.QueryCallback nextFacesCallback = new APIService.QueryCallback() {
 
       @Override
@@ -398,6 +378,28 @@ public class WallOfFacesFragment extends MainActivityFragment {
   @Override
   public void onSearchClose() {
     loadSelectedFilter();
+  }
+
+  @Override
+  public void setActionBar() {
+    String[] filters = {
+      "Wall of Feeghes",
+      "Favorites",
+      "My Faces"
+    };
+    context.setActionBarSpinner(filters, new AdapterView.OnItemSelectedListener() {
+
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        selectedFilterPos = position;
+        loadSelectedFilter();
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+
+      }
+    });
   }
 
   private class FacesAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {

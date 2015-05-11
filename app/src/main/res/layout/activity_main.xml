@@ -40,7 +40,19 @@
         android:id="@+id/toolbarMain"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        app:contentInsetLeft="4dp"
+        app:contentInsetStart="4dp"
         app:theme="@style/ActionBarStyle">
+
+        <TextView
+          android:id="@+id/txtViewActionBarTitle"
+          android:layout_width="match_parent"
+          android:layout_height="?attr/actionBarSize"
+          android:textAppearance="?android:attr/textAppearanceMedium"
+          android:gravity="center_vertical"
+          android:paddingLeft="12dp"
+          android:textColor="@color/actionBarText"
+          android:minHeight="?android:attr/listPreferredItemHeight"/>
 
         <LinearLayout
           android:orientation="horizontal"
@@ -54,7 +66,8 @@
             android:id="@+id/imgViewSelectedRoomProfilePic"
             android:layout_height="match_parent"
             android:layout_width="0dp"
-            android:layout_margin="7dp"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="7dp"
             android:adjustViewBounds="true"
             android:layout_weight="2"/>
 
@@ -86,6 +99,7 @@
         <Spinner
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+          android:paddingLeft="7dp"
           android:visibility="gone"
           android:id="@+id/spinActionBarTitle"/>
 

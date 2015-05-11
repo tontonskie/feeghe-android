@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.os.Bundle;
 
 import com.greenlemonmedia.feeghe.MainActivity;
 
@@ -12,9 +13,7 @@ import org.json.JSONObject;
  */
 abstract public class MainActivityFragment extends Fragment {
 
-  public MainActivity getCurrentActivity() {
-    return (MainActivity) getActivity();
-  }
+  protected MainActivity context;
 
   abstract public String getTabId();
 
@@ -34,14 +33,30 @@ abstract public class MainActivityFragment extends Fragment {
 
   abstract public void onSearchClose();
 
+  abstract public void setActionBar();
+
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     ((MainActivity) activity).setCurrentFragmentId(getFragmentId());
   }
 
+  @Override
+  public void onActivityCreated(Bundle savedInstance) {
+    super.onActivityCreated(savedInstance);
+    context = (MainActivity) getActivity();
+    setActionBar();
+  }
+
+  public MainActivity getCurrentActivity() {
+    if (context == null) {
+      context = (MainActivity) getActivity();
+    }
+    return context;
+  }
+
   public interface AttachmentListing {
-    public JSONObject getAttachedItem(int position);
-    public int getAttachmentsCount();
+    JSONObject getAttachedItem(int position);
+    int getAttachmentsCount();
   }
 }

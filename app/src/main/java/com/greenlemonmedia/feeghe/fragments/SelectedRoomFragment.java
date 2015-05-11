@@ -63,7 +63,6 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
   private static final int UPLOAD_FILE = 1;
 
-  private MainActivity context;
   private String currentRoomId;
   private ListView listViewMessages;
   private Button btnSendNewMessage;
@@ -166,8 +165,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
-    context = getCurrentActivity();
-    context.showActionBarSelectedRoom();
+
     setRoomVars();
 
     session = Session.getInstance(context);
@@ -530,6 +528,11 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   @Override
   public void onSearchClose() {
     loadMessages();
+  }
+
+  @Override
+  public void setActionBar() {
+    context.showActionBarSelectedRoom();
   }
 
   private void sendNewMessage(final String[] attachments) {

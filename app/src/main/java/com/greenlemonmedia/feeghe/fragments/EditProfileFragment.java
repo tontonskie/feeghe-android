@@ -31,7 +31,6 @@ import org.json.JSONObject;
 public class EditProfileFragment extends MainActivityFragment {
 
   private Session session;
-  private MainActivity context;
   private JSONObject currentUser;
   private EditText editTxtFirstName;
   private EditText editTxtLastName;
@@ -55,8 +54,6 @@ public class EditProfileFragment extends MainActivityFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
 
-    context = getCurrentActivity();
-    context.setActionBarTitle(getResources().getString(R.string.app_name));
     session = Session.getInstance(context);
     userService = new UserService(context);
 
@@ -294,5 +291,10 @@ public class EditProfileFragment extends MainActivityFragment {
   @Override
   public void onSearchClose() {
 
+  }
+
+  @Override
+  public void setActionBar() {
+    context.setActionBarTitle(getResources().getString(R.string.app_name));
   }
 }

@@ -66,4 +66,9 @@ public class UploadFragment extends MainActivityFragment {
   public void onSearchClose() {
 
   }
+
+  @Override
+  public void setActionBar() {
+
+  }
 }

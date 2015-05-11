@@ -43,7 +43,6 @@ public class NewUserFragment extends MainActivityFragment {
   private TextView txtViewNewUserError;
   private ViewAnimator view;
   private Spinner selectGender;
-  private MainActivity context;
   private ListView listViewContacts;
   private CheckBox chkSyncContacts;
   private Button btnAddContacts;
@@ -63,7 +62,6 @@ public class NewUserFragment extends MainActivityFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    context = getCurrentActivity();
     session = Session.getInstance(context);
     contactService = new ContactService(context);
     userService = new UserService(context);
@@ -238,6 +236,11 @@ public class NewUserFragment extends MainActivityFragment {
   @Override
   public void onSearchClose() {
     return;
+  }
+
+  @Override
+  public void setActionBar() {
+
   }
 
   public void showSyncContactsForm() {

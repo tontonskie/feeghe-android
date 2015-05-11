@@ -40,7 +40,6 @@ import java.util.HashMap;
 
 public class ContactsFragment extends MainActivityFragment {
 
-  private MainActivity context;
   private ListView listViewFeegheContacts;
   private ListView listViewPhoneContacts;
   private ContactService contactService;
@@ -69,7 +68,7 @@ public class ContactsFragment extends MainActivityFragment {
 
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    context = getCurrentActivity();
+
     session = Session.getInstance(context);
     contactService = new ContactService(context);
     userService = new UserService(context);
@@ -162,8 +161,7 @@ public class ContactsFragment extends MainActivityFragment {
     return MainActivity.TAB_CONTACTS;
   }
 
-  @Override
-  protected void setupUIEvents() {
+  public void setActionBar() {
     String[] filters = {
       "Feeghe Contacts",
       "Phone Contacts"
@@ -186,7 +184,10 @@ public class ContactsFragment extends MainActivityFragment {
 
       }
     });
+  }
 
+  @Override
+  protected void setupUIEvents() {
     String[] feegheContactActions = new String[] {
       "Delete"
     };

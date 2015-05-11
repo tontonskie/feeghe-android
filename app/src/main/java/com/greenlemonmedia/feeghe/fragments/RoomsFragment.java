@@ -31,7 +31,6 @@ import java.util.Iterator;
 
 public class RoomsFragment extends MainActivityFragment {
 
-  private MainActivity context;
   private RoomsAdapter roomsAdapter;
   private ListView listViewRooms;
   private Session session;
@@ -46,8 +45,7 @@ public class RoomsFragment extends MainActivityFragment {
 
   public void onActivityCreated(Bundle savedInstance) {
     super.onActivityCreated(savedInstance);
-    context = getCurrentActivity();
-    context.setActionBarTitle(getResources().getString(R.string.app_name));
+
     listViewRooms = (ListView) context.findViewById(R.id.listViewRooms);
 
     session = Session.getInstance(context);
@@ -158,6 +156,11 @@ public class RoomsFragment extends MainActivityFragment {
   @Override
   public void onSearchClose() {
 
+  }
+
+  @Override
+  public void setActionBar() {
+    context.setActionBarTitle(getResources().getString(R.string.app_name));
   }
 
   public void showRooms(ResponseArray response) {

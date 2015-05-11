@@ -1,15 +1,13 @@
 package com.greenlemonmedia.feeghe;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -36,8 +34,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TabWidget;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.ContactService;
@@ -58,6 +59,7 @@ import com.greenlemonmedia.feeghe.fragments.NewUserFragment;
 import com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment;
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.greenlemonmedia.feeghe.tasks.GetPhoneContactsTask;
+import com.greenlemonmedia.feeghe.tasks.RegisterIDTask;
 import com.greenlemonmedia.feeghe.ui.UITabHost;
 import com.koushikdutta.async.http.socketio.DisconnectCallback;
 import com.koushikdutta.async.http.socketio.ErrorCallback;
@@ -71,7 +73,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends ActionBarActivity implements UITabHost.OnTabChangeListener {
 
-  private Activity context;
+  private MainActivity context;
   private UserService userService;
   private Session session;
   private Session.User currentUser;
@@ -97,6 +99,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private ActionBar actionBar;
   private MenuItem menuItemSearch;
   private LinearLayout selectedRoomTitleContainer;
+  private TextView txtViewActionBarTitle;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -116,23 +119,34 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   public static final String FRAG_WALL_OF_FACES = "wall_of_faces_fragment";
   public static final String FRAG_EDIT_PROFILE = "edit_profile_fragment";
 
+  private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+
+    if (!checkPlayServices()) {
+      return;
+    }
 
     context = this;
     session = Session.getInstance(context);
+    if (!session.isLoggedIn()) {
+      backToRegistration();
+      return;
+    }
+
     userService = new UserService(context);
     messageService = new MessageService(context);
     roomService = new RoomService(context);
     contactService = new ContactService(context);
     roomCacheCollection = roomService.getCacheCollection();
 
-    if (!session.isLoggedIn()) {
-      backToRegistration();
-      return;
+    if (session.get(Session.REG_ID) == null) {
+      new RegisterIDTask(context).execute();
     }
+
+    setContentView(R.layout.activity_main);
 
     setupTabs();
     setupNavDrawer();
@@ -141,6 +155,58 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     setupKeyboardDetection();
 
     registerObservers();
+  }
+
+  @Override
+  public void onNewIntent(Intent intent) {
+    Bundle bundle = intent.getExtras();
+    if (bundle == null) {
+      return;
+    }
+
+    if (bundle.containsKey("room")) {
+      JSONObject room = roomCacheCollection.get(bundle.getString("room")).getContent();
+      if (room == null) {
+        final ProgressDialog preloader = APIUtils.showPreloader(context);
+        roomService.get(bundle.getString("room"), new APIService.GetCallback() {
+
+          @Override
+          public void onSuccess(ResponseObject response) {
+            preloader.dismiss();
+            showRoomFragment(response.getContent());
+          }
+
+          @Override
+          public void onFail(int statusCode, String error, JSONObject validationError) {
+            preloader.dismiss();
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+          }
+        });
+      } else {
+        showRoomFragment(room);
+      }
+      return;
+    }
+  }
+
+  public boolean checkPlayServices() {
+    int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+    if (resultCode != ConnectionResult.SUCCESS) {
+      if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+        GooglePlayServicesUtil.getErrorDialog(resultCode, this, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+      } else {
+        Toast.makeText(context, "Play services is not supported", Toast.LENGTH_LONG).show();
+        finish();
+      }
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    checkPlayServices();
   }
 
   private void registerObservers() {
@@ -241,10 +307,12 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     toolbar = (Toolbar) findViewById(R.id.toolbarMain);
     setSupportActionBar(toolbar);
     spinActionBar = (Spinner) toolbar.findViewById(R.id.spinActionBarTitle);
+    txtViewActionBarTitle = (TextView) toolbar.findViewById(R.id.txtViewActionBarTitle);
     selectedRoomTitleContainer = (LinearLayout) context.findViewById(R.id.selectedRoomTitleContainer);
     actionBar = getSupportActionBar();
     actionBar.setHomeButtonEnabled(false);
     actionBar.setDisplayHomeAsUpEnabled(false);
+    actionBar.setDisplayShowTitleEnabled(false);
 
     toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, toolbar, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc) {
 
@@ -265,32 +333,25 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   }
 
   public void setActionBarSpinner(String[] selections, AdapterView.OnItemSelectedListener listener) {
-    closeSearch();
+    txtViewActionBarTitle.setVisibility(View.GONE);
+    selectedRoomTitleContainer.setVisibility(View.GONE);
     spinActionBar.setVisibility(View.VISIBLE);
     spinActionBar.setAdapter(new ArrayAdapter<>(context, R.layout.spinner_action_bar, selections));
     if (listener != null) {
       spinActionBar.setOnItemSelectedListener(listener);
     }
-    actionBar.setDisplayShowTitleEnabled(false);
-    selectedRoomTitleContainer.setVisibility(View.GONE);
-  }
-
-  public void closeSearch() {
-    if (menuItemSearch != null) {
-      menuItemSearch.collapseActionView();
-    }
   }
 
   public void setActionBarTitle(String title) {
     spinActionBar.setVisibility(View.GONE);
-    actionBar.setDisplayShowTitleEnabled(true);
-    actionBar.setTitle(title);
     selectedRoomTitleContainer.setVisibility(View.GONE);
+    txtViewActionBarTitle.setVisibility(View.VISIBLE);
+    txtViewActionBarTitle.setText(title);
   }
 
   public void showActionBarSelectedRoom() {
-    actionBar.setDisplayShowTitleEnabled(false);
     spinActionBar.setVisibility(View.GONE);
+    txtViewActionBarTitle.setVisibility(View.GONE);
     selectedRoomTitleContainer.setVisibility(View.VISIBLE);
   }
 
@@ -355,7 +416,18 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     updateContacts();
   }
 
+  private boolean isFromNotification() {
+    Bundle bundle = getIntent().getExtras();
+    if (bundle != null && bundle.containsKey("room")) {
+      return true;
+    }
+    return false;
+  }
+
   private void setupSocketConnection() {
+    if (isFromNotification()) {
+       return;
+    }
     boolean isConnected = APIUtils.isConnected(context);
     if (!isConnected || (isConnected && Socket.isConnected())) {
       loadHome();
@@ -601,12 +673,12 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
         return true;
       }
     });
+
     return true;
   }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    Log.d("test", "test");
     if (toggleSettings.onOptionsItemSelected(item)) {
       return true;
     }
