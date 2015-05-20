@@ -1,5 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
+import android.app.Activity;
+
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.socketio.Acknowledge;
@@ -16,21 +18,35 @@ import java.util.Date;
 /**
  * Created by tonton on 1/8/15.
  */
-abstract public class Socket {
+public class Socket {
 
-  private static SocketIOClient client;
+  private static Socket instance;
+
+  public Activity context;
+  public Session session;
+  public SocketIOClient client;
 
   public interface SocketConnectionListener {
-    public void onStartConnecting(SocketIORequest request);
-    public void onConnect(SocketIOClient client);
+    void onStartConnecting(SocketIORequest request);
+    void onConnect(SocketIOClient client);
   }
+
+  /**
+   *
+   * @param context
+   */
+  private Socket(Activity context) {
+    this.context = context;
+    this.session = Session.getInstance(context);
+  }
+
 
   /**
    *
    * @return
    */
   public static boolean isConnected() {
-    return client != null && client.isConnected();
+    return instance != null && (instance.client != null && instance.client.isConnected());
   }
 
   /**
@@ -38,16 +54,20 @@ abstract public class Socket {
    * @return
    */
   public static SocketIOClient getClient() {
-    return client;
+    if (!isConnected()) {
+      return null;
+    }
+    return instance.client;
   }
 
   /**
    *
-   * @param session
+   * @param context
    * @param connectionListener
    */
-  public static void connect(Session session, final SocketConnectionListener connectionListener) {
-    String qstring = "token=" + session.getToken() + "&user=" + session.getUserId();
+  public static void connect(Activity context, final SocketConnectionListener connectionListener) {
+    instance = new Socket(context);
+    String qstring = "token=" + instance.session.getToken() + "&user=" + instance.session.getUserId();
     qstring += "&__sails_io_sdk_version=0.10.0&__sails_io_sdk_platform=mobile&__sails_io_sdk_language=java";
     qstring += "&t=" + new Date().getTime();
 
@@ -65,16 +85,16 @@ abstract public class Socket {
           ex.printStackTrace();
           return;
         }
-        client = socketClient;
-        connectionListener.onConnect(client);
+        instance.client = socketClient;
+        connectionListener.onConnect(instance.client);
       }
     });
   }
 
   public static void disconnect() {
     if (!isConnected()) return;
-    client.disconnect();
-    client = null;
+    instance.client.disconnect();
+    instance.client = null;
   }
 
   /**
@@ -84,15 +104,21 @@ abstract public class Socket {
    */
   public static void on(String event, final APIService.EventCallback callback) {
     if (!isConnected()) return;
-    client.on(event, new EventCallback() {
+    instance.client.on(event, new EventCallback() {
 
       @Override
-      public void onEvent(JSONArray argument, Acknowledge acknowledge) {
-        try {
-          callback.onEvent(argument.getJSONObject(0));
-        } catch (JSONException e) {
-          e.printStackTrace();
-        }
+      public void onEvent(final JSONArray argument, Acknowledge acknowledge) {
+        instance.context.runOnUiThread(new Runnable() {
+
+          @Override
+          public void run() {
+            try {
+              callback.onEvent(argument.getJSONObject(0));
+            } catch (JSONException e) {
+              e.printStackTrace();
+            }
+          }
+        });
       }
     });
   }

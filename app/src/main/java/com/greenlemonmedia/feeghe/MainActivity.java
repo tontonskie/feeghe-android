@@ -157,6 +157,10 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     registerObservers();
   }
 
+  private void loadCache() {
+
+  }
+
   @Override
   public void onNewIntent(Intent intent) {
     Bundle bundle = intent.getExtras();
@@ -276,7 +280,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
           @Override
           public void onFail(int statusCode, String error, JSONObject validationError) {
-
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
           }
         });
       }
@@ -433,7 +437,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
       loadHome();
       return;
     }
-    Socket.connect(session, new Socket.SocketConnectionListener() {
+    Socket.connect(context, new Socket.SocketConnectionListener() {
 
       @Override
       public void onStartConnecting(SocketIORequest request) {

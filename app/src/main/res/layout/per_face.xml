@@ -1,8 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:id="@+id/layoutFaceBox"
-              android:padding="10dp">
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:id="@+id/layoutFaceBox"
+  android:background="@drawable/per_face">
 
   <TextView
     android:layout_alignParentLeft="true"
@@ -10,7 +10,11 @@
     android:layout_height="wrap_content"
     android:id="@+id/txtViewFaceUsage"
     android:textColor="@color/perFaceUsage"
+    android:background="@drawable/per_face_usage"
     android:text="2000"
+    android:layout_marginLeft="5dp"
+    android:layout_marginTop="5dp"
+    android:textSize="10dp"
     android:textStyle="bold"/>
 
   <ImageView
@@ -27,12 +31,14 @@
     android:scrollHorizontally="true"
     android:ellipsize="end"
     android:maxLines="1"
-    android:layout_alignParentBottom="true"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/txtViewFaceTitle"
-    android:textColor="@color/perFaceTitle"
+    android:textSize="10dp"
     android:textStyle="bold"
-    android:gravity="center_horizontal"/>
+    android:background="@drawable/per_face_title"
+    android:textColor="@color/perFaceTitle"
+    android:layout_alignParentBottom="true"
+    android:gravity="center"/>
 
 </RelativeLayout>

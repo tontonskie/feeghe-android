@@ -17,4 +17,9 @@
     <item name="android:textColorSecondary">@color/actionBarText</item>
   </style>
 
+  <style name="ChatFaceTab">
+    <item name="android:layout_height">50dp</item>
+    <item name="android:background">@color/faceChatTabInactive</item>
+  </style>
+
 </resources>

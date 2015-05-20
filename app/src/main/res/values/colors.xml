@@ -32,7 +32,12 @@
   <color name="perChatContentReceived">#000</color>
   <color name="perChatContentOwn">#fff</color>
 
-  <color name="perFaceTitle">#3795F8</color>
-  <color name="perFaceUsage">#FC1B25</color>
+  <color name="perFaceTitle">#fff</color>
+  <color name="perFaceUsage">#fff</color>
+  <color name="perFaceUsageBg">@color/perRoomUnreadBg</color>
+  <color name="perFaceTitleBg">#31353D</color>
+
+  <color name="faceChatTabInactive">#CCCCCC</color>
+  <color name="faceChatTabActive">#fff</color>
 
 </resources>

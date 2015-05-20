@@ -2,6 +2,7 @@ package com.greenlemonmedia.feeghe.api;
 
 import android.app.Activity;
 
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +49,14 @@ public class FaceService extends APIService {
     }
     setBodyParams(putRequest, params);
     apiAsyncCall(putRequest, callback);
+  }
+
+  /**
+   *
+   * @param callback
+   */
+  public void getRecent(QueryCallback callback) {
+    apiAsyncCall(new HttpGet(getBaseUrl("recent")), callback, true);
   }
 
   /**

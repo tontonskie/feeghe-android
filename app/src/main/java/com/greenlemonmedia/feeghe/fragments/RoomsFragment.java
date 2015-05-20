@@ -50,11 +50,17 @@ public class RoomsFragment extends MainActivityFragment {
 
     session = Session.getInstance(context);
     roomService = new RoomService(context);
+
+    loadRooms();
+
+    setupUIEvents();
+    setupSocketEvents();
+  }
+
+  private void loadRooms() {
     JSONObject request = roomService.getCacheQuery();
-    roomCacheCollection = roomService.getCacheCollection(request);
-
+    roomCacheCollection = roomService.getCacheCollection();
     final ResponseArray responseFromCache = roomCacheCollection.getData();
-
     if (responseFromCache.length() != 0) {
       showRooms(responseFromCache);
     }
@@ -85,9 +91,6 @@ public class RoomsFragment extends MainActivityFragment {
         Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
-
-    setupUIEvents();
-    setupSocketEvents();
   }
 
   @Override
@@ -103,21 +106,26 @@ public class RoomsFragment extends MainActivityFragment {
       public void onEvent(JSONObject evt) {
         try {
           String verb = evt.getString("verb");
-          final JSONObject data = evt.getJSONObject("data");
+          JSONObject data = evt.getJSONObject("data");
           if (verb.equals("created")) {
-            int roomsCount = roomsAdapter.getCount();
-            String roomId = data.getString("room");
-            String recentChat = data.getString("content");
-            for (int i = 0; i < roomsCount; i++) {
-              if (roomsAdapter.getItem(i).getString("id").equals(roomId)) {
-                JSONObject roomUpdate = roomsAdapter.getItem(i);
-                roomsAdapter.remove(roomUpdate);
-                JSONObject roomUser = roomUpdate.put("recentChat", recentChat)
-                  .getJSONObject("users")
-                  .getJSONObject(session.getUserId());
-                roomUser.put("unreadCount", roomUser.getInt("unreadCount") + 1);
-                roomsAdapter.insert(roomUpdate, i);
-                return;
+
+            String currentUserId = session.getUserId();
+            int len = roomsAdapter.getCount();
+            for (int i = 0; i < len; i++) {
+
+              JSONObject room = roomsAdapter.getItem(i);
+              if (room.getString("id").equals(data.getString("room"))) {
+
+                room.put("recentChat", data.getString("content"));
+                room.put("recentChatCreatedAt", data.getString("timestamp"));
+
+                JSONObject roomUser = room.getJSONObject("users").getJSONObject(currentUserId);
+                roomUser.put("unreadCount", roomUser.optInt("unreadCount", 0) + 1);
+
+                roomsAdapter.remove(roomsAdapter.getItem(i));
+                roomsAdapter.insert(room, 0);
+                roomCacheCollection.update(room.getString("id"), room);
+                break;
               }
             }
           }

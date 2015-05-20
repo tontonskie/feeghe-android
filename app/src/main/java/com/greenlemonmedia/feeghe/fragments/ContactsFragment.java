@@ -91,7 +91,7 @@ public class ContactsFragment extends MainActivityFragment {
 
     contactCacheCollection = contactService.getCacheCollection();
     final ResponseArray responseFromCache = contactCacheCollection.getData();
-    if (responseFromCache.getContent().length() != 0) {
+    if (responseFromCache.length() != 0) {
       showFeegheContacts(responseFromCache);
     }
 
@@ -99,15 +99,14 @@ public class ContactsFragment extends MainActivityFragment {
 
       @Override
       public void onSuccess(ResponseArray response) {
-        if (feegheContactsAdapter == null) {
+        if (responseFromCache.length() == 0) {
           showFeegheContacts(response);
           contactCacheCollection.save(response.getContent());
         } else {
           feegheContactsAdapter.clear();
           JSONArray addedContacts = contactCacheCollection.updateCollection(response).getContent();
-          int addedContactsLength = addedContacts.length();
           try {
-            for (int i = 0; i < addedContactsLength; i++) {
+            for (int i = 0; i < addedContacts.length(); i++) {
               feegheContactsAdapter.add(addedContacts.getJSONObject(i));
             }
           } catch (JSONException ex) {

@@ -12,10 +12,78 @@
     android:id="@+id/listViewMessages"
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
-    android:layout_above="@+id/newMessageBoxContainer"
+    android:layout_above="@+id/newMessageOptionsContainer"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>
+
+  <LinearLayout
+    android:id="@+id/newMessageOptionsContainer"
+    android:orientation="horizontal"
+    android:layout_above="@+id/newMessageBoxContainer"
+    android:layout_width="match_parent"
+    android:visibility="gone"
+    android:weightSum="4"
+    android:background="#fff"
+    android:layout_height="200dp">
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_weight=".5"
+      android:orientation="vertical"
+      android:background="#ccc"
+      android:layout_height="match_parent">
+
+      <ImageButton
+        style="@style/ChatFaceTab"
+        android:background="@color/faceChatTabActive"
+        android:layout_width="match_parent"
+        android:src="@drawable/recent_faces"
+        android:id="@+id/btnChatShowRecentFaces"/>
+
+      <ImageButton
+        style="@style/ChatFaceTab"
+        android:layout_width="match_parent"
+        android:src="@drawable/own_faces"
+        android:id="@+id/btnChatShowOwnFaces"/>
+
+      <ImageButton
+        style="@style/ChatFaceTab"
+        android:layout_width="match_parent"
+        android:src="@drawable/fav_faces"
+        android:id="@+id/btnChatShowFavFaces"/>
+
+      <ImageButton
+        style="@style/ChatFaceTab"
+        android:layout_width="match_parent"
+        android:src="@drawable/face_search"
+        android:id="@+id/btnChatSearchFaces"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+      android:orientation="vertical"
+      android:layout_width="0dp"
+      android:layout_weight="3.5"
+      android:layout_height="match_parent">
+
+      <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:visibility="gone"
+        android:hint="Search here"
+        android:id="@+id/editTxtChatSearchFace"/>
+
+      <GridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/gridUsableFaces"
+        android:numColumns="4"/>
+
+    </LinearLayout>
+
+  </LinearLayout>
 
   <LinearLayout
     android:orientation="horizontal"
@@ -23,9 +91,8 @@
     android:layout_height="wrap_content"
     android:weightSum="10"
     android:background="@color/selectedRoomInputContainer"
-    android:layout_alignParentBottom="false"
-    android:id="@+id/newMessageBoxContainer"
-    android:layout_above="@+id/newMessageOptionsContainer">
+    android:layout_alignParentBottom="true"
+    android:id="@+id/newMessageBoxContainer">
 
     <Button
       android:layout_width="0dp"
@@ -61,59 +128,6 @@
       android:id="@+id/btnSendNewMessage"
       android:layout_marginRight="10dp"
       android:layout_weight="1"/>
-  </LinearLayout>
-
-  <LinearLayout
-    android:id="@+id/newMessageOptionsContainer"
-    android:layout_alignParentBottom="true"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <!--<LinearLayout-->
-      <!--android:id="@+id/newMessageOptionBtns"-->
-      <!--android:orientation="horizontal"-->
-      <!--android:layout_width="match_parent"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:weightSum="10">-->
-
-      <!--<Button-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Use Face"-->
-        <!--android:id="@+id/btnShowUseFace"-->
-        <!--android:layout_weight="5"/>-->
-
-      <!--<Button-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Attach"-->
-        <!--android:id="@+id/btnAttach"-->
-        <!--android:layout_weight="5"/>-->
-    <!--</LinearLayout>-->
-
-    <LinearLayout
-      android:id="@+id/newMessageOptionDisplay"
-      android:orientation="vertical"
-      android:layout_width="match_parent"
-      android:layout_height="200dp"
-      android:visibility="gone">
-
-      <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Close"
-        android:id="@+id/btnCloseOptionDisplay"
-        android:layout_gravity="right"/>
-
-      <GridView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/gridUsableFaces"
-        android:numColumns="4"/>
-    </LinearLayout>
-
   </LinearLayout>
 
 </RelativeLayout>

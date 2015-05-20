@@ -51,10 +51,12 @@ abstract public class APIService implements Serializable {
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
   protected Activity context;
-  protected static HashMap<String, CacheCollection> cacheCollections;
   protected String basePath;
   protected String cacheName;
   protected boolean enableAutoHeaders = true;
+
+  protected static HashMap<String, CacheCollection> cacheCollections;
+  protected static HashMap<String, String> hashIds;
 
   /**
    *
@@ -86,7 +88,42 @@ abstract public class APIService implements Serializable {
     if (cacheCollections == null) {
       cacheCollections = new HashMap<>();
     }
-    String queryId = APIUtils.hash(query.toString());
+    if (hashIds == null) {
+      hashIds = new HashMap<>();
+    }
+    String queryId = "";
+    String queryString = cacheName + "-" + query.toString();
+    if (!hashIds.containsKey(queryString)) {
+      queryId = APIUtils.hash(queryString);
+      hashIds.put(queryString, queryId);
+    } else {
+      queryId = hashIds.get(queryString);
+    }
+    if (!cacheCollections.containsKey(cacheName + '-' + queryId)) {
+      cacheCollections.put(cacheName + '-' + queryId, new CacheCollection(cacheName, dbCache, queryId));
+    }
+    return cacheCollections.get(cacheName + '-' + queryId);
+  }
+
+  /**
+   *
+   * @param queryId
+   * @return
+   */
+  public CacheCollection getCacheCollection(String queryId) {
+    if (cacheCollections == null) {
+      cacheCollections = new HashMap<>();
+    }
+    if (hashIds == null) {
+      hashIds = new HashMap<>();
+    }
+    String queryString = cacheName + "-" + queryId;
+    if (!hashIds.containsKey(queryString)) {
+      queryId = APIUtils.hash(queryString);
+      hashIds.put(queryString, queryId);
+    } else {
+      queryId = hashIds.get(queryString);
+    }
     if (!cacheCollections.containsKey(cacheName + '-' + queryId)) {
       cacheCollections.put(cacheName + '-' + queryId, new CacheCollection(cacheName, dbCache, queryId));
     }

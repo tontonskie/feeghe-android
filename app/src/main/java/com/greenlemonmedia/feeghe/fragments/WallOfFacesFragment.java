@@ -449,7 +449,8 @@ public class WallOfFacesFragment extends MainActivityFragment {
           .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("small"))))
           .into(viewHolder.imgViewFace);
         viewHolder.txtViewFaceTitle.setText(face.getString("title"));
-        viewHolder.imgViewFace.setTag(face.getString("id"));
+        viewHolder.txtViewFaceTitle.setTag(face);
+        viewHolder.imgViewFace.setTag(face);
       } catch (JSONException e) {
         e.printStackTrace();
       }

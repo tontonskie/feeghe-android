@@ -30,11 +30,30 @@
     android:visibility="gone"
     android:id="@+id/imgViewPerChatAttachment"/>
 
-  <TextView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:textAppearance="?android:attr/textAppearanceSmall"
-    android:text="Sending..."
-    android:id="@+id/txtViewMessageTimestamp"/>
+  <LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_gravity="right"
+    android:id="@+id/layoutMessageStatus"
+    android:layout_height="wrap_content">
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:text="... "
+      android:textStyle="bold"
+      android:textColor="@android:color/darker_gray"
+      android:visibility="gone"
+      android:id="@+id/txtViewMessageStatus"/>
+
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:textAppearance="?android:attr/textAppearanceSmall"
+      android:text="sending..."
+      android:id="@+id/txtViewMessageTimestamp"/>
+
+  </LinearLayout>
 
 </LinearLayout>
