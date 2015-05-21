@@ -41,7 +41,7 @@ abstract public class APIService implements Serializable {
 
   public static final String PORT = "";
   public static final String HTTP_SCHEME = "http";
-  public static final String HOST = "dev.feeghe.com";
+  public static final String HOST = "staging.feeghe.com";
   public static final String PATH = "api";
   public static final String URL = HTTP_SCHEME + "://" + HOST + (PORT.isEmpty() ? "" : ":" + PORT) + "/" + PATH + "/";
   public static final String STATIC_HOST = HOST;

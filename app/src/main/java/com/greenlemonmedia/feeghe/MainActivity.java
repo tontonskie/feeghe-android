@@ -1,7 +1,5 @@
 package com.greenlemonmedia.feeghe;
 
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
@@ -13,8 +11,11 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.provider.ContactsContract;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -100,6 +101,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private MenuItem menuItemSearch;
   private LinearLayout selectedRoomTitleContainer;
   private TextView txtViewActionBarTitle;
+  private ViewPager viewPager;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -148,6 +150,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
     setContentView(R.layout.activity_main);
 
+    setupViewPager();
     setupTabs();
     setupNavDrawer();
     setupSounds();
@@ -157,7 +160,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     registerObservers();
   }
 
-  private void loadCache() {
+  private void setupViewPager() {
 
   }
 
@@ -592,7 +595,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
   private void showFragment(MainActivityFragment fragment, boolean withBackStack) {
     currentFragment = fragment;
-    FragmentManager fm = getFragmentManager();
+    FragmentManager fm = getSupportFragmentManager();
     FragmentTransaction ft = fm.beginTransaction();
     ft.replace(android.R.id.tabcontent, fragment);
     if (withBackStack && currentFragmentTabId != null) {
@@ -699,7 +702,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   }
 
   public void onBackPressed() {
-    FragmentManager fm = getFragmentManager();
+    FragmentManager fm = getSupportFragmentManager();
     if (fm.getBackStackEntryCount() > 0) {
       String fragTabId = fm.getBackStackEntryAt(fm.getBackStackEntryCount() - 1).getName();
       setCurrentTab(fragTabId);
