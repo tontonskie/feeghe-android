@@ -347,12 +347,7 @@ public class SelectedFaceModal extends MainActivityModal {
     }
   }
 
-  protected void onStart() {
-    switcherSelectedFace.setDisplayedChild(0);
-    setCommentsReady(false);
-    if (commentsAdapter != null) {
-      commentsAdapter.clear();
-    }
+  public void render() {
     JSONObject face = (JSONObject) getData();
     try {
 
@@ -380,15 +375,15 @@ public class SelectedFaceModal extends MainActivityModal {
 
           int tagIndexStart = tagString.length();
           String tag = tags.getString(i)
-            .replaceAll("^\"+", "")
-            .replaceAll("\"+$", "");
+              .replaceAll("^\"+", "")
+              .replaceAll("\"+$", "");
           tagString.append(tag + spacesBetween);
 
           tagString.setSpan(
-            new BackgroundColorSpan(Color.WHITE),
-            tagIndexStart,
-            tagIndexStart + tag.length(),
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+              new BackgroundColorSpan(Color.WHITE),
+              tagIndexStart,
+              tagIndexStart + tag.length(),
+              Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
           );
         }
 
@@ -400,11 +395,20 @@ public class SelectedFaceModal extends MainActivityModal {
       }
 
       APIUtils.getPicasso(context)
-        .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("medium"))))
-        .into(imgViewSelectedFace);
+          .load(Uri.parse(APIUtils.getStaticUrl(face.getJSONObject("photo").getString("medium"))))
+          .into(imgViewSelectedFace);
 
     } catch (JSONException e) {
       e.printStackTrace();
     }
+  }
+
+  protected void onStart() {
+    switcherSelectedFace.setDisplayedChild(0);
+    setCommentsReady(false);
+    if (commentsAdapter != null) {
+      commentsAdapter.clear();
+    }
+    render();
   }
 }

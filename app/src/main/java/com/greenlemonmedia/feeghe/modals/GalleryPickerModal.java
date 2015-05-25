@@ -34,6 +34,11 @@ public class GalleryPickerModal extends MainActivityModal {
   }
 
   @Override
+  public void render() {
+
+  }
+
+  @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.modal_gallery_picker);

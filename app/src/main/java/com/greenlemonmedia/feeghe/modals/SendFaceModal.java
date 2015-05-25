@@ -58,6 +58,11 @@ public class SendFaceModal extends MainActivityModal {
     super(activity);
   }
 
+  @Override
+  public void render() {
+
+  }
+
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.modal_send_face);

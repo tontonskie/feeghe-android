@@ -48,6 +48,11 @@ public class AttachedPreviewModal extends MainActivityModal implements Callback 
   }
 
   @Override
+  public void render() {
+    loadAttachment();
+  }
+
+  @Override
   protected void setupUIEvents() {
     btnNext.setOnClickListener(new View.OnClickListener() {
 
@@ -70,7 +75,7 @@ public class AttachedPreviewModal extends MainActivityModal implements Callback 
 
   @Override
   protected void onStart() {
-    loadAttachment();
+    render();
   }
 
   private void loadAttachment() {

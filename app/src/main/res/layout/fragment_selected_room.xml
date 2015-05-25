@@ -5,6 +5,18 @@
   android:orientation="vertical"
   tools:context="com.greenlemonmedia.feeghe.fragments.SelectedRoomFragment">
 
+  <Button
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:text="@string/room_show_more_btn"
+    android:padding="10dp"
+    android:id="@+id/btnLoadPrevMessages"
+    android:gravity="center"
+    android:background="#3091FC"
+    android:textColor="#fff"
+    android:visibility="gone"/>
+
   <ListView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,6 +25,7 @@
     android:choiceMode="multipleChoice"
     android:stackFromBottom="true"
     android:layout_above="@+id/newMessageOptionsContainer"
+    android:layout_below="@+id/btnLoadPrevMessages"
     android:divider="@android:color/transparent"
     android:dividerHeight="0dp"
     android:transcriptMode="alwaysScroll"/>

@@ -11,12 +11,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ImageSpan;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,7 +67,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private String currentRoomId;
   private ListView listViewMessages;
   private Button btnSendNewMessage;
-  private EditText txtNewMessage;
+  private EditText editTxtNewMessage;
   private RoomMessagesAdapter roomMessagesAdapter;
   private Session session;
   private MessageService messageService;
@@ -108,6 +106,8 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private ImageButton btnChatShowFavFaces;
   private ImageButton btnChatShowSearchFaces;
   private EditText editTxtSearchFace;
+  private boolean noMorePrevMessages = false;
+  private Button btnLoadPrevMessages;
   private HashMap<Integer, JSONObject> roomAttachments = new HashMap<>();
 
   @Override
@@ -179,7 +179,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
     txtViewTyping = (TextView) listViewMessagesFooter.findViewById(R.id.txtViewTyping);
-    txtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
+    editTxtNewMessage = (EditText) context.findViewById(R.id.txtNewMessage);
     btnSendNewMessage = (Button) context.findViewById(R.id.btnSendNewMessage);
     btnShowUseFace = (Button) context.findViewById(R.id.btnShowUseFace);
     newMessageManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -194,6 +194,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     btnChatShowSearchFaces = (ImageButton) context.findViewById(R.id.btnChatSearchFaces);
     btnChatShowFavFaces = (ImageButton) context.findViewById(R.id.btnChatShowFavFaces);
     editTxtSearchFace = (EditText) context.findViewById(R.id.editTxtChatSearchFace);
+    btnLoadPrevMessages = (Button) context.findViewById(R.id.btnLoadPrevMessages);
 
     modalGallery = new GalleryPickerModal(context);
     modalAttachedPreview = new AttachedPreviewModal(this);
@@ -409,6 +410,52 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     sendNewMessage(new String[]{APIUtils.getPath(context, uri)});
   }
 
+  private void loadPrevMessages() {
+    if (noMorePrevMessages) {
+      btnLoadPrevMessages.setVisibility(View.GONE);
+      return;
+    }
+    if (!btnLoadPrevMessages.isEnabled()) {
+      return;
+    }
+    btnLoadPrevMessages.setText("Loading...");
+    btnLoadPrevMessages.setEnabled(false);
+    JSONObject query = messageService.getCacheQuery(currentRoomId);
+    try {
+      query.put("skip", roomMessagesAdapter.getCount());
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    messageService.query(query, new APIService.QueryCallback() {
+
+      @Override
+      public void onSuccess(ResponseArray response) {
+        JSONArray messages = response.getContent();
+        if (messages.length() == 0) {
+          noMorePrevMessages = true;
+          btnLoadPrevMessages.setVisibility(View.GONE);
+          return;
+        }
+        try {
+          for (int i = 0; i < messages.length(); i++) {
+            roomMessagesAdapter.insert(messages.getJSONObject(i), 0);
+          }
+        } catch (JSONException ex) {
+          ex.printStackTrace();
+        }
+        btnLoadPrevMessages.setText(getResources().getString(R.string.room_show_more_btn));
+        btnLoadPrevMessages.setEnabled(true);
+      }
+
+      @Override
+      public void onFail(int statusCode, String error, JSONObject validationError) {
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+        btnLoadPrevMessages.setText(getResources().getString(R.string.room_show_more_btn));
+        btnLoadPrevMessages.setEnabled(true);
+      }
+    });
+  }
+
   @Override
   protected void setupUIEvents() {
     btnSendAttachment.setOnClickListener(new View.OnClickListener() {
@@ -462,11 +509,24 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       }
     };
 
-    txtNewMessage.addTextChangedListener(new TextWatcher() {
+    editTxtNewMessage.addTextChangedListener(new TextWatcher() {
+
+      private ArrayList<ImageSpan> facesToRemove = new ArrayList<>();
 
       @Override
       public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+        if (count > 0) {
+          int end = start + count;
+          Editable message = editTxtNewMessage.getEditableText();
+          ImageSpan[] list = message.getSpans(start, end, ImageSpan.class);
+          for (ImageSpan span : list) {
+            int spanStart = message.getSpanStart(span);
+            int spanEnd = message.getSpanEnd(span);
+            if ((spanStart < end) && (spanEnd > start)) {
+              facesToRemove.add(span);
+            }
+          }
+        }
       }
 
       @Override
@@ -483,7 +543,24 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void afterTextChanged(Editable s) {
+        Editable message = editTxtNewMessage.getEditableText();
+        for (ImageSpan span : facesToRemove) {
+          int start = message.getSpanStart(span);
+          int end = message.getSpanEnd(span);
+          message.removeSpan(span);
+          if (start != end) {
+            message.delete(start, end);
+          }
+        }
+        facesToRemove.clear();
+      }
+    });
 
+    btnLoadPrevMessages.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        loadPrevMessages();
       }
     });
 
@@ -499,10 +576,20 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         if ((firstVisibleItem + visibleItemCount) >= totalItemCount) {
           onEndOfList = true;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+          btnLoadPrevMessages.setVisibility(View.GONE);
           read();
         } else {
           onEndOfList = false;
           listViewMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+          if (firstVisibleItem == 0 && !noMorePrevMessages) {
+            View v = listViewMessages.getChildAt(0);
+            int offset = (v == null) ? 0 : v.getTop();
+            if (offset == 0) {
+              btnLoadPrevMessages.setVisibility(View.VISIBLE);
+            }
+          } else {
+            btnLoadPrevMessages.setVisibility(View.GONE);
+          }
         }
       }
     });
@@ -520,7 +607,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       @Override
       public void onClick(View v) {
         if (!faceSelectionDisplay.isShown()) {
-          newMessageManager.hideSoftInputFromWindow(txtNewMessage.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+          newMessageManager.hideSoftInputFromWindow(editTxtNewMessage.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
           faceSelectionDisplay.setVisibility(View.VISIBLE);
         } else {
           faceSelectionDisplay.setVisibility(View.GONE);
@@ -761,14 +848,14 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   }
 
   private void sendNewMessage(final String[] attachments) {
-    String content = txtNewMessage.getText().toString();
+    String content = editTxtNewMessage.getText().toString();
     if (content.isEmpty() && (attachments == null || attachments.length == 0)) {
       return;
     }
 
     btnSendNewMessage.setEnabled(false);
     processingNewMessage = true;
-    txtNewMessage.setText("");
+    editTxtNewMessage.setText("");
     processingNewMessage = false;
     JSONObject newMessage = new JSONObject();
 
@@ -782,7 +869,11 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       dataForAppend.put("user", session.getCurrentUser().toJSON());
       dataForAppend.put("room", currentRoomId);
-      dataForAppend.put("timestamp", "");
+      if (APIUtils.isConnected(context)) {
+        dataForAppend.put("timestamp", "sending");
+      } else {
+        dataForAppend.put("timestamp", "failed");
+      }
       dataForAppend.put("id", tmpMessageId);
 
       if (attachments != null && attachments.length > 0) {
@@ -819,7 +910,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
           if (!sentMessage.isNull("files") && sentMessage.getJSONArray("files").length() > 0) {
 
-            sentMessage.put("timestamp", "Uploading...");
+            sentMessage.put("timestamp", "uploading...");
             APIService.SaveCallback onUploadComplete = new APIService.SaveCallback() {
 
               @Override
@@ -894,7 +985,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   public void setMessages(ResponseArray response) {
     roomMessagesAdapter = new RoomMessagesAdapter(APIUtils.toList(response));
     listViewMessages.setAdapter(roomMessagesAdapter);
-    txtNewMessage.setEnabled(true);
+    editTxtNewMessage.setEnabled(true);
   }
 
   public void setUsableFaces(ResponseArray response) {
@@ -956,19 +1047,12 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     @Override
     public void onClick(View v) {
       FaceImageTag face = (FaceImageTag) v.getTag();
-      int cursorPos = txtNewMessage.getSelectionStart();
-      SpannableStringBuilder message = new SpannableStringBuilder(txtNewMessage.getText());
-
       String faceImgTag = APIUtils.getImageTag(face.id, face.src);
-      message.insert(cursorPos, faceImgTag);
-      message.setSpan(
-        new ImageSpan(context, face.img),
-        cursorPos,
-        cursorPos + faceImgTag.length(),
-        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-      );
-
-      txtNewMessage.setText(message);
+      int start = editTxtNewMessage.getSelectionStart();
+      ImageSpan span = new ImageSpan(context, face.img);
+      Editable message = editTxtNewMessage.getEditableText();
+      message.replace(start, editTxtNewMessage.getSelectionEnd(), faceImgTag);
+      message.setSpan(span, start, start + faceImgTag.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     private class UsableFaceViewHolder {
@@ -1062,27 +1146,35 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     private class MessageViewHolder {
       TextView txtViewPerChatContent;
       TextView txtViewChatMateName;
-      TextView txtViewMessageTimestamp;
+      TextView txtViewOwnMessageTimestamp;
+      TextView txtViewMateMessageTimestamp;
       ImageView imgViewAttachment;
       TextView txtViewMessageStatus;
-      LinearLayout layoutMessageStatus;
+      LinearLayout layoutStatusContainer;
+      LinearLayout layoutMessageContainer;
     }
 
     private void showFaceModal(String faceId) {
-      final ProgressDialog faceLoading = APIUtils.showPreloader(context);
+      JSONObject face = faceService.getCacheCollection().get(faceId).getContent();
+      if (face != null) {
+        modalSelectedFace.setData(face);
+        modalSelectedFace.show();
+      }
       faceService.get(faceId, new APIService.GetCallback() {
 
         @Override
         public void onSuccess(ResponseObject response) {
-          faceLoading.dismiss();
           modalSelectedFace.setData(response.getContent());
-          modalSelectedFace.show();
+          if (!modalSelectedFace.isShowing()) {
+            modalSelectedFace.show();
+          } else {
+            modalSelectedFace.render();
+          }
         }
 
         @Override
         public void onFail(int statusCode, String error, JSONObject validationError) {
           Toast.makeText(context, error, Toast.LENGTH_LONG).show();
-          faceLoading.dismiss();
         }
       });
     }
@@ -1095,10 +1187,12 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         viewHolder = new MessageViewHolder();
         viewHolder.txtViewChatMateName = (TextView) convertView.findViewById(R.id.txtViewChatMateName);
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
-        viewHolder.txtViewMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMessageTimestamp);
+        viewHolder.txtViewOwnMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewOwnMessageTimestamp);
+        viewHolder.txtViewMateMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMateMessageTimestamp);
         viewHolder.imgViewAttachment = (ImageView) convertView.findViewById(R.id.imgViewPerChatAttachment);
         viewHolder.txtViewMessageStatus = (TextView) convertView.findViewById(R.id.txtViewMessageStatus);
-        viewHolder.layoutMessageStatus = (LinearLayout) convertView.findViewById(R.id.layoutMessageStatus);
+        viewHolder.layoutMessageContainer = (LinearLayout) convertView.findViewById(R.id.perChatMessageContainer);
+        viewHolder.layoutStatusContainer = (LinearLayout) convertView.findViewById(R.id.layoutMessageStatusContainer);
         viewHolder.imgViewAttachment.setOnClickListener(this);
         viewHolder.txtViewPerChatContent.setMovementMethod(LinkMovementMethod.getInstance());
         convertView.setTag(viewHolder);
@@ -1115,41 +1209,32 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         }
 
         JSONObject previousUser = null;
-        JSONObject nextUser = null;
         if (position > 0) {
           previousUser = getItem(position - 1).getJSONObject("user");
-        }
-        if (position < (getCount() - 1)) {
-          nextUser = getItem(position + 1).getJSONObject("user");
         }
 
         JSONObject user = message.getJSONObject("user");
         String userId = user.getString("id");
-        if (previousUser == null || !previousUser.getString("id").equals(userId)) {
+        if (currentRoom.getBoolean("isGroup") && (previousUser == null || !previousUser.getString("id").equals(userId))) {
           viewHolder.txtViewChatMateName.setVisibility(View.VISIBLE);
           viewHolder.txtViewChatMateName.setText(APIUtils.getFullName(user));
         } else {
           viewHolder.txtViewChatMateName.setVisibility(View.GONE);
         }
 
-//        if (nextUser == null || !nextUser.getString("id").equals(userId)) {
-//          viewHolder.txtViewMessageTimestamp.setVisibility(View.VISIBLE);
-          viewHolder.txtViewMessageTimestamp.setText(message.getString("timestamp"));
-//        } else {
-//          viewHolder.txtViewMessageTimestamp.setVisibility(View.GONE);
-//        }
+        viewHolder.txtViewMateMessageTimestamp.setVisibility(View.GONE);
+        viewHolder.txtViewOwnMessageTimestamp.setVisibility(View.GONE);
 
-        LinearLayout.LayoutParams imgLayoutParams = (LinearLayout.LayoutParams) viewHolder.imgViewAttachment.getLayoutParams();
-        LinearLayout.LayoutParams txtViewLayoutParams = (LinearLayout.LayoutParams) viewHolder.txtViewPerChatContent.getLayoutParams();
-        LinearLayout.LayoutParams statusLayoutParams = (LinearLayout.LayoutParams) viewHolder.layoutMessageStatus.getLayoutParams();
+        LinearLayout.LayoutParams layoutMessageParams = (LinearLayout.LayoutParams) viewHolder.layoutMessageContainer.getLayoutParams();
         if (userId.equals(session.getUserId())) {
 
           viewHolder.txtViewChatMateName.setGravity(Gravity.RIGHT);
-          viewHolder.txtViewPerChatContent.setGravity(Gravity.RIGHT);
-          viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_own);
+          viewHolder.layoutStatusContainer.setGravity(Gravity.RIGHT);
+          viewHolder.layoutMessageContainer.setBackgroundResource(R.drawable.per_chat_own);
           viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentOwn));
-          viewHolder.txtViewMessageTimestamp.setGravity(Gravity.RIGHT);
           viewHolder.txtViewMessageStatus.setVisibility(View.VISIBLE);
+          viewHolder.txtViewOwnMessageTimestamp.setVisibility(View.VISIBLE);
+          viewHolder.txtViewOwnMessageTimestamp.setText(message.getString("timestamp"));
 
           JSONObject statusByUsers = message.optJSONObject("statusByUsers");
           boolean isRead = true;
@@ -1166,34 +1251,37 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           }
 
           if (!isRead) {
-            viewHolder.txtViewMessageStatus.setTextColor(Color.GREEN);
+            String ts = message.getString("timestamp");
+            if (ts.equals("sending")) {
+              viewHolder.txtViewMessageStatus.setTextColor(Color.YELLOW);
+            } else if (ts.equals("failed")) {
+              viewHolder.txtViewMessageStatus.setTextColor(Color.RED);
+            } else {
+              viewHolder.txtViewMessageStatus.setTextColor(Color.GREEN);
+            }
           } else {
             viewHolder.txtViewMessageStatus.setTextColor(Color.DKGRAY);
           }
 
-          txtViewLayoutParams.gravity = Gravity.RIGHT;
-          imgLayoutParams.gravity = Gravity.RIGHT;
-          statusLayoutParams.gravity = Gravity.RIGHT;
+          layoutMessageParams.gravity = Gravity.RIGHT;
 
         } else {
 
           viewHolder.txtViewChatMateName.setGravity(Gravity.LEFT);
-          viewHolder.txtViewPerChatContent.setGravity(Gravity.LEFT);
-          viewHolder.txtViewPerChatContent.setBackgroundResource(R.drawable.per_chat_received);
+          viewHolder.layoutStatusContainer.setGravity(Gravity.LEFT);
+          viewHolder.layoutMessageContainer.setBackgroundResource(R.drawable.per_chat_received);
           viewHolder.txtViewPerChatContent.setTextColor(context.getResources().getColor(R.color.perChatContentReceived));
-          viewHolder.txtViewMessageTimestamp.setGravity(Gravity.LEFT);
           viewHolder.txtViewMessageStatus.setVisibility(View.GONE);
-          txtViewLayoutParams.gravity = Gravity.LEFT;
-          imgLayoutParams.gravity = Gravity.LEFT;
-          statusLayoutParams.gravity = Gravity.LEFT;
+          viewHolder.txtViewMateMessageTimestamp.setVisibility(View.VISIBLE);
+          viewHolder.txtViewMateMessageTimestamp.setText(message.getString("timestamp"));
 
+          layoutMessageParams.gravity = Gravity.LEFT;
         }
 
         viewHolder.txtViewPerChatContent.setText("Loading...");
         viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
         viewHolder.imgViewAttachment.setVisibility(View.GONE);
-        viewHolder.imgViewAttachment.setLayoutParams(imgLayoutParams);
-        viewHolder.txtViewPerChatContent.setLayoutParams(txtViewLayoutParams);
+        viewHolder.layoutMessageContainer.setLayoutParams(layoutMessageParams);
 
         if (!message.isNull("files") && message.getJSONArray("files").length() > 0) {
 
@@ -1230,7 +1318,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
           );
 
         } else if (!message.isNull("content")) {
-          viewHolder.txtViewPerChatContent.setText(message.getString("content"));
+          viewHolder.txtViewPerChatContent.setText(APIUtils.sanitizeMessage(message.getString("content")));
         } else {
           viewHolder.txtViewPerChatContent.setText("");
         }

@@ -33,6 +33,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TabWidget;
 import android.widget.TextView;
@@ -102,6 +103,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private LinearLayout selectedRoomTitleContainer;
   private TextView txtViewActionBarTitle;
   private ViewPager viewPager;
+  private RelativeLayout container;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -149,6 +151,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     }
 
     setContentView(R.layout.activity_main);
+    container = (RelativeLayout) findViewById(R.id.container);
 
     setupViewPager();
     setupTabs();
@@ -323,15 +326,25 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
     toggleSettings = new ActionBarDrawerToggle(this, drawerSettings, toolbar, R.string.settings_drawer_open_desc, R.string.settings_drawer_close_desc) {
 
+      @Override
       public void onDrawerClosed(View view) {;
         actionBar.setTitle("Feeghe");
         supportInvalidateOptionsMenu();
       }
 
+      @Override
       public void onDrawerOpened(View drawerView) {
         listViewSettings.bringToFront();
         actionBar.setTitle("Settings");
         supportInvalidateOptionsMenu();
+      }
+
+      @Override
+      public void onDrawerSlide(View drawerView, float slideOffset) {
+        super.onDrawerSlide(drawerView, slideOffset);
+        container.setTranslationX(-(slideOffset * drawerView.getWidth()));
+        drawerSettings.bringChildToFront(drawerView);
+        drawerSettings.requestLayout();
       }
     };
 
@@ -455,7 +468,6 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   }
 
   private void setupKeyboardDetection() {
-    final LinearLayout container = (LinearLayout) findViewById(R.id.container);
     container.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 
       @Override

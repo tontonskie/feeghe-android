@@ -53,6 +53,8 @@ abstract public class MainActivityModal extends Dialog {
     return data;
   }
 
+  abstract public void render();
+
   public void setContentView(int resId) {
     super.setContentView(resId);
     getWindow().setLayout(

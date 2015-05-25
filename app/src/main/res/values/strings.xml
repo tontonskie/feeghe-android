@@ -22,4 +22,6 @@
   <string name="hello_world">Hello world!</string>
   <string name="title_activity_messages">MessagesActivity</string>
 
+  <string name="room_show_more_btn">Show More</string>
+
 </resources>

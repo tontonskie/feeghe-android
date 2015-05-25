@@ -51,6 +51,29 @@ public class SelectedRoomUsersModal extends MainActivityModal {
   }
 
   @Override
+  public void render() {
+    JSONObject room = (JSONObject) getData();
+    try {
+
+      if (room.getBoolean("isGroup") && !room.getJSONObject("creator").getString("id").equals(session.getUserId())) {
+        btnAdd.setVisibility(View.INVISIBLE);
+      } else {
+        btnAdd.setVisibility(View.VISIBLE);
+      }
+
+      ArrayList<JSONObject> userList = new ArrayList<>();
+      JSONObject users = room.getJSONObject("users");
+      Iterator<?> i = users.keys();
+      while (i.hasNext()) {
+        userList.add(users.getJSONObject((String) i.next()));
+      }
+      setUsers(userList);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.dialog_edit_selected_room_users);
@@ -192,25 +215,7 @@ public class SelectedRoomUsersModal extends MainActivityModal {
 
   @Override
   protected void onStart() {
-    JSONObject room = (JSONObject) getData();
-    try {
-
-      if (room.getBoolean("isGroup") && !room.getJSONObject("creator").getString("id").equals(session.getUserId())) {
-        btnAdd.setVisibility(View.INVISIBLE);
-      } else {
-        btnAdd.setVisibility(View.VISIBLE);
-      }
-
-      ArrayList<JSONObject> userList = new ArrayList<>();
-      JSONObject users = room.getJSONObject("users");
-      Iterator<?> i = users.keys();
-      while (i.hasNext()) {
-         userList.add(users.getJSONObject((String) i.next()));
-      }
-      setUsers(userList);
-    } catch (JSONException e) {
-      e.printStackTrace();
-    }
+    render();
   }
 
   private class RoomUsersAdapter extends ArrayAdapter<JSONObject> implements View.OnClickListener {

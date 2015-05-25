@@ -341,7 +341,17 @@ public class APIUtils {
    * @param message
    * @return
    */
+  public static String sanitizeMessage(String message) {
+    return message.replaceAll("</?a[^>]*>", "");
+  }
+
+  /**
+   *
+   * @param message
+   * @return
+   */
   public static Matcher parseMessage(String message) {
+    message = sanitizeMessage(message);
     Pattern pattern = Pattern.compile("<img.*?face=\"([^\"][a-zA-Z0-9]*?)\".*?src=\"([^\">]*\\/([^\">]*?))\".*?>", Pattern.CASE_INSENSITIVE);
     return pattern.matcher(message);
   }

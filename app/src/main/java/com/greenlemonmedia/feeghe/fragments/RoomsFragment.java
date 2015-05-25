@@ -264,7 +264,7 @@ public class RoomsFragment extends MainActivityFragment {
           if (!recentChat.isEmpty() && APIUtils.messageHasFace(recentChat)) {
             APIUtils.loadFacesFromMessage(context, recentChat, viewHolder.txtViewRoomRecentChat, null, true);
           } else {
-            viewHolder.txtViewRoomRecentChat.setText(recentChat);
+            viewHolder.txtViewRoomRecentChat.setText(APIUtils.sanitizeMessage(recentChat));
           }
           viewHolder.txtViewRecentTimestamp.setText(room.getString("recentChatTimestamp"));
         } else {
