@@ -1,6 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
 import android.app.Activity;
+import android.content.Context;
 
 import com.greenlemonmedia.feeghe.storage.Session;
 import com.koushikdutta.async.http.AsyncHttpClient;
@@ -22,7 +23,7 @@ public class Socket {
 
   private static Socket instance;
 
-  public Activity context;
+  public Context context;
   public Session session;
   public SocketIOClient client;
 
@@ -35,7 +36,7 @@ public class Socket {
    *
    * @param context
    */
-  private Socket(Activity context) {
+  private Socket(Context context) {
     this.context = context;
     this.session = Session.getInstance(context);
   }
@@ -65,7 +66,7 @@ public class Socket {
    * @param context
    * @param connectionListener
    */
-  public static void connect(Activity context, final SocketConnectionListener connectionListener) {
+  public static void connect(Context context, final SocketConnectionListener connectionListener) {
     instance = new Socket(context);
     String qstring = "token=" + instance.session.getToken() + "&user=" + instance.session.getUserId();
     qstring += "&__sails_io_sdk_version=0.10.0&__sails_io_sdk_platform=mobile&__sails_io_sdk_language=java";
@@ -108,7 +109,7 @@ public class Socket {
 
       @Override
       public void onEvent(final JSONArray argument, Acknowledge acknowledge) {
-        instance.context.runOnUiThread(new Runnable() {
+        Runnable cb = new Runnable() {
 
           @Override
           public void run() {
@@ -118,7 +119,12 @@ public class Socket {
               e.printStackTrace();
             }
           }
-        });
+        };
+        if (instance.context != null && instance.context instanceof Activity) {
+          ((Activity) instance.context).runOnUiThread(cb);
+          return;
+        }
+        cb.run();
       }
     });
   }

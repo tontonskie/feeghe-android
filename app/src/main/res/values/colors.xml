@@ -40,4 +40,7 @@
   <color name="faceChatTabInactive">#CCCCCC</color>
   <color name="faceChatTabActive">#fff</color>
 
+  <color name="selectedFaceTitle">#3091FC</color>
+  <color name="selectedFaceOptBtns">#00a651</color>
+
 </resources>

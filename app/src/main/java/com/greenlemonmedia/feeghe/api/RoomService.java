@@ -72,7 +72,7 @@ public class RoomService extends APIService {
       notNull.put("!", JSONObject.NULL);
       checkUser.put("users." + session.getUserId(), notNull);
       request = createWhereQuery(checkUser);
-      request.put("sort", "updatedAt DESC");
+      request.put("sort", "recentChatCreatedAt DESC");
     } catch (JSONException e) {
       e.printStackTrace();
     }

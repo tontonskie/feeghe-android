@@ -1,6 +1,7 @@
 package com.greenlemonmedia.feeghe.api;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -50,7 +52,7 @@ abstract public class APIService implements Serializable {
   protected Session session;
   protected DefaultHttpClient httpClient;
   protected DbCache dbCache;
-  protected Activity context;
+  protected Context context;
   protected String basePath;
   protected String cacheName;
   protected boolean enableAutoHeaders = true;
@@ -63,7 +65,7 @@ abstract public class APIService implements Serializable {
    * @param modelName
    * @param context
    */
-  public APIService(String modelName, Activity context) {
+  public APIService(String modelName, Context context) {
     this.context = context;
     this.modelName = modelName;
     basePath = modelName;
@@ -78,6 +80,14 @@ abstract public class APIService implements Serializable {
    * @return
    */
   abstract public JSONObject getCacheQuery();
+
+  /**
+   *
+   * @return
+   */
+  public CacheCollection getAllCache() {
+    return new CacheCollection(cacheName, dbCache, null);
+  }
 
   /**
    *
@@ -569,9 +579,9 @@ abstract public class APIService implements Serializable {
       ex.printStackTrace();
     }
     SocketIOClient client = Socket.getClient();
-    if (client == null) {
-      if (callback != null) {
-        context.runOnUiThread(new Runnable() {
+    if (client == null || !APIUtils.isConnected(context)) {
+      if (callback != null && context instanceof Activity) {
+        ((Activity) context).runOnUiThread(new Runnable() {
 
           @Override
           public void run() {
@@ -585,7 +595,7 @@ abstract public class APIService implements Serializable {
 
       @Override
       public void acknowledge(final JSONArray arguments) {
-        context.runOnUiThread(new Runnable() {
+        Runnable cb = new Runnable() {
 
           @Override
           public void run() {
@@ -611,7 +621,12 @@ abstract public class APIService implements Serializable {
               callback.onFail(statusCode, errMessage, validationError);
             }
           }
-        });
+        };
+        if (!(context instanceof Activity)) {
+          cb.run();
+          return;
+        }
+        ((Activity) context).runOnUiThread(cb);
       }
     });
   }

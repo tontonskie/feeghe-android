@@ -16,7 +16,7 @@ abstract public class MainActivityModal extends Dialog {
   private MainActivity modalActivity;
 
   public interface OnDataChangedListener {
-    public void onChanged(Object oldData, Object newData);
+    void onChanged(Object oldData, Object newData);
   }
 
   public MainActivityModal(MainActivity activity) {

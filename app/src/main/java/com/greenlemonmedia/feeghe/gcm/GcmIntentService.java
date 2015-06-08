@@ -78,7 +78,8 @@ public class GcmIntentService extends IntentService {
       .setSmallIcon(R.drawable.messages_white)
       .setContentTitle(getResources().getString(R.string.app_name))
       .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-      .setContentText(message);
+      .setContentText(message)
+      .setAutoCancel(true);
 
     mBuilder.setContentIntent(contentIntent);
     mBuilder.setDefaults(Notification.DEFAULT_SOUND);

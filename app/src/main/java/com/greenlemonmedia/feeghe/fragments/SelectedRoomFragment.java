@@ -38,6 +38,7 @@ import com.greenlemonmedia.feeghe.api.APIService;
 import com.greenlemonmedia.feeghe.api.APIUtils;
 import com.greenlemonmedia.feeghe.api.CacheCollection;
 import com.greenlemonmedia.feeghe.api.FaceService;
+import com.greenlemonmedia.feeghe.api.FailedMessageService;
 import com.greenlemonmedia.feeghe.api.MessageService;
 import com.greenlemonmedia.feeghe.api.ResponseArray;
 import com.greenlemonmedia.feeghe.api.ResponseObject;
@@ -108,6 +109,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
   private EditText editTxtSearchFace;
   private boolean noMorePrevMessages = false;
   private Button btnLoadPrevMessages;
+  private CacheCollection failedMsgsCache;
   private HashMap<Integer, JSONObject> roomAttachments = new HashMap<>();
 
   @Override
@@ -175,6 +177,8 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
     messageService = new MessageService(context);
     roomService = new RoomService(context);
     roomCacheCollection = roomService.getCacheCollection();
+    FailedMessageService failedMessageService = new FailedMessageService(context);
+    failedMsgsCache = failedMessageService.getCacheCollection(failedMessageService.getCacheQuery(currentRoomId));
 
     listViewMessages = (ListView) context.findViewById(R.id.listViewMessages);
     listViewMessages.addFooterView(listViewMessagesFooter);
@@ -384,6 +388,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
             ex.printStackTrace();
           }
         }
+        loadFailedMessages();
       }
 
       @Override
@@ -391,6 +396,24 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
+
+    loadFailedMessages();
+  }
+
+  private void loadFailedMessages() {
+    ResponseArray failedMessages = failedMsgsCache.getData();
+    if (roomMessagesAdapter == null) {
+      setMessages(failedMessages);
+      return;
+    }
+    try {
+      JSONArray msgs = failedMessages.getContent();
+      for (int i = 0; i < msgs.length(); i++) {
+        roomMessagesAdapter.add(msgs.getJSONObject(i));
+      }
+    } catch (JSONException ex) {
+      ex.printStackTrace();
+    }
   }
 
   @Override
@@ -973,13 +996,25 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
       @Override
       public void onFail(int statusCode, String error, JSONObject validationError) {
-
+        int pos = roomMessagesAdapter.getPosition(dataForAppend);
+        if (pos >= 0) {
+          roomMessagesAdapter.remove(dataForAppend);
+          try {
+            dataForAppend.put("timestamp", "failed");
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+          roomMessagesAdapter.insert(dataForAppend, pos);
+        }
+        failedMsgsCache.save(dataForAppend);
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
       }
     });
 
     roomMessagesAdapter.add(dataForAppend);
     scrollToEnd();
     btnSendNewMessage.setEnabled(true);
+//    messageService.save(dataForAppend);
   }
 
   public void setMessages(ResponseArray response) {
@@ -1129,13 +1164,17 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       super(context, R.layout.per_chat, messages);
     }
 
+    private View.OnClickListener onClickAttachment = new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        showAttachment((ImageView) v);
+      }
+    };
+
     @Override
     public void onClick(View v) {
-      switch (v.getId()) {
-        case R.id.imgViewPerChatAttachment:
-          showAttachment((ImageView) v);
-          break;
-      }
+
     }
 
     public void showAttachment(ImageView v) {
@@ -1148,7 +1187,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
       TextView txtViewChatMateName;
       TextView txtViewOwnMessageTimestamp;
       TextView txtViewMateMessageTimestamp;
-      ImageView imgViewAttachment;
+      LinearLayout attachmentsContainer;
       TextView txtViewMessageStatus;
       LinearLayout layoutStatusContainer;
       LinearLayout layoutMessageContainer;
@@ -1189,11 +1228,10 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         viewHolder.txtViewPerChatContent = (TextView) convertView.findViewById(R.id.txtViewPerChatContent);
         viewHolder.txtViewOwnMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewOwnMessageTimestamp);
         viewHolder.txtViewMateMessageTimestamp = (TextView) convertView.findViewById(R.id.txtViewMateMessageTimestamp);
-        viewHolder.imgViewAttachment = (ImageView) convertView.findViewById(R.id.imgViewPerChatAttachment);
+        viewHolder.attachmentsContainer = (LinearLayout) convertView.findViewById(R.id.perChatAttachmentContainer);
         viewHolder.txtViewMessageStatus = (TextView) convertView.findViewById(R.id.txtViewMessageStatus);
         viewHolder.layoutMessageContainer = (LinearLayout) convertView.findViewById(R.id.perChatMessageContainer);
         viewHolder.layoutStatusContainer = (LinearLayout) convertView.findViewById(R.id.layoutMessageStatusContainer);
-        viewHolder.imgViewAttachment.setOnClickListener(this);
         viewHolder.txtViewPerChatContent.setMovementMethod(LinkMovementMethod.getInstance());
         convertView.setTag(viewHolder);
       } else {
@@ -1215,7 +1253,8 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
         JSONObject user = message.getJSONObject("user");
         String userId = user.getString("id");
-        if (currentRoom.getBoolean("isGroup") && (previousUser == null || !previousUser.getString("id").equals(userId))) {
+        if (currentRoom.getBoolean("isGroup") && !userId.equals(session.getUserId())
+            && (previousUser == null || !previousUser.getString("id").equals(userId))) {
           viewHolder.txtViewChatMateName.setVisibility(View.VISIBLE);
           viewHolder.txtViewChatMateName.setText(APIUtils.getFullName(user));
         } else {
@@ -1280,29 +1319,56 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
 
         viewHolder.txtViewPerChatContent.setText("Loading...");
         viewHolder.txtViewPerChatContent.setVisibility(View.VISIBLE);
-        viewHolder.imgViewAttachment.setVisibility(View.GONE);
+        viewHolder.attachmentsContainer.setVisibility(View.GONE);
+        viewHolder.attachmentsContainer.removeAllViews();
         viewHolder.layoutMessageContainer.setLayoutParams(layoutMessageParams);
 
         if (!message.isNull("files") && message.getJSONArray("files").length() > 0) {
 
-          viewHolder.txtViewPerChatContent.setVisibility(View.GONE);
-          viewHolder.imgViewAttachment.setVisibility(View.VISIBLE);
-
           if (!isTmpMsg) {
+
+            int imgViewHeight = APIUtils.toDp(getResources(), 200);
             JSONArray attached = message.getJSONArray("files");
-            for (int i = 0; i < attached.length(); i++) {
+            int attachedNum = attached.length();
+            for (int i = 0; i < attachedNum; i++) {
+
               JSONObject sizes = attached.getJSONObject(i);
-              viewHolder.imgViewAttachment.setTag(position + i);
+
+              ImageView imgViewAttachment = new ImageView(context);
+              LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                imgViewHeight
+              );
+              if (attachedNum == 1) {
+                params.setMargins(10, 10, 10, 10);
+              } else if (i == 0) {
+                params.setMargins(10, 10, 10, 5);
+              } else if (i == (attached.length() - 1)) {
+                params.setMargins(10, 5, 10, 10);
+              } else {
+                params.setMargins(10, 5, 10, 5);
+              }
+              imgViewAttachment.setLayoutParams(params);
+              imgViewAttachment.setScaleType(ImageView.ScaleType.CENTER_CROP);
+              imgViewAttachment.setTag(position + i);
+
               APIUtils.getPicasso(context)
                 .load(Uri.parse(APIUtils.getStaticUrl(sizes.getString("small"))))
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
-                .into(viewHolder.imgViewAttachment);
+                .into(imgViewAttachment);
+
+              imgViewAttachment.setOnClickListener(onClickAttachment);
+              viewHolder.attachmentsContainer.addView(imgViewAttachment);
+
               roomAttachments.put(position + i, sizes);
             }
           }
+          viewHolder.attachmentsContainer.setVisibility(View.VISIBLE);
+        }
 
-        } else if (!message.isNull("faces") && message.getJSONArray("faces").length() > 0) {
+        if ((!message.isNull("faces") && message.getJSONArray("faces").length() > 0)
+            || APIUtils.messageHasFace(message.getString("content"))) {
 
           APIUtils.loadFacesFromMessage(
             context,
@@ -1320,7 +1386,7 @@ public class SelectedRoomFragment extends MainActivityFragment implements MainAc
         } else if (!message.isNull("content")) {
           viewHolder.txtViewPerChatContent.setText(APIUtils.sanitizeMessage(message.getString("content")));
         } else {
-          viewHolder.txtViewPerChatContent.setText("");
+          viewHolder.txtViewPerChatContent.setVisibility(View.GONE);
         }
 
         if (position >= (getCount() - 1)) {

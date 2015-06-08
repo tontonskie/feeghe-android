@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -24,6 +25,7 @@ import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.Patterns;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
@@ -713,5 +715,15 @@ public class APIUtils {
       return true;
     }
     return false;
+  }
+
+  /**
+   *
+   * @param resources
+   * @param num
+   * @return
+   */
+  public static int toDp(Resources resources, int num) {
+    return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 200, resources.getDisplayMetrics());
   }
 }

@@ -1,19 +1,14 @@
 package com.greenlemonmedia.feeghe.api;
 
-import android.app.Activity;
+import android.content.Context;
 
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -25,7 +20,7 @@ public class MessageService extends APIService {
    *
    * @param context
    */
-  public MessageService(Activity context) {
+  public MessageService(Context context) {
     super("message", context);
   }
 

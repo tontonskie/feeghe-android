@@ -104,6 +104,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   private TextView txtViewActionBarTitle;
   private ViewPager viewPager;
   private RelativeLayout container;
+  private boolean fromNotification;
   private String[] tabTags = {
     TAB_MESSAGES,
     TAB_CONTACTS,
@@ -145,6 +146,7 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     roomService = new RoomService(context);
     contactService = new ContactService(context);
     roomCacheCollection = roomService.getCacheCollection();
+    fromNotification = isFromNotification();
 
     if (session.get(Session.REG_ID) == null) {
       new RegisterIDTask(context).execute();
@@ -161,6 +163,10 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     setupKeyboardDetection();
 
     registerObservers();
+
+    if (fromNotification) {
+      onNewIntent(getIntent());
+    }
   }
 
   private void setupViewPager() {
@@ -173,7 +179,6 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
     if (bundle == null) {
       return;
     }
-
     if (bundle.containsKey("room")) {
       JSONObject room = roomCacheCollection.get(bundle.getString("room")).getContent();
       if (room == null) {
@@ -445,11 +450,8 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
   }
 
   private void setupSocketConnection() {
-    if (isFromNotification()) {
-       return;
-    }
     boolean isConnected = APIUtils.isConnected(context);
-    if (!isConnected || (isConnected && Socket.isConnected())) {
+    if (!fromNotification && !isConnected || (isConnected && Socket.isConnected())) {
       loadHome();
       return;
     }
@@ -462,7 +464,9 @@ public class MainActivity extends ActionBarActivity implements UITabHost.OnTabCh
 
       @Override
       public void onConnect(SocketIOClient client) {
-        loadHome();
+        if (!fromNotification) {
+          loadHome();
+        }
       }
     });
   }
